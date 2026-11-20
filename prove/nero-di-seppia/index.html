@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nero di Seppia</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout: una scrivania grigia con sopra un e-reader. Dentro lo schermo solo carta e inchiostro:
+   il prologo e' impaginato come un romanzo illustrato di fine Ottocento, il gioco come un terminale.
+   Tema unico per scelta: e' la resa di un pannello e-ink. */
+:root {
+  color-scheme: light;
+  --desk: #c7cbc9;
+  --desk-ink: #23282a;
+  --bezel: #1d2022;
+  --paper: #f1f0ea;
+  --ink: #111111;
+  --ink-soft: #565a5b;
+  --mono: "IBM Plex Mono", "Courier New", Courier, monospace;
+  --serif: "Old Standard TT", "Century Schoolbook", Georgia, serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--desk); color: var(--desk-ink); font-family: var(--mono); font-size: 14.5px; line-height: 1.5; }
+
+.stage { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+
+.demo-bar { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; }
+.demo-bar h1 { font-family: var(--serif); font-weight: 700; font-size: 27px; line-height: 1; margin: 0; letter-spacing: 3px; text-transform: uppercase; }
+.demo-bar p { margin: 4px 0 0; font-size: 12px; }
+.switch { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.seg { display: flex; }
+.seg button { font: 600 12px/1 var(--mono); color: var(--desk-ink); background: transparent; border: 2px solid var(--desk-ink); padding: 0 10px; min-height: 32px; cursor: pointer; border-radius: 0; }
+.seg button + button { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--desk-ink); color: var(--desk); }
+
+.device { flex: 1 1 auto; width: 100%; max-width: 600px; min-height: 600px; max-height: 900px; display: flex; background: var(--bezel); padding: 22px 22px 40px; border-radius: 18px; }
+.screen { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); }
+
+.status { display: flex; justify-content: space-between; gap: 12px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; padding: 7px 16px; }
+.status span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- pagina ---------- */
+.out { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 14px 16px 6px; }
+.out p { margin: 0 0 10px; max-width: 64ch; }
+.out .room { font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; }
+.out .echo { font-weight: 600; margin: 0 0 8px; }
+.out .note { color: var(--ink-soft); font-size: 13px; }
+.out .turn + .turn { border-top: 1px dashed var(--ink); padding-top: 12px; margin-top: 6px; }
+.kw { font-weight: 600; border-bottom: 2px dotted var(--ink); cursor: pointer; }
+
+.front { text-align: center; margin: 2px 0 10px; }
+.front h2 { font-family: var(--serif); font-size: 30px; letter-spacing: 5px; text-transform: uppercase; margin: 0; line-height: 1.1; text-wrap: balance; }
+.front span { display: block; font-family: var(--serif); font-style: italic; font-size: 15px; margin-top: 2px; }
+.prosa p { font-family: var(--serif); font-size: 17.5px; line-height: 1.46; max-width: 60ch; margin: 0 0 9px; }
+.prosa p:first-child::first-letter { float: left; font-weight: 700; font-size: 3.05em; line-height: 0.86; padding: 3px 7px 0 0; }
+
+figure { margin: 2px 0 12px; }
+figure canvas { display: block; margin: 0 auto; border: 2px solid var(--ink); max-width: 100%; }
+figcaption { font-family: var(--serif); font-style: italic; font-size: 14px; text-align: center; margin-top: 5px; }
+
+.sheet { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: flex-start; margin-bottom: 8px; }
+.sheet figure { flex: 0 0 auto; margin: 0; }
+.sheet figure canvas { border: 0; }
+.sheet figcaption { max-width: 124px; font-size: 12.5px; line-height: 1.25; }
+.sheet .who { flex: 1 1 240px; min-width: 0; }
+.sheet h2 { font-family: var(--serif); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px; line-height: 1.1; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+.sheet dl { margin: 0; font-size: 13px; line-height: 1.4; }
+.sheet dt { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin-top: 6px; }
+.sheet dd { margin: 0; }
+.facts { margin: 0 0 8px; padding: 8px 0 0 18px; border-top: 1px solid var(--ink); font-size: 13px; }
+.facts-title { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 0 0 -4px; }
+.end { font-family: var(--serif); font-style: italic; font-size: 20px; text-align: center; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 8px 0; margin: 14px 0 10px; }
+.turn-next { display: block; width: 100%; margin: 6px 0 8px; }
+
+/* ---------- comandi ---------- */
+.chip { font: 600 12.5px/1 var(--mono); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 0; padding: 0 8px; min-width: 38px; min-height: 36px; cursor: pointer; }
+.chip.on { background: var(--ink); color: var(--paper); }
+.chip:disabled { border-style: dotted; color: var(--ink-soft); cursor: default; }
+.chip.go { min-height: 42px; font-size: 14px; }
+
+.book { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 16px; border-top: 2px solid var(--ink); }
+.pager { display: flex; align-items: center; gap: 6px; }
+.pager span { font-size: 12px; min-width: 88px; text-align: center; }
+.refs { display: flex; gap: 6px; }
+.screen.rullo .pager { visibility: hidden; }
+
+.rows { display: grid; grid-template-columns: 58px 1fr; gap: 6px 8px; align-items: center; padding: 0 16px; }
+.rows .lab { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center; }
+.chips .spacer { flex: 1 1 auto; }
+.bag { font-size: 13.5px; line-height: 1.9; }
+.bag .sep { padding: 0 7px; color: var(--ink-soft); }
+
+.cmd { display: flex; align-items: center; gap: 8px; padding: 6px 16px 14px; }
+.cmd label { font-weight: 600; font-size: 18px; }
+.cmd input { flex: 1 1 auto; min-width: 0; font: 400 16px/1.2 var(--mono); color: var(--ink); background: var(--paper); border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; padding: 6px 2px; }
+.cmd input::placeholder { color: var(--ink-soft); }
+.screen.reading .rows, .screen.reading .cmd { display: none; }
+.screen.reading .book { padding-bottom: 14px; }
+
+button:focus-visible, input:focus-visible, .kw:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.seg button:focus-visible { outline-color: var(--desk-ink); }
+
+.foot { width: 100%; max-width: 600px; margin: 0; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .stage { padding: 0; gap: 0; }
+  .demo-bar { padding: 10px 16px; }
+  .demo-bar h1 { font-size: 22px; }
+  .device { padding: 0; border-radius: 0; max-height: none; min-height: 560px; }
+  .foot { padding: 8px 16px; }
+  .rows { grid-template-columns: 1fr; gap: 2px; }
+  .rows .lab { margin-top: 4px; }
+}
+</style>
+</head>
+<body>
+<main class="stage">
+  <header class="demo-bar">
+    <div>
+      <h1>Nero di Seppia</h1>
+      <p>Seconda prova · avventura testuale per e-reader</p>
+    </div>
+    <div class="switch"><span id="lbl-mode">Schermo</span>
+      <div class="seg" role="group" aria-labelledby="lbl-mode">
+        <button type="button" id="mode-pagina" aria-pressed="true">Pagina</button>
+        <button type="button" id="mode-rullo" aria-pressed="false">Rullo</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="device">
+    <div class="screen" id="screen">
+      <div class="status"><span id="st-room">Prologo</span><span id="st-moves">Mosse 0</span></div>
+      <div class="out" id="out" aria-live="polite"></div>
+
+      <div class="book">
+        <div class="pager">
+          <button type="button" class="chip" id="pg-prev" aria-label="Pagina precedente">◀</button>
+          <span id="pg-label">Pag. 1 di 1</span>
+          <button type="button" class="chip" id="pg-next" aria-label="Pagina successiva">▶</button>
+        </div>
+        <div class="refs">
+          <button type="button" class="chip" id="ref-scheda" data-cmd="scheda">SCHEDA</button>
+          <button type="button" class="chip" id="ref-mappa" data-cmd="mappa">MAPPA</button>
+          <button type="button" class="chip" id="ref-aiuto" data-cmd="aiuto" aria-label="Aiuto">?</button>
+        </div>
+      </div>
+
+      <div class="rows" id="rows">
+        <span class="lab">Rotta</span>
+        <div class="chips" id="chips-dir"></div>
+        <span class="lab">Azioni</span>
+        <div class="chips" id="chips-verb">
+          <button type="button" class="chip" id="v-esamina" data-verb="esamina">ESAMINA</button>
+          <button type="button" class="chip" id="v-prendi" data-verb="prendi">PRENDI</button>
+          <button type="button" class="chip" id="v-apri" data-verb="apri">APRI</button>
+          <button type="button" class="chip" id="v-usa" data-verb="usa">USA</button>
+          <button type="button" class="chip" id="v-dai" data-verb="dai">DAI</button>
+          <button type="button" class="chip" id="v-parla" data-verb="parla">PARLA</button>
+        </div>
+        <span class="lab">Con te</span>
+        <div class="bag" id="bag"></div>
+      </div>
+
+      <form class="cmd" id="cmd-form" autocomplete="off">
+        <label for="cmd-input">&gt;</label>
+        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando, poi Invio">
+      </form>
+    </div>
+  </div>
+
+  <p class="foot">Si gioca scrivendo, oppure toccando un'azione e poi una parola sottolineata. Le tavole sono calcolate dal codice, senza file immagine.</p>
+</main>
+
+<script>
+/* ==================================================================
+   MOTORE DI GIOCO. Non tocca il DOM: riceve una stringa e restituisce
+   una lista di blocchi (testo, titolo, tavola, mappa, scheda).
+   ================================================================== */
+var PC = (function () {
+  var SAVE_KEY = 'nerodiseppia.v1';
+  var S;
+
+  var ROOM_NAME = { cuccetta: 'La tua cuccetta', corridoio: 'Corridoio', ponte: 'Ponte di comando', macchine: 'Sala macchine', stagna: 'Camera stagna', fondale: 'Fondale' };
+  var EXITS = {
+    cuccetta: { giu: 'corridoio' },
+    corridoio: { prua: 'ponte', poppa: 'macchine', su: 'cuccetta', giu: 'stagna' },
+    ponte: { poppa: 'corridoio' },
+    macchine: { prua: 'corridoio' },
+    stagna: { su: 'corridoio', fuori: 'fondale' },
+    fondale: { dentro: 'stagna' }
+  };
+  var DIR_ORDER = ['prua', 'poppa', 'su', 'giu', 'dentro', 'fuori'];
+  var ADJ = [['cuccetta', 'corridoio'], ['corridoio', 'ponte'], ['corridoio', 'macchine'], ['corridoio', 'stagna'], ['stagna', 'fondale']];
+  var ITEMS = ['lume', 'bulino', 'taccuino', 'gallette', 'elmo', 'manovella'];
+
+  function fresh() {
+    return { room: 'cuccetta', moves: 0, visited: { cuccetta: 1 },
+      loc: { bulino: 'inv', taccuino: 'inv', lume: 'cuccetta', gallette: 'ponte', elmo: 'ponte', manovella: 'polpo' },
+      f: { botola: 0, spuntato: 0, giornale: 0, oblo: 0, polpo: 0, nutrito: 0, indossato: 0, portello: 0, fine: 0 } };
+  }
+
+  /* ---------- parser ---------- */
+  var STOP = ' il lo la i gli le l un uno una del dello della dei degli delle dell al allo alla ai agli alle all nel nello nella nell sul sullo sulla sull con col di da dal dalla per verso a ad in mio mia ';
+  var DIRS = { prua: 'prua', avanti: 'prua', poppa: 'poppa', indietro: 'poppa', dietro: 'poppa',
+    su: 'su', sali: 'su', salgo: 'su', alto: 'su', giu: 'giu', scendi: 'giu', scendo: 'giu', basso: 'giu',
+    fuori: 'fuori', esci: 'fuori', esco: 'fuori', dentro: 'dentro', entra: 'dentro', rientra: 'dentro', rientro: 'dentro' };
+  var VERBS = {
+    guarda: 'guarda', g: 'guarda', l: 'guarda', osserva: 'guarda', descrivi: 'guarda',
+    esamina: 'esamina', x: 'esamina', ispeziona: 'esamina', controlla: 'esamina', studia: 'esamina',
+    leggi: 'leggi', sfoglia: 'leggi',
+    prendi: 'prendi', raccogli: 'prendi', piglia: 'prendi', afferra: 'prendi', stacca: 'prendi', ripesca: 'prendi',
+    lascia: 'lascia', posa: 'lascia', molla: 'lascia',
+    inventario: 'inventario', inv: 'inventario', i: 'inventario', zaino: 'inventario', tasche: 'inventario',
+    apri: 'apri', forza: 'apri', chiudi: 'chiudi',
+    usa: 'usa', utilizza: 'usa', infila: 'usa', adopera: 'usa', gira: 'usa', avvita: 'usa', spingi: 'usa', tira: 'usa',
+    dai: 'dai', offri: 'dai', porgi: 'dai', lancia: 'dai', dona: 'dai',
+    parla: 'parla', saluta: 'parla', chiedi: 'parla', chiama: 'parla', grida: 'parla',
+    indossa: 'indossa', metti: 'indossa', vesti: 'indossa', togli: 'togli', sfila: 'togli',
+    accendi: 'accendi', spegni: 'spegni', mangia: 'mangia', assaggia: 'mangia',
+    vai: 'vai', va: 'vai', vado: 'vai', cammina: 'vai', corri: 'vai', torna: 'vai',
+    mappa: 'mappa', m: 'mappa', cartina: 'mappa', spaccato: 'mappa',
+    scheda: 'scheda', chi: 'scheda', personaggio: 'scheda', io: 'scheda',
+    aiuto: 'aiuto', help: 'aiuto', comandi: 'aiuto',
+    prologo: 'prologo', ricomincia: 'ricomincia', restart: 'ricomincia', salva: 'salva', aspetta: 'aspetta', z: 'aspetta', dormi: 'aspetta'
+  };
+  var NOUNS = {
+    lume: 'lume', lanterna: 'lume', lampada: 'lume', luce: 'lume',
+    bulino: 'bulino', taccuino: 'taccuino', quaderno: 'taccuino', schizzi: 'taccuino',
+    sportello: 'botola', botola: 'botola', porta: 'botola', fessura: 'botola', anello: 'botola',
+    branda: 'branda', letto: 'branda', mensola: 'branda', cuccetta: 'branda', tubi: 'branda',
+    scritta: 'scritta', gesso: 'scritta', paratia: 'scritta', muro: 'scritta',
+    lampade: 'lampade', timone: 'timone', ruota: 'timone', poltrona: 'poltrona', sedia: 'poltrona',
+    tavolo: 'tavolo', carte: 'tavolo', giornale: 'giornale', diario: 'giornale', registro: 'giornale', libro: 'giornale',
+    elmo: 'elmo', casco: 'elmo', biscottiera: 'elmo',
+    gallette: 'gallette', galletta: 'gallette', biscotti: 'gallette', biscotto: 'gallette',
+    oblo: 'oblo', finestra: 'oblo', vetro: 'oblo',
+    polpo: 'polpo', piovra: 'polpo', bestia: 'polpo', animale: 'polpo', tentacolo: 'polpo',
+    manovella: 'manovella', quadro: 'quadro', valvole: 'quadro', bielle: 'motore', macchine: 'motore', motore: 'motore', acqua: 'acqua',
+    scafandro: 'scafandro', tuta: 'scafandro', muta: 'scafandro', portello: 'portello', perno: 'portello', ganci: 'ganci', gancio: 'ganci',
+    scala: 'scala', scaletta: 'scala',
+    malanotte: 'relitto', veliero: 'relitto', relitto: 'relitto', nave: 'relitto', brigantino: 'relitto',
+    impronte: 'impronte', orme: 'impronte', lampreda: 'lampreda', sommergibile: 'lampreda', scafo: 'lampreda',
+    fango: 'fango', fondale: 'fango', capitano: 'gente', gorgo: 'gente', equipaggio: 'gente', nostromo: 'gente',
+    mappa: 'mappa', scheda: 'scheda'
+  };
+  var SCENERY = { botola: ['cuccetta', 'corridoio'], branda: ['cuccetta'], scritta: ['corridoio'], lampade: ['corridoio'],
+    timone: ['ponte'], poltrona: ['ponte'], tavolo: ['ponte'], giornale: ['ponte'], oblo: ['ponte'],
+    polpo: ['macchine'], quadro: ['macchine'], motore: ['macchine'], acqua: ['macchine', 'stagna', 'fondale'],
+    scafandro: ['stagna'], portello: ['stagna', 'fondale'], ganci: ['stagna'], scala: ['corridoio', 'stagna', 'cuccetta'],
+    relitto: ['fondale'], impronte: ['fondale'], fango: ['fondale'], lampreda: '*', gente: '*' };
+
+  function norm(s) {
+    s = String(s).toLowerCase();
+    s = s.replace(/[àá]/g, 'a').replace(/[èé]/g, 'e').replace(/[ìí]/g, 'i').replace(/[òó]/g, 'o').replace(/[ùú]/g, 'u');
+    s = s.replace(/\?/g, ' aiuto ').replace(/['’`«»]/g, ' ').replace(/[^a-z0-9 ]/g, ' ');
+    return s.replace(/\s+/g, ' ').replace(/^ | $/g, '');
+  }
+  function tokens(s) {
+    var raw = s.split(' '), out = [], i;
+    if (raw.length === 1) { return raw; }
+    for (i = 0; i < raw.length; i++) { if (raw[i] && STOP.indexOf(' ' + raw[i] + ' ') < 0) { out.push(raw[i]); } }
+    return out.length ? out : raw;
+  }
+
+  /* ---------- stato del mondo ---------- */
+  function has(id) { return S.loc[id] === 'inv'; }
+  function isItem(id) { for (var i = 0; i < ITEMS.length; i++) { if (ITEMS[i] === id) { return true; } } return false; }
+  function dark() { return S.room === 'macchine' && !has('lume'); }
+  function present(id) {
+    if (isItem(id)) {
+      if (has(id) || S.loc[id] === S.room) { return true; }
+      if (id === 'manovella') { return (S.loc.manovella === 'polpo' && S.room === 'macchine') || (S.loc.manovella === 'perno' && S.room === 'stagna'); }
+      if (id === 'elmo') { return S.loc.elmo === 'worn'; }
+      return false;
+    }
+    var sc = SCENERY[id];
+    if (!sc) { return false; }
+    if (sc === '*') { return true; }
+    for (var i = 0; i < sc.length; i++) { if (sc[i] === S.room) { return true; } }
+    return false;
+  }
+
+  /* ---------- blocchi ---------- */
+  function P(s) { return { t: 'p', s: s }; }
+  function NOTE(s) { return { t: 'note', s: s }; }
+  function IMG(id, cap) { return { t: 'img', id: id, cap: cap }; }
+
+  function describe(withImage) {
+    var b = [{ t: 'room', s: ROOM_NAME[S.room] }], r = S.room, d = '', t;
+    if (r === 'cuccetta') {
+      d = 'Una mensola per dormire e un\'altra, più stretta, per pentirsene: ti hanno dato il loculo sopra i tubi del vapore. Il pavimento pende verso poppa. ';
+      if (S.loc.lume === 'cuccetta') { d += 'Alla parete oscilla un [[lume]] a olio, acceso per puro spirito di contraddizione. '; }
+      d += S.f.botola ? 'Lo [[sportello]] nel pavimento è aperto: [[giù]].' : 'Nel pavimento c\'è lo [[sportello]] che scende in corridoio.';
+    } else if (r === 'corridoio') {
+      d = 'Largo quanto un uomo che trattiene il fiato. Le [[lampade]] sono morte tutte tranne una, che ci sta pensando. Sulla paratia qualcuno ha lasciato una [[scritta]] col gesso.\nA [[prua]] c\'è il ponte di comando; a [[poppa]] la sala macchine, da cui non arriva nessun rumore, ed è questo il rumore che ti preoccupa. Una scaletta sale alla tua cuccetta ([[su]]), una botola scende alla camera stagna ([[giù]]).';
+    } else if (r === 'ponte') {
+      d = 'Il [[timone]] gira piano da solo, come chi finge di avere da fare. La [[poltrona]] del capitano è vuota. Sul tavolo delle carte ';
+      var e = S.loc.elmo === 'ponte', g = S.loc.gallette === 'ponte';
+      if (e && g) { d += 'ci sono il [[giornale]] di bordo e l\'[[elmo]] di uno scafandro, pieno di [[gallette]]: qualcuno lo usava come biscottiera.'; }
+      else if (e) { d += 'ci sono il [[giornale]] di bordo e l\'[[elmo]] di uno scafandro, vuoto.'; }
+      else if (g) { d += 'ci sono il [[giornale]] di bordo e un mucchietto di [[gallette]].'; }
+      else { d += 'resta il [[giornale]] di bordo.'; }
+      d += ' Davanti a te, grande come una ruota di carro, l\'[[oblò]].\nIl corridoio è a [[poppa]].';
+    } else if (r === 'macchine') {
+      if (dark()) {
+        d = 'Buio, e uno sciacquio. Qualcosa, qui dentro, si è spostato quando sei entrato. Senza una luce non fai un altro passo.\nIl corridoio è a [[prua]].';
+      } else {
+        if (!S.f.polpo) { S.f.polpo = 1; b.push(IMG('polpo', 'Tav. V — Il nuovo macchinista')); }
+        d = 'Le bielle sono ferme a metà gesto. C\'è un palmo d\'[[acqua]] sul pavimento e, seduto sul [[quadro]] delle valvole con l\'aria di chi ha già sporto reclamo, un [[polpo]] grosso come un cane da pastore';
+        if (!S.f.nutrito) { d += '. Con un tentacolo tiene stretta una [[manovella]] di ottone.'; }
+        else { d += ', che digerisce.' + (S.loc.manovella === 'macchine' ? ' La [[manovella]] è nell\'acqua, ai suoi piedi. Per così dire.' : ''); }
+        d += '\nIl corridoio è a [[prua]].';
+      }
+    } else if (r === 'stagna') {
+      d = 'Una stanza di ferro pensata per riempirsi d\'acqua, ' + (S.f.portello ? 'e adesso lo fa benissimo. ' : 'cosa che per ora non fa. ');
+      d += S.f.indossato ? 'Sei dentro lo [[scafandro]], e lo scafandro è dentro la stanza. ' : 'Alla parete è appeso uno [[scafandro]], l\'ultimo di sei: gli altri [[ganci]] sono vuoti. ';
+      d += S.f.portello ? 'Il [[portello]] esterno è aperto sul buio: [[fuori]].' : 'Nel pavimento c\'è il [[portello]] esterno, con un perno quadrato dove dovrebbe stare una manovella.';
+      d += '\nLa scala torna [[su]].';
+    } else if (r === 'fondale') {
+      if (withImage) { b.push(IMG('relitto', 'Tav. VI — La «Malanotte»')); }
+      d = 'Il [[fango]] si alza a ogni passo e ricade piano, come neve che ci ha ripensato. Dietro di te la [[Lampreda]], coricata su un fianco. Davanti, nel fanale dell\'elmo, la [[Malanotte]]: intera, gli alberi in piedi, le vele ancora serrate ai pennoni, come se trent\'anni fossero stati una sosta.\nSei paia di [[impronte]] di piombo vanno verso la sua fiancata. Nessuna torna.\nIl portello è alle tue spalle: [[dentro]].';
+    }
+    b.push(P(d));
+    return b;
+  }
+
+  function prologue() {
+    return [
+      [{ t: 'front', s: 'Nero di Seppia', sub: 'Prologo, in quattro tavole' },
+        IMG('porto', 'Tav. I — Porto Scuro, novembre 1887'),
+        { t: 'prosa', s: 'A Porto Scuro piove di traverso undici mesi l\'anno. Il dodicesimo c\'è la nebbia.\n\nTi chiami Tullio Vespro, hai ventitré anni e incidi il legno per la «Gazzetta Illustrata»: navi che arrivano, navi che partono, ogni tanto un naufragio, che viene meglio. Mastro Zeno dice che hai una buona mano e una pessima sorte. Sulla mano ha ragione.' }],
+      [IMG('lampreda', 'Tav. II — La «Lampreda» all\'ormeggio'),
+        { t: 'prosa', s: 'Poi è arrivata la lettera. Un certo capitano Gorgo cercava un incisore per documentare «un\'impresa scientifica di breve durata e sicuro ritorno». Mastro Zeno l\'ha letta due volte, si è rotto una gamba con ammirevole tempismo e ha mandato te.\n\nLa «Lampreda» aspettava in fondo al molo vecchio, legata corta come un cane che morde: trenta metri di ferro chiodato, senza un solo albero. «Non galleggia», hai detto. «Non è il suo mestiere», ha risposto Gorgo.' }],
+      [IMG('discesa', 'Tav. III — La discesa'),
+        { t: 'prosa', s: 'Siete scesi all\'alba. A venti braccia il mare era verde, a cinquanta era blu, a cento ha smesso di essere un colore ed è diventato un\'opinione.\n\nGorgo guardava dall\'oblò senza battere le palpebre e ripeteva un nome solo: «Malanotte». Un brigantino, hai capito, andato a fondo trent\'anni fa con un carico che nessun registro ha mai avuto il coraggio di elencare. Tu incidevi. Ti pagano a tavola.' }],
+      [IMG('oblo', 'Tav. IV — Qualcosa, là fuori'),
+        { t: 'prosa', s: 'Al terzo giorno qualcosa ha bussato allo scafo. Da fuori. Tre colpi, educati.\n\nRicordi il capitano che sorrideva per la prima volta, le lampade che si spegnevano una dopo l\'altra, e un rumore come di una cattedrale che si siede. Poi più niente.\n\nTi svegli nella tua cuccetta. La «Lampreda» è ferma, storta e molto silenziosa. Qualcosa gocciola. Non sei sicuro che sia acqua.' }]
+    ];
+  }
+
+  function sheet() {
+    var cond, scopo, facts = [];
+    if (S.room === 'fondale') { cond = 'Sott\'acqua, a centoquaranta braccia. Respira, il che è già molto.'; }
+    else if (S.f.indossato) { cond = 'Chiuso in quaranta chili di rame, tela e piombo.'; }
+    else { cond = 'Asciutto. Per ora.'; }
+    if (S.f.fine) { scopo = 'Seguire le impronte. Oppure trovare un ottimo motivo per non farlo.'; }
+    else if (S.f.giornale || S.visited.stagna) { scopo = 'Uscire dalla «Lampreda». Preferibilmente respirando.'; }
+    else if (S.f.botola) { scopo = 'Capire perché a bordo non si sente più nessuno.'; }
+    else { scopo = 'Uscire da questa cuccetta.'; }
+
+    facts.push(S.f.giornale ? 'La «Lampreda» è ferma sul fondo, a centoquaranta braccia.' : 'La «Lampreda» è ferma, storta e silenziosa.');
+    if (S.f.spuntato) { facts.push('Un bulino da otto lire non è una leva. Funziona una volta sola.'); }
+    if (S.visited.corridoio) { facts.push('L\'equipaggio ha scritto «Torniamo subito». Non ha scritto quando.'); }
+    if (S.f.giornale) { facts.push('Gorgo ha trovato la «Malanotte». O la «Malanotte» ha trovato lui.'); }
+    if (S.f.oblo) { facts.push('Là fuori c\'è un veliero. E qualcosa di lungo, che non ha fretta.'); }
+    if (S.f.polpo) { facts.push(S.f.nutrito ? 'I polpi apprezzano le gallette più di te.' : 'In sala macchine comanda un polpo. Ha una manovella e non la presta.'); }
+    if (S.f.fine) { facts.push('Sei paia di impronte vanno verso il relitto. Nessuna torna.'); }
+
+    return [{ t: 'sheet', name: 'Tullio Vespro', cap: 'Autoritratto, a memoria e senza specchio',
+      rows: [['Età', '23 anni, portati con apprensione'],
+        ['Mestiere', 'Apprendista incisore, bottega di mastro Zeno, Porto Scuro'],
+        ['Incarico', 'Illustrare la spedizione della «Lampreda» per la «Gazzetta Illustrata»'],
+        ['Paga', 'A tavola consegnata. Finora: nessuna'],
+        ['Debiti', 'Tre mesi d\'affitto, un bulino da otto lire, una cena'],
+        ['Sa nuotare', 'No'],
+        ['Condizione', cond],
+        ['Scopo', scopo]],
+      facts: facts }];
+  }
+
+  function mapBlock() {
+    var v = {}, id;
+    for (id in S.visited) { if (S.visited.hasOwnProperty(id)) { v[id] = 1; } }
+    return [{ t: 'map', visited: v, room: S.room, polpo: S.f.polpo, suit: !S.f.indossato, cap: 'Spaccato della «Lampreda», per quel che ne hai visto' }];
+  }
+
+  /* ---------- azioni ---------- */
+  function go(dir) {
+    var ex = EXITS[S.room], to = ex[dir], d, n = 0, only;
+    if (!to && dir === 'fuori') { for (d in ex) { if (ex.hasOwnProperty(d)) { n++; only = d; } } if (n === 1) { dir = only; to = ex[dir]; } }
+    if (!to) { return [P('Da quella parte c\'è solo ferro.')]; }
+    if (S.room === 'cuccetta' && !S.f.botola) { return [P('Lo sportello è incastrato. Non si scende.')]; }
+    if (S.room === 'stagna' && dir === 'su') {
+      if (S.f.portello) { return [P('La camera è allagata e il portello interno non si apre finché c\'è acqua. Ce n\'è.')]; }
+      if (S.f.indossato) { return [P('Con quaranta chili di rame e piombo addosso, la scala è fuori discussione.')]; }
+    }
+    if (S.room === 'stagna' && dir === 'fuori' && !S.f.portello) { return [P('Il portello esterno è chiuso. Sul perno manca la manovella.')]; }
+    S.room = to; S.moves++;
+    var first = !S.visited[to];
+    S.visited[to] = 1;
+    if (to === 'fondale' && !S.f.fine) {
+      S.f.fine = 1;
+      return describe(true).concat([{ t: 'end', s: 'Fine della prima tavola' },
+        NOTE('La prova finisce qui. Puoi ancora guardarti intorno, aprire la SCHEDA o la MAPPA, rileggere il PROLOGO, oppure scrivere RICOMINCIA.')]);
+    }
+    return describe(first);
+  }
+
+  function readLog() {
+    S.f.giornale = 1; S.moves++;
+    return [P('L\'ultima pagina è di ieri, nella grafia a punta del capitano:'),
+      P('«Giorno 3. Profondità 140 braccia. Trovata. Lei ci ha visti per prima.\nL\'equipaggio insiste per uscire a salutare. Ho dato il permesso: non si discute con chi ha già deciso.\nNota: l\'incisore dorme. Lasciarlo dormire. Qualcuno dovrà pur disegnarlo.»')];
+  }
+
+  function examine(id) {
+    switch (id) {
+      case 'lume': return [P('Un lume a olio da marina, con la gabbia di ottone. Fa una luce gialla e testarda.')];
+      case 'bulino': return [P(S.f.spuntato ? 'Il tuo bulino migliore. Era. Adesso ha la punta storta come un\'opinione di mastro Zeno.' : 'Il tuo bulino migliore: acciaio di Sheffield, manico di bosso. Otto lire, non ancora pagate.')];
+      case 'taccuino': return [P('I tuoi schizzi: la «Lampreda» all\'ormeggio, il capitano di profilo, un gabbiano venuto male. Le ultime pagine sono bianche. Per ora.')];
+      case 'botola':
+        if (S.room === 'corridoio') { return [P('Una botola con una scala di ferro che scende alla camera stagna.')]; }
+        return [P(S.f.botola ? 'Aperto, e non si richiuderà mai più.' : 'Lo sportello da cui si scende in corridoio. Lo scafo si è storto e lui con lo scafo: è incastrato. Resta una fessura dove passerebbe una lama.')];
+      case 'branda': return [P('Dormirci era difficile anche quando il pavimento era in piano.')];
+      case 'scritta': return [P('«TORNIAMO SUBITO». La calligrafia è del nostromo. Il gesso è ancora per terra, spezzato in due.')];
+      case 'lampade': return [P('Una sola resiste. Ogni tanto sfarfalla, giusto per tenerti sveglio.')];
+      case 'timone': return [P('Lo fermi con una mano. Appena lo lasci, ricomincia.')];
+      case 'poltrona': return [P('Cuoio consumato. È ancora tiepida. Preferiresti di no.')];
+      case 'tavolo': return [P('Carte nautiche. L\'ultima rotta finisce in un punto dove qualcuno ha premuto la matita fino a bucare il foglio.')];
+      case 'giornale': return readLog();
+      case 'elmo': return [P('Rame battuto, tre vetri, un collare a vite. ' + (S.loc.gallette === 'ponte' && S.loc.elmo === 'ponte' ? 'Dentro, gallette.' : 'Odora ancora di gallette.'))];
+      case 'gallette': return [P('Gallette da marinaio, dure come la vita che le ha prodotte. Qualcuno ci ha inciso le iniziali, per non confonderle.')];
+      case 'oblo':
+        S.f.oblo = 1;
+        return [IMG('oblo', 'Tav. IV — Qualcosa, là fuori'), P('Il fanale di prua illumina dieci metri di niente. Oltre, appoggiata sul fondo come una bestia che dorme, la sagoma di un veliero. E tra voi e lei, qualcosa di lungo che si sposta senza fretta.')];
+      case 'polpo':
+        if (S.f.nutrito) { return [P('Ha cambiato colore: adesso è del grigio soddisfatto di un notaio dopo pranzo. Ti ignora con metodo.')]; }
+        return [IMG('polpo', 'Tav. V — Il nuovo macchinista'), P('Ti guarda con un occhio a fessura, e in quell\'occhio c\'è più pazienza che in tutta Porto Scuro. Non ha l\'aria di voler mollare la manovella. Ha l\'aria di avere fame.')];
+      case 'manovella':
+        if (S.loc.manovella === 'polpo') { return [P('Ottone, con un innesto quadrato. Il polpo la tiene come si tiene un argomento vincente.')]; }
+        if (S.loc.manovella === 'perno') { return [P('Avvitata sul perno. Ha fatto il suo dovere.')]; }
+        return [P('Ottone, con un innesto quadrato. È fredda e un po\' viscida. Non indaghi.')];
+      case 'quadro': return [P('Volantini, manometri, targhette in tedesco. Tutte le lancette sono a zero, tranne una che non vuoi capire.')];
+      case 'motore': return [P('Fermo. Non rotto: fermo. Come se avesse ricevuto un ordine.')];
+      case 'acqua': return [P(S.room === 'fondale' ? 'Ce n\'è moltissima. Tutta sopra di te.' : 'Sale con calma. Ha tempo, lei.')];
+      case 'scafandro': return [P(S.f.indossato ? 'Ci sei dentro. Senti il tuo respiro, che non sapevi così rumoroso.' : 'Tela gommata, piombo nelle scarpe, un collare di rame. ' + (has('elmo') ? 'L\'elmo ce l\'hai tu.' : 'Manca l\'elmo.'))];
+      case 'portello':
+        if (S.room === 'fondale') { return [P('Un quadrato di luce gialla nella pancia della «Lampreda». Non è mai sembrata così accogliente.')]; }
+        return [P(S.f.portello ? 'Aperto. Sotto, il fondo del mare.' : 'Ferro, guarnizioni di cuoio grasso, e un perno quadrato nudo. Senza manovella non si muove.')];
+      case 'ganci': return [P('Sei ganci. Cinque vuoti.')];
+      case 'scala': return [P('Ferro e ruggine. Regge.')];
+      case 'relitto': return [IMG('relitto', 'Tav. VI — La «Malanotte»'), P('Non un\'alga, non un dente di cane. Il nome a poppa si legge ancora, in lettere dorate. Qualcuno, là dentro, ha acceso una luce.')];
+      case 'impronte': return [P('Scarpe di piombo, passo regolare, nessuna esitazione. Sei uomini che sapevano dove andare. O che non lo decidevano più loro.')];
+      case 'lampreda': return [P(S.room === 'fondale' ? 'Vista da fuori sembra un pesce che ha perso una discussione.' : 'Ci sei dentro, ed è il posto più sicuro nel raggio di centoquaranta braccia. Il che dice molto del resto.')];
+      case 'fango': return [P('Grigio, fine, antico. Conserva tutto.')];
+      case 'gente': return [P('Non c\'è nessuno. È questo il problema.')];
+    }
+    return [P('Niente di speciale.')];
+  }
+
+  function feed() {
+    if (!has('gallette')) { return [P('Non hai niente che un polpo possa volere.')]; }
+    if (S.room !== 'macchine' || dark()) { return [P('A chi?')]; }
+    if (S.f.nutrito) { return [P('Ne ha già avuta una. Ti guarda come si guarda un cameriere lento, ma non insiste.')]; }
+    S.f.nutrito = 1; S.loc.manovella = 'macchine'; S.moves++;
+    return [P('Posi una galletta sul quadro. Un tentacolo la esamina, la porta sotto il mantello, e segue un rumore che preferiresti non aver sentito.'),
+      P('Il polpo lascia cadere la [[manovella]] nell\'acqua, soddisfatto, e torna a fissare la paratia.')];
+  }
+
+  function wear() {
+    if (S.room !== 'stagna') { return [P(has('elmo') ? 'In testa, senza il resto, serve solo a sentirti ridicolo.' : 'Qui non c\'è niente da indossare.')]; }
+    if (S.f.indossato) { return [P('Ce l\'hai già addosso. Si sente.')]; }
+    if (!has('elmo')) { return [P('Senza elmo è solo un vestito molto pesante in cui annegare con più dignità.')]; }
+    S.f.indossato = 1; S.loc.elmo = 'worn'; S.moves++;
+    return [P('Ti cali nello scafandro e avviti l\'elmo sul collare. Il mondo diventa tre vetri rotondi e il rumore del tuo respiro. Sa di rame e, vagamente, di gallette.')];
+  }
+
+  function crank() {
+    if (S.room !== 'stagna') { return [P('Qui non c\'è niente a cui avvitarla.')]; }
+    if (S.f.portello) { return [P('Il portello è già aperto.')]; }
+    if (!has('manovella')) { return [P('Senza manovella il perno non gira. Ci provi con le dita, per scrupolo.')]; }
+    if (!S.f.indossato) { return [P('Innesti la manovella sul perno, poi ti fermi. Aprire quel portello vestito così sarebbe una decisione breve.')]; }
+    S.f.portello = 1; S.loc.manovella = 'perno'; S.moves++;
+    return [P('Giri. L\'acqua entra dal basso, nera e ordinata: alle ginocchia, al petto, sopra l\'elmo. Poi il portello si spalanca sul fondo del mare: [[fuori]].')];
+  }
+
+  function act(verb, id) {
+    switch (verb) {
+      case 'esamina': S.moves++; return examine(id);
+      case 'leggi':
+        if (id === 'giornale' || id === 'scritta' || id === 'taccuino') { return verb === 'leggi' && id !== 'giornale' ? (S.moves++, examine(id)) : readLog(); }
+        return [P('Non c\'è niente da leggere.')];
+      case 'prendi':
+        if (isItem(id)) {
+          if (has(id)) { return [P('Ce l\'hai già.')]; }
+          if (id === 'elmo' && S.loc.elmo === 'worn') { return [P('Ce l\'hai in testa.')]; }
+          if (id === 'manovella' && S.loc.manovella === 'polpo') { return [P('Tiri. Il polpo tira. Lui ha otto braccia, tu due e una reputazione da difendere solo con te stesso. Lasci perdere.')]; }
+          if (id === 'manovella' && S.loc.manovella === 'perno') { return [P('Meglio lasciarla dov\'è.')]; }
+          S.loc[id] = 'inv'; S.moves++;
+          if (id === 'lume') { return [P('Lo sganci dalla parete. La fiamma si piega, poi decide di restare.')]; }
+          if (id === 'gallette') { return [P('Te ne riempi una tasca. Tintinnano.')]; }
+          if (id === 'elmo') { return [P(S.loc.gallette === 'ponte' ? 'Rovesci le gallette sul tavolo e prendi l\'elmo. Pesa come un secchio pieno.' : 'Prendi l\'elmo. Pesa come un secchio pieno.')]; }
+          if (id === 'manovella') { return [P('La ripeschi dall\'acqua. Il polpo non si volta nemmeno.')]; }
+          return [P('Preso.')];
+        }
+        if (id === 'polpo') { return [P('No.')]; }
+        if (id === 'scafandro') { return [P('Pesa quaranta chili. Non si prende: si indossa.')]; }
+        if (id === 'giornale') { return [P('Meglio lasciarlo dov\'è. Se qualcuno torna, vorrà sapere com\'è finita.')]; }
+        return [P('Non ti serve, e comunque non si stacca.')];
+      case 'lascia': return [P('Non è il momento di alleggerirsi.')];
+      case 'apri':
+        if (id === 'botola' && S.room === 'cuccetta') {
+          if (S.f.botola) { return [P('È già aperto.')]; }
+          return [P('Tiri l\'anello con due mani. Niente: è incastrato. Servirebbe qualcosa di sottile e robusto da infilare nella fessura.')];
+        }
+        if (id === 'botola') { return [P('È già aperta: basta scendere.')]; }
+        if (id === 'portello') { return crank(); }
+        if (id === 'giornale') { return readLog(); }
+        return [P('Non si apre.')];
+      case 'chiudi': return [P('Non serve.')];
+      case 'usa':
+        if (isItem(id) && !has(id) && !(id === 'elmo' && S.loc.elmo === 'worn')) { return [P('Prima dovresti averlo in mano.')]; }
+        if (id === 'bulino') {
+          if (S.room === 'cuccetta' && !S.f.botola) {
+            S.f.botola = 1; S.f.spuntato = 1; S.moves++;
+            return [P('Infili il bulino nella fessura e fai leva con tutto il peso. Qualcosa cede: prima la punta del bulino, poi lo sportello. Mastro Zeno ti ucciderebbe, ma è un problema da superficie.'), P('Si scende: [[giù]].')];
+          }
+          if (S.room === 'macchine' && !dark()) { return [P('Minacciare un polpo con un bulino' + (S.f.spuntato ? ' spuntato' : '') + '. No.')]; }
+          return [P('Non c\'è niente da incidere, e non è il momento.')];
+        }
+        if (id === 'lume') { return [P('È già acceso. È l\'unica cosa che funziona, qui.')]; }
+        if (id === 'taccuino') { return [P('Fai uno schizzo veloce. Se non altro, ti pagano a tavola.')]; }
+        if (id === 'gallette') { return (S.room === 'macchine' && !dark()) ? feed() : act('mangia', 'gallette'); }
+        if (id === 'elmo' || id === 'scafandro') { return wear(); }
+        if (id === 'manovella' || id === 'portello') { return crank(); }
+        if (id === 'botola') { return act('apri', 'botola'); }
+        if (id === 'timone') { return [P('Lo giri tutto da una parte. La «Lampreda» non se ne accorge.')]; }
+        if (id === 'giornale') { return readLog(); }
+        if (id === 'polpo') { return [P('E come, esattamente?')]; }
+        if (id === 'scala') { return [P('Basta dire SU o GIÙ.')]; }
+        return [P('Non sai bene come.')];
+      case 'dai':
+        if (id === 'gallette' || id === 'polpo') { return feed(); }
+        if (S.room === 'macchine' && !dark() && isItem(id) && has(id)) { return [P('Il polpo lo esamina con un tentacolo e te lo restituisce. Aveva in mente altro.')]; }
+        return [P('A chi?')];
+      case 'parla':
+        if (id === 'polpo') { return [P('«Buonasera», dici. Il polpo cambia colore, lentamente, dal ruggine al grigio tempesta. Non è un no. Non è nemmeno un sì.')]; }
+        return [P('Dici «C\'è nessuno?» abbastanza forte da pentirtene. Non risponde nessuno. Meglio così.')];
+      case 'indossa': return (id === 'elmo' || id === 'scafandro') ? wear() : [P('Non è cosa che si indossi.')];
+      case 'togli':
+        if (id !== 'elmo' && id !== 'scafandro') { return [P('Non ce l\'hai addosso.')]; }
+        if (!S.f.indossato) { return [P('Non ce l\'hai addosso.')]; }
+        if (S.f.portello) { return [P('Qui? Adesso? No.')]; }
+        S.f.indossato = 0; S.loc.elmo = 'inv';
+        return [P('Sviti l\'elmo ed esci dallo scafandro. L\'aria della «Lampreda» sa di chiuso, ed è buonissima.')];
+      case 'accendi': return [P(id === 'lume' ? 'È già acceso.' : 'Non è cosa che si accenda.')];
+      case 'spegni': return [P(id === 'lume' ? 'A centoquaranta braccia di profondità? No.' : 'Non è acceso.')];
+      case 'mangia':
+        if (id === 'gallette' && has('gallette')) { return [P('Ne assaggi un angolo. Cominci a capire perché l\'equipaggio è uscito.')]; }
+        return [P('Non hai fame. Non così.')];
+    }
+    return [P('Non succede niente.')];
+  }
+
+  var HELP = 'COMANDI\nMuoversi: PRUA, POPPA, SU, GIÙ, DENTRO, FUORI\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA, DAI, PARLA, INDOSSA cosa\nLibro: SCHEDA (chi sei), MAPPA, INVENTARIO, PROLOGO, RICOMINCIA\nBastano verbo e oggetto: «prendi il lume», «dai le gallette al polpo».';
+
+  function exec(input) {
+    var s = norm(input);
+    if (!s) { return [P('Come?')]; }
+    var t = tokens(s), w = t[0], verb, ids = [], id, i, n;
+
+    if (DIRS[w] && t.length === 1) { return done(go(DIRS[w])); }
+    verb = VERBS[w];
+    if (!verb) {
+      if (NOUNS[w]) { verb = 'esamina'; t.unshift('esamina'); }
+      else { return [P('Non conosco il verbo «' + w + '». Scrivi AIUTO per l\'elenco dei comandi.')]; }
+    }
+
+    if (verb === 'aiuto') { return [P(HELP)]; }
+    if (verb === 'mappa') { return mapBlock(); }
+    if (verb === 'scheda') { return sheet(); }
+    if (verb === 'prologo') { return [{ t: 'prologue' }]; }
+    if (verb === 'salva') { return [P('La partita si salva da sola a ogni mossa.')]; }
+    if (verb === 'ricomincia') { S = fresh(); save(); return [{ t: 'restart' }]; }
+    if (verb === 'aspetta') { S.moves++; return done([P('Aspetti. La «Lampreda» scricchiola, si assesta, scricchiola ancora. Non è un rumore che migliora con l\'attesa.')]); }
+    if (verb === 'inventario') {
+      var inv = inventory(), names = [];
+      for (i = 0; i < inv.length; i++) { names.push(inv[i].label); }
+      return [P(names.length ? 'Hai con te: ' + names.join(', ') + '.' : 'Non hai niente con te.')];
+    }
+    if (verb === 'vai') {
+      for (i = 1; i < t.length; i++) { if (DIRS[t[i]]) { return done(go(DIRS[t[i]])); } }
+      return [P('In che direzione? Qui si dice PRUA, POPPA, SU, GIÙ, DENTRO o FUORI.')];
+    }
+    if (verb === 'guarda' && t.length === 1) { S.moves++; return done(describe(true)); }
+    if (verb === 'guarda') { verb = 'esamina'; }
+
+    for (i = 1; i < t.length; i++) { n = NOUNS[t[i]]; if (n && ids.length < 2 && n !== ids[0]) { ids.push(n); } }
+    if (!ids.length && t.length > 1 && DIRS[t[1]]) { return done(go(DIRS[t[1]])); }
+    if (!ids.length) {
+      if (verb === 'parla') { return done(act('parla', (S.room === 'macchine' && !dark()) ? 'polpo' : 'gente')); }
+      return [P(t.length > 1 ? 'Non so cosa sia «' + t[1] + '».' : 'Cosa, di preciso?')];
+    }
+    id = ids[0];
+    /* "apri lo sportello con il bulino", "dai al polpo le gallette": conta l'oggetto che hai in mano */
+    if (ids.length === 2) {
+      if (verb === 'apri' && isItem(ids[1])) { verb = 'usa'; id = ids[1]; }
+      else if ((verb === 'usa' || verb === 'dai') && !isItem(ids[0]) && isItem(ids[1])) { id = ids[1]; }
+    }
+    if (id === 'mappa') { return mapBlock(); }
+    if (id === 'scheda') { return sheet(); }
+    if (dark() && !has(id)) { return [P('È troppo buio per vedere qualcosa.')]; }
+    if (!present(id)) { return [P('Qui non vedi niente del genere.')]; }
+    return done(act(verb, id));
+  }
+
+  function inventory() {
+    var out = [], i, id, label;
+    for (i = 0; i < ITEMS.length; i++) {
+      id = ITEMS[i];
+      if (has(id)) { label = id; if (id === 'bulino' && S.f.spuntato) { label = 'bulino (spuntato)'; } out.push({ word: id, label: label }); }
+    }
+    if (S.f.indossato) { out.push({ word: 'scafandro', label: 'scafandro (addosso)' }); }
+    return out;
+  }
+
+  function done(blocks) { save(); return blocks; }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* senza salvataggio si gioca lo stesso */ } }
+  function load() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY), o = raw && JSON.parse(raw);
+      if (o && o.room && ROOM_NAME[o.room] && o.loc && o.f && o.visited) { return o; }
+    } catch (e) { /* salvataggio assente o illeggibile */ }
+    return null;
+  }
+
+  function start(forceNew) {
+    var saved = forceNew ? null : load();
+    if (saved && saved.moves > 0) {
+      S = saved;
+      return { resumed: true, blocks: [NOTE('Partita ripresa da dove l\'avevi lasciata. PROLOGO per rileggere l\'inizio, RICOMINCIA per ripartire da capo.')].concat(describe(true)) };
+    }
+    S = fresh();
+    return { resumed: false, blocks: describe(true).concat([NOTE('Scrivi un comando, oppure tocca un\'azione e poi una parola sottolineata. SCHEDA ti dice chi sei e come sei messo.')]) };
+  }
+
+  return {
+    start: start, exec: exec, prologue: prologue, inventory: inventory,
+    look: function () { return describe(false); },
+    exits: function () { var out = [], i; for (i = 0; i < DIR_ORDER.length; i++) { if (EXITS[S.room][DIR_ORDER[i]]) { out.push(DIR_ORDER[i]); } } return out; },
+    status: function () { return { room: ROOM_NAME[S.room], moves: S.moves }; },
+    isDir: function (w) { return !!DIRS[norm(w)]; }
+  };
+})();
+
+/* ==================================================================
+   TAVOLE A INCISIONE. Ogni scena e' una funzione che per ogni punto
+   restituisce una luminosita' e una direzione del tratto. Il tono non
+   e' reso con puntini ma con linee parallele che si ingrossano nelle
+   ombre e si incrociano nei neri, come nel legno di testa inciso a bulino.
+   ================================================================== */
+var Incisione = (function () {
+  var PI = Math.PI, HP = Math.PI / 2, OL = 0.75;
+  function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
+  function mix(a, b, t) { return a + (b - a) * t; }
+  function sstep(a, b, x) { var t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
+  function len(x, y) { return Math.sqrt(x * x + y * y); }
+  function hash(x, y) { var v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return v - Math.floor(v); }
+  function noise(x, y) {
+    var xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    return mix(mix(hash(xi, yi), hash(xi + 1, yi), u), mix(hash(xi, yi + 1), hash(xi + 1, yi + 1), u), v);
+  }
+  function fbm(x, y) { return 0.6 * noise(x, y) + 0.3 * noise(x * 2.1, y * 2.1) + 0.1 * noise(x * 4.3, y * 4.3); }
+  var segY = 0;
+  function sdSeg(px, py, ax, ay, bx, by) {
+    var dx = bx - ax, dy = by - ay, t = clamp(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy), 0, 1);
+    segY = ay + dy * t;
+    return len(px - ax - dx * t, py - ay - dy * t);
+  }
+  function sdBox(px, py, cx, cy, hx, hy) {
+    var dx = Math.abs(px - cx) - hx, dy = Math.abs(py - cy) - hy;
+    return len(Math.max(dx, 0), Math.max(dy, 0)) + Math.min(Math.max(dx, dy), 0);
+  }
+  function sdEll(px, py, cx, cy, rx, ry) { return (len((px - cx) / rx, (py - cy) / ry) - 1) * Math.min(rx, ry); }
+
+  var SC = {};
+
+  /* Tav. I: il porto sotto la pioggia di traverso */
+  SC.porto = { w: 240, h: 140, fn: function (u, v, o) {
+    var c = fbm(u * 0.03 + 3, v * 0.06 + 1), dm, t, m, k, bx, h, roof, d, i, mx, wx, wy;
+    o.a = 1.05; o.g = 0.42 + 0.40 * c;
+    dm = len(u - 190, v - 28);
+    if (dm < 11) { o.g = 1; } else if (dm < 32) { o.g += (1 - (dm - 11) / 21) * 0.5 * c; }
+    d = len(u - 122, v - 74); if (d < 15) { o.g += 0.6 * (1 - d / 15); }
+    if (v > 96) {
+      t = (v - 96) / 44; o.a = 0.05 * Math.sin(u * 0.05 + v * 0.1);
+      o.g = 0.30 + 0.13 * Math.sin(v * 1.3 + Math.sin(u * 0.09) * 3) + 0.08 * t;
+      m = Math.abs(u - 190); k = 5 + t * 22; if (m < k) { o.g += 0.55 * (1 - m / k) * (0.55 + 0.45 * Math.sin(v * 2.1 + u * 0.7)); }
+    }
+    if (v > 89.5 && v < 96.5 && u > 150 + (v - 89.5) * 0.5 && u < 205 - (v - 89.5) * 0.9) { o.g = 0.03; o.a = 0; }
+    for (i = 0; i < 3; i++) {
+      mx = 162 + i * 14;
+      if (Math.abs(u - mx) < 0.8 && v > 44 + i * 2 && v < 90) { o.g = 0.03; }
+      if (Math.abs(v - 56) < 0.6 && Math.abs(u - mx) < 6.5) { o.g = 0.03; }
+      if (Math.abs(v - 68) < 0.6 && Math.abs(u - mx) < 8) { o.g = 0.03; }
+    }
+    if (sdSeg(u, v, 151, 90, 162, 44) < 0.35 || sdSeg(u, v, 205, 90, 190, 48) < 0.35) { o.g = 0.03; }
+    if (u < 134) {
+      k = Math.floor(u / 19); bx = u - k * 19; h = 52 + hash(k, 7) * 24; roof = h - 9 + Math.abs(bx - 9.5) * 0.95;
+      if (v > roof && v < 102) {
+        o.a = HP;
+        if (v < h) { o.g = 0.06; o.a = 0.6; }
+        else {
+          o.g = 0.22 + 0.10 * hash(k, 3);
+          wx = bx % 9.5; wy = (v - h) % 13;
+          if (v < 96 && wx > 3 && wx < 6.5 && wy > 4 && wy < 10) { o.g = hash(k * 5 + Math.floor(bx / 9.5), Math.floor((v - h) / 13)) > 0.55 ? 0.97 : 0.02; }
+        }
+        if (bx < 0.8 || Math.abs(v - h) < 0.5) { o.g = 0; }
+      }
+    }
+    if (Math.abs(u - 122) < 0.7 && v > 76 && v < 102) { o.g = 0; }
+    if (len(u - 122, v - 74) < 2.6) { o.g = 1; }
+    if (v >= 102 && v < 108 && u < 146) { o.g = 0.66; o.a = 0; if (v < 102.9 || (u % 14) < 0.6) { o.g = 0; } }
+    if (v >= 108 && v < 111 && u < 146) { o.g = 0.05; }
+    if (sdBox(u, v, 140, 99.5, 1.8, 2.5) < 0) { o.g = 0.02; }
+  } };
+
+  /* Tav. II: il sommergibile all'ormeggio */
+  SC.lampreda = { w: 240, h: 140, fn: function (u, v, o) {
+    var c = fbm(u * 0.025, v * 0.07 + 9), WL = 100, e, k, sx, t, d;
+    o.a = 0; o.g = 0.78 + 0.20 * c;
+    if (v > 93 - 5 * noise(u * 0.06, 5) && v <= WL && (u < 60 || u > 208)) { o.g = 0.30; o.a = HP; }
+    if (v > WL) { t = (v - WL) / 40; o.a = 0.04 * Math.sin(u * 0.06); o.g = 0.30 + 0.14 * Math.sin(v * 1.2 + Math.sin(u * 0.08 + v * 0.2) * 2.5) + 0.06 * t; }
+    e = sdEll(u, v, 118, 96, 100, 26);
+    if (e < 0) {
+      if (v <= WL) {
+        k = (v - 70) / 30; o.a = 0;
+        o.g = 0.70 - 0.58 * k + 0.24 * Math.exp(-Math.pow((k - 0.2) / 0.08, 2));
+        sx = (u - 18) % 20;
+        if (sx < 0.7) { o.g = 0.02; }
+        if ((Math.abs(sx - 3) < 0.85 || Math.abs(sx - 17.5) < 0.85) && Math.abs((v % 6) - 3) < 0.85) { o.g = 0.02; }
+        if (e > -1) { o.g = 0; }
+      } else { o.g *= 0.4; }
+    }
+    if (Math.abs(v - WL) < 0.9 && e < 2.5 && Math.sin(u * 0.9) > -0.3) { o.g = 1; }
+    t = sdBox(u, v, 112, 61, 12, 9) - 2;
+    if (t < 0) {
+      o.a = HP; o.g = 0.88 - 0.62 * sstep(102, 124, u);
+      d = len(u - 106, v - 59); if (d < 3.8) { o.g = d < 2.7 ? 0.02 : 1; }
+      d = len(u - 118, v - 59); if (d < 3.8) { o.g = d < 2.7 ? 0.02 : 1; }
+      if (t > -1) { o.g = 0; }
+    }
+    d = sdEll(u, v, 112, 50, 7, 3.2); if (d < 0 && v < 50.5) { o.g = d > -OL ? 0 : 0.5; }
+    if (sdSeg(u, v, 121, 50, 121, 32) < 0.9) { o.g = 0.03; }
+    if (sdBox(u, v, 125.5, 35, 4, 2.4) < 0) { o.g = 0.06; }
+    if (u > 212 && sdSeg(u, v, 212, 94, 237, 90) < 2.0 - (u - 212) * 0.06) { o.g = 0.08; }
+    if (sdBox(u, v, 20, 88, 3, 10) < 0) { o.g = 0.15; o.a = HP; }
+    if (sdSeg(u, v, 58, 80, 0, 62) < 0.45) { o.g = 0.02; }
+    if (u < 7 && v > 54) { o.g = 0.08; o.a = HP; }
+  } };
+
+  /* Tav. III: la discesa */
+  SC.discesa = { w: 240, h: 140, fn: function (u, v, o) {
+    var depth = v / 140, ang = Math.atan2(u - 120, v + 200), ca = 0.9492, sa = 0.3146, x, y, e, i, bx, by, r, d, w;
+    o.a = 0.25; o.t = ang * 270; o.x = 0;
+    o.g = 0.86 - 0.84 * Math.pow(depth, 0.7);
+    o.g += 0.14 * Math.sin(ang * 95) * (1 - depth) * (0.5 + 0.5 * noise(ang * 60, 1));
+    x = (u - 108) * ca + (v - 58) * sa; y = -(u - 108) * sa + (v - 58) * ca;
+    if (x > 33) { w = (x - 33) * 0.30 + 1.5; if (Math.abs(y) < w) { o.g += 0.5 * (1 - Math.abs(y) / w) * clamp(1 - (x - 33) / 95, 0, 1); } }
+    if (sdBox(x, y, -3, -8.5, 5, 3.2) < 0 || sdBox(x, y, -32, 0, 2.5, 9) < 0) { o.g = 0.05; o.a = 0.32; o.t = null; o.x = 1; }
+    e = sdEll(x, y, 0, 0, 34, 6.5);
+    if (e < 0) {
+      o.a = 0.32; o.t = null; o.x = 1; o.g = y < -2.5 ? 0.62 : 0.06;
+      for (i = 0; i < 4; i++) { if (len(x - (-14 + i * 10), y - 0.5) < 1.4) { o.g = 1; } }
+      if (e > -OL) { o.g = 0; }
+    }
+    for (i = 0; i < 9; i++) {
+      bx = 70 - i * 4.5 + 5 * Math.sin(i * 2.1); by = 44 - i * 5.2; r = 1.2 + (i % 3) * 0.8;
+      d = Math.abs(len(u - bx, v - by) - r); if (d < 0.45) { o.g = 1; }
+    }
+    d = v - (120 + 7 * Math.sin(u * 0.05 + 1) + 5 * Math.sin(u * 0.013)); if (d > 0 && d < 5) { o.g += 0.12 * (1 - d / 5); }
+  } };
+
+  /* Tav. IV: l'oblo', il relitto lontano e il tentacolo */
+  SC.oblo = { w: 240, h: 140, fn: function (u, v, o) {
+    var dx = u - 120, dy = v - 70, r = len(dx, dy), th, k, tt, d, L, al, pe, w, X, Y, m, i, mx, sb, yc, tk, dyt, su, sv, rr;
+    if (r > 70) {
+      o.a = HP; o.g = 0.26 + 0.10 * noise(u * 0.1, v * 0.1);
+      if ((u % 48) < 0.8) { o.g = 0.03; }
+      if (Math.abs((u % 48) - 4) < 0.9 && Math.abs((v % 10) - 5) < 0.9) { o.g = 0.03; }
+      if (v > 6 && v < 15) { o.a = 0; o.g = 0.15 + 0.7 * Math.sin(PI * (v - 6) / 9); if (v < 6.8 || v > 14.2) { o.g = 0; } }
+      return;
+    }
+    if (r > 60) {
+      th = Math.atan2(dy, dx); k = (r - 60) / 10; o.a = 0.7; o.t = r; o.g = 0.30 + 0.65 * Math.sin(k * PI);
+      tt = th / (PI / 6); tt = (tt - Math.floor(tt) - 0.5) * (PI / 6) * 65; d = len(r - 65, tt);
+      if (d < 3.2) { o.g = d < 2.3 ? 0.10 : 1; }
+      if (r > 69.2 || r < 60.8) { o.g = 0; }
+      return;
+    }
+    o.a = 0;
+    al = (u - 66) * 0.8054 - (v - 128) * 0.5927; pe = Math.abs((u - 66) * (-0.5927) - (v - 128) * 0.8054);
+    w = 5 + al * 0.45; L = (al > 0 && pe < w) ? (1 - pe / w) * clamp(1.15 - al / 160, 0.25, 1) : 0;
+    o.g = 0.04 + 0.5 * L;
+    if (hash(Math.floor(u / 1.5), Math.floor(v / 1.5)) > 0.988) { o.g += 0.6 * L + 0.1; }
+    X = (u - 150) * 0.995 + (v - 66) * 0.0998; Y = -(u - 150) * 0.0998 + (v - 66) * 0.995;
+    m = (Y > 4 && sdEll(X, Y, 0, 3, 30, 11) < 0) || sdBox(X, Y, -22, 2, 7, 2.5) < 0;
+    for (i = -1; i < 2; i++) {
+      mx = i * 15;
+      if (Math.abs(X - mx) < 0.8 && Y < 4 && Y > -30 + Math.abs(mx) * 0.3) { m = true; }
+      if ((Math.abs(Y + 22) < 0.6 && Math.abs(X - mx) < 6.5) || (Math.abs(Y + 12) < 0.6 && Math.abs(X - mx) < 8)) { m = true; }
+    }
+    if (m) { o.g = 0.02; }
+    sb = 104 + 4 * noise(u * 0.05, 3); if (v > sb) { o.g = 0.08 + 0.7 * L * (0.6 + 0.4 * noise(u * 0.3, v * 0.5)); o.a = 0.04; }
+    yc = 92 + 11 * Math.sin(u * 0.055 + 0.6) + (u - 120) * 0.07; tk = 10.5 - (u - 60) * 0.05; dyt = v - yc;
+    if (Math.abs(dyt) < tk) {
+      k = dyt / tk; o.a = 0.9; o.t = dyt; o.g = 0.82 - 0.62 * (k * 0.5 + 0.5);
+      su = ((u + 4.5) % 9) - 4.5; sv = dyt - tk * 0.55; rr = len(su, sv); if (rr < 2.3) { o.g = rr < 1.1 ? 0.04 : 1; }
+      if (Math.abs(dyt) > tk - OL) { o.g = 0; }
+    }
+  } };
+
+  /* Tav. V: il polpo sul quadro delle valvole */
+  var TENT = (function () {
+    var list = [], i, j, n = 11, side, jj, bx, by, ex, ey, t, pts;
+    for (i = 0; i < 6; i++) {
+      side = i < 3 ? -1 : 1; jj = i % 3; bx = 120 + side * (5 + jj * 6); by = 94; ex = 120 + side * (30 + jj * 27); ey = 110 + jj * 9; pts = [];
+      for (j = 0; j < n; j++) {
+        t = j / (n - 1);
+        pts.push([bx + (ex - bx) * t + side * 4 * Math.sin(t * 5 + i), by + (ey - by) * Math.pow(t, 0.8) - (jj === 2 ? 12 : 4) * Math.sin(t * PI) + 3 * Math.sin(t * 9 + i * 2)]);
+      }
+      list.push(pts);
+    }
+    list.push([[136, 92], [150, 94], [164, 88], [175, 76], [183, 64], [190, 55], [197, 52], [201, 57], [197, 62], [192, 60]]);
+    return list;
+  })();
+  SC.polpo = { w: 240, h: 140, fn: function (u, v, o) {
+    var d, e, e2, nx, ny, i, ee, ex, dx, dy;
+    o.a = HP; o.g = 0.32 + 0.12 * noise(u * 0.08, v * 0.08);
+    if ((u % 60) < 0.8) { o.g = 0.04; }
+    if (Math.abs((u % 60) - 5) < 0.9 && Math.abs((v % 12) - 6) < 0.9) { o.g = 0.04; }
+    if (v > 10 && v < 20) { o.a = 0; o.g = 0.12 + 0.75 * Math.sin(PI * (v - 10) / 10); if (v < 10.8 || v > 19.2) { o.g = 0; } }
+    if (v > 25 && v < 31) { o.a = 0; o.g = 0.10 + 0.6 * Math.sin(PI * (v - 25) / 6); if (v < 25.7 || v > 30.3) { o.g = 0; } }
+    dx = u - 38; dy = v - 62; d = len(dx, dy);
+    if (d < 16) {
+      if (d > 12) { o.g = (d > 15.3 || d < 12.7) ? 0 : 0.9; o.a = 0.4; }
+      else if (d < 3.2 || Math.abs(dx) < 1 || Math.abs(dy) < 1) { o.g = 0.85; }
+    }
+    if (sdBox(u, v, 120, 117, 66, 12) < 0) {
+      o.a = 0; o.g = 0.66;
+      if (v < 106) { o.g = v < 105.8 && v > 105 ? 0 : 0.95; }
+      d = len(u - 70, v - 118); if (d < 7.5) { o.g = d > 6.5 ? 0 : (sdSeg(u, v, 70, 118, 74, 113) < 0.6 ? 0 : 0.97); }
+      d = len(u - 170, v - 118); if (d < 7.5) { o.g = d > 6.5 ? 0 : (sdSeg(u, v, 170, 118, 165, 121) < 0.6 ? 0 : 0.97); }
+      if (sdBox(u, v, 120, 117, 66, 12) > -OL) { o.g = 0; }
+    }
+    if (v > 129) { o.a = 0.05 * Math.sin(u * 0.07 + v); o.g = 0.10 + 0.30 * Math.max(0, Math.sin(v * 1.7 + Math.sin(u * 0.1) * 2.2)); }
+    /* manovella */
+    d = Math.min(sdSeg(u, v, 192, 60, 203, 38), sdSeg(u, v, 203, 38, 219, 38)) - 2;
+    d = Math.min(d, len(u - 221, v - 38) - 3.4);
+    if (d < 0) { o.g = d > -OL ? 0 : 0.96; o.a = 0.9; }
+    tent(u, v, o, 0, 6);
+    /* testa e mantello */
+    e = sdEll(u, v, 120, 54, 30, 32); e2 = sdEll(u, v, 120, 85, 23, 15);
+    if (e < 0 || e2 < 0) {
+      nx = (u - 120) / 30; ny = (v - 60) / 38; o.a = 0.5; o.t = len(nx, ny) * 30;
+      o.g = clamp(0.56 - 0.44 * (nx * 0.7 + ny * 0.5), 0.07, 0.95);
+      if (noise(u * 0.16, v * 0.16) > 0.64) { o.g *= 0.70; }
+      if (Math.min(e, e2) > -1) { o.g = 0; o.t = null; }
+      for (i = 0; i < 2; i++) {
+        ex = 104 + i * 32; ee = sdEll(u, v, ex, 81, 8.5, 5.8);
+        if (ee < 0) {
+          o.g = 0.98; o.a = 0; o.t = null;
+          if (v < 78.8) { o.g = 0.20; }
+          if (sdBox(u, v, ex, 82.2, 5, 1.3) < 0) { o.g = 0.01; }
+          if (ee > -1.1 || Math.abs(v - 78.8) < 0.5) { o.g = 0; }
+        }
+      }
+    }
+    tent(u, v, o, 6, 7);
+  } };
+  function tent(u, v, o, i0, i1) {
+    var i, s, T, n, d, rad, rd, best = 1e9, bang = 0, bup = false, bd = 0;
+    if (v < 44 || v > 138) { return; }
+    for (i = i0; i < i1; i++) {
+      T = TENT[i]; n = T.length;
+      if (i < 6 ? (v < 84 || (i < 3 ? u > 126 : u < 114)) : (u < 126 || v > 104)) { continue; }
+      for (s = 0; s < n - 1; s++) {
+        d = sdSeg(u, v, T[s][0], T[s][1], T[s + 1][0], T[s + 1][1]);
+        rad = (i < 6 ? 6.2 : 4.6) * (1 - (s + 0.5) / (n - 1)) + 1.5; rd = d - rad;
+        if (rd < best) { best = rd; bd = d; bang = Math.atan2(T[s + 1][1] - T[s][1], T[s + 1][0] - T[s][0]); bup = v < segY; }
+      }
+    }
+    if (best < 0) { o.a = bang + 0.9; o.t = bd; o.g = bup ? 0.86 : 0.34; if (best > -OL) { o.g = 0; o.t = null; } }
+  }
+
+  /* Tav. VI: la Malanotte sul fondo, nel fanale dell'elmo */
+  SC.relitto = { w: 240, h: 140, fn: function (u, v, o) {
+    var al = (u - 10) * 0.866 - (v - 140) * 0.5, pe = Math.abs((u - 10) * (-0.5) - (v - 140) * 0.866), w = 16 + al * 0.72, L, sb, X, Y, i, mx, top, hw, yy, j, d;
+    L = (al > 0 && pe < w) ? sstep(0, 1, 1 - pe / w) * clamp(1.3 - al / 250, 0.5, 1) : 0;
+    o.a = 0; o.g = 0.07 + 0.06 * noise(u * 0.05, v * 0.05) + 0.60 * L;
+    if (hash(Math.floor(u / 1.4), Math.floor(v / 1.4)) > 0.989) { o.g += 0.25 + 0.5 * L; }
+    X = (u - 138) * 0.996 + (v - 98) * 0.0899; Y = -(u - 138) * 0.0899 + (v - 98) * 0.996;
+    d = len(X + 54, Y + 4); if (d < 18) { o.g += 0.55 * (1 - d / 18); }
+    if (sdSeg(X, Y, -64, -8, -36, -52) < 0.35 || sdSeg(X, Y, -36, -52, 0, -62) < 0.3 || sdSeg(X, Y, 0, -62, 34, -50) < 0.3 || sdSeg(X, Y, 34, -50, 88, -13) < 0.35) { o.g = 0.02; }
+    for (i = 0; i < 3; i++) {
+      mx = -36 + i * 35; top = i === 1 ? -62 : (i === 0 ? -52 : -50);
+      if (Math.abs(X - mx) < 1.3 && Y < 0 && Y > top) { o.g = 0.02; }
+      for (j = 0; j < 2; j++) {
+        yy = top + 9 + j * 19; hw = 12 + j * 5;
+        if (Math.abs(Y - yy) < 0.8 && Math.abs(X - mx) < hw) { o.g = 0.02; }
+        if (Y > yy + 0.8 && Y < yy + 4 + 0.7 * Math.sin(X * 1.1) && Math.abs(X - mx) < hw - 1.5) { o.g = 0.55 + 0.4 * L; o.a = HP; }
+      }
+    }
+    if (sdSeg(X, Y, 58, -3, 88, -13) < 0.9) { o.g = 0.02; }
+    if ((Y > 0 && sdEll(X, Y, 0, -2, 70, 20) < 0) || (X > -66 && X < -40 && Y > -9 && Y <= 0) || (X > 42 && X < 62 && Y > -4 && Y <= 0)) {
+      o.a = 0.09; o.g = 0.03;
+      if (((Y + 9) % 4) < 0.55) { o.g = 0.10 + 0.45 * L; }
+      if (Y > 5 && Y < 8.5 && Math.abs(X) < 56 && ((X + 70) % 13) > 5 && ((X + 70) % 13) < 8.5) { o.g = 0.0; }
+      if (X > -63 && X < -45 && Y > -7 && Y < -2.5 && ((X + 63) % 6) > 1.6) { o.g = 1; }
+    }
+    sb = 118 + 5 * noise(u * 0.04, 2);
+    if (v > sb) {
+      o.a = 0.03 * Math.sin(u * 0.07); o.g = 0.12 + 0.78 * L * (0.55 + 0.45 * noise(u * 0.25, v * 0.5));
+      for (i = 0; i < 7; i++) { d = sdEll(u, v, 34 + i * 13, 135.5 - i * 2.1 + (i % 2) * 2.2, 2.6, 1.2); if (d < 0) { o.g = 0.02; } }
+    }
+  } };
+
+  /* Ritratto per la scheda */
+  SC.ritratto = { w: 110, h: 130, fn: function (u, v, o) {
+    var dx = u - 55, dy = v - 65, e = sdEll(u, v, 55, 65, 46, 58), h, d;
+    if (e > 0) { o.g = 1; return; }
+    if (e > -5) { o.g = 0.3 + 0.55 * Math.sin((e + 5) / 5 * PI); o.a = 0.8; o.t = e; if (e > -0.8 || e < -4.2) { o.g = 0; } return; }
+    o.g = 0.60 - 0.12 * (v / 130); o.a = 0;
+    if (sdEll(u, v, 55, 131, 37, 33) < 0) {
+      o.g = 0.13; o.a = 1.0;
+      if (v > 99 && Math.abs(dx) < (v - 99) * 0.42) { o.g = 0.94; o.a = HP; if (Math.abs(dx) < 2.6 && v > 104) { o.g = 0.08; } }
+      if (sdEll(u, v, 55, 131, 37, 33) > -OL) { o.g = 0; }
+    }
+    if (sdBox(u, v, 55, 92, 6, 9) < 0) { o.g = 0.70; o.a = HP; }
+    if (sdEll(u, v, 37.5, 65, 2.6, 4.6) < 0 || sdEll(u, v, 72.5, 65, 2.6, 4.6) < 0) { o.g = 0.8; }
+    h = sdEll(u, v, 55, 63, 17, 22);
+    if (h < 0) {
+      o.a = 1.25; o.g = 0.95 - 0.42 * sstep(1, 15, dx);
+      if (v > 78 && v < 84) { o.g -= 0.08; }
+      if (sdEll(u, v, 48, 63, 2.7, 1.7) < 0 || sdEll(u, v, 62, 63, 2.7, 1.7) < 0) { o.g = 0.02; }
+      if (sdSeg(u, v, 44, 59.5, 51, 56.5) < 0.75 || sdSeg(u, v, 59, 56.5, 66, 59.5) < 0.75) { o.g = 0.02; }
+      if (sdSeg(u, v, 45.5, 67, 50.5, 67.6) < 0.4 || sdSeg(u, v, 59.5, 67.6, 64.5, 67) < 0.4) { o.g = 0.15; }
+      if (sdSeg(u, v, 55.5, 63, 53.6, 72) < 0.45 || sdSeg(u, v, 53.6, 72, 57, 72.6) < 0.45) { o.g = 0.05; }
+      if (sdSeg(u, v, 50, 79.6, 55, 78.8) < 0.5 || sdSeg(u, v, 55, 78.8, 60, 79.8) < 0.5) { o.g = 0.03; }
+      if (h > -0.8) { o.g = 0; }
+    }
+    d = v - (50 + 3.5 * Math.sin(u * 0.55) - (dx > 0 ? 0 : 1.5) + Math.abs(dx) * 0.12);
+    if (d < 0 && sdEll(u, v, 55, 60, 19.5, 25) < 0) { o.g = 0.07; o.a = 1.45 + dx * 0.02; }
+  } };
+
+  function ink(px, py, g, a, P, tt, cross) {
+    if (g >= 0.985) { return 0; }
+    if (g <= 0.03) { return 1; }
+    var dark = 1 - g, sa = Math.sin(a), ca = Math.cos(a), t = -px * sa + py * ca, al = px * ca + py * sa, f, d, c;
+    if (tt !== null) { t = tt; }                              /* la scena detta la curva del tratto */
+    else { t += Math.sin(al * 0.24 / P + t * 0.011) * 0.32 * P; }   /* mano che trema appena */
+    f = t / P; f -= Math.floor(f); d = Math.abs(f - 0.5) * 2;
+    if (!cross) {                                             /* un solo ordine di tratti, che si ingrossa; nei neri, puntini */
+      if (d < Math.min(dark * 1.02, 0.72)) { return 1; }
+      return (dark > 0.70 && hash(px, py) < (dark - 0.70) * 3.6) ? 1 : 0;
+    }
+    c = dark * 0.92; if (c > 0.64) { c = 0.64; }
+    if (d < c) { return 1; }
+    if (dark > 0.42) {
+      sa = Math.sin(a + 1.08); ca = Math.cos(a + 1.08); t = -px * sa + py * ca; f = t / P; f -= Math.floor(f); d = Math.abs(f - 0.5) * 2;
+      c = (dark - 0.42) * 1.35; if (c > 0.62) { c = 0.62; }
+      if (d < c) { return 1; }
+      if (dark > 0.72) {
+        sa = Math.sin(a - 1.02); ca = Math.cos(a - 1.02); t = -px * sa + py * ca; f = t / P; f -= Math.floor(f); d = Math.abs(f - 0.5) * 2;
+        if (d < (dark - 0.72) * 2.2) { return 1; }
+      }
+    }
+    return 0;
+  }
+
+  var cache = {};
+  function master(id, cssW) {
+    var sc = SC[id], dpr = Math.min(window.devicePixelRatio || 1, 2), bw = Math.min(Math.round(cssW * dpr), 720), key = id + '@' + bw;
+    if (cache[key]) { return cache[key]; }
+    var s = bw / sc.w, bh = Math.round(sc.h * s), c = document.createElement('canvas'), ctx, img, data, px, py, k = 0, o = { g: 1, a: 0, t: null, x: 1 };
+    var P = Math.max(3, bw / (sc.w * 0.54));
+    c.width = bw; c.height = bh;
+    ctx = c.getContext('2d'); img = ctx.createImageData(bw, bh); data = img.data;
+    for (py = 0; py < bh; py++) {
+      for (px = 0; px < bw; px++) {
+        o.g = 1; o.a = 0; o.t = null; o.x = 1;
+        sc.fn((px + 0.5) / s, (py + 0.5) / s, o);
+        if (ink(px, py, o.g, o.a, P, o.t === null ? null : o.t * s, o.x)) { data[k] = 17; data[k + 1] = 17; data[k + 2] = 17; }
+        else { data[k] = 241; data[k + 1] = 240; data[k + 2] = 234; }
+        data[k + 3] = 255; k += 4;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    cache[key] = c;
+    return c;
+  }
+  function make(id, cssW) {
+    var m = master(id, cssW), c = document.createElement('canvas');
+    c.width = m.width; c.height = m.height; c.style.width = cssW + 'px';
+    c.getContext('2d').drawImage(m, 0, 0);
+    return c;
+  }
+
+  /* Mappa: spaccato del sommergibile, disegnato a linee. Cio' che non hai visto resta tratteggiato. */
+  function hullPath(ctx) {
+    ctx.beginPath(); ctx.moveTo(30, 112);
+    ctx.bezierCurveTo(60, 64, 120, 50, 180, 50); ctx.lineTo(330, 50);
+    ctx.bezierCurveTo(400, 50, 442, 82, 464, 114);
+    ctx.bezierCurveTo(442, 144, 400, 178, 330, 178); ctx.lineTo(180, 178);
+    ctx.bezierCurveTo(120, 178, 60, 162, 30, 112); ctx.closePath();
+  }
+  function line(ctx, x1, y1, x2, y2) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+  function drawMap(canvas, st, cssW) {
+    var PAPER = '#f1f0ea', INK = '#111111';
+    var dpr = Math.min(window.devicePixelRatio || 1, 2), W = 480, H = 246, k = cssW * dpr / W, ctx = canvas.getContext('2d'), x, y, yy, i, id, r, seen = {}, vis = st.visited;
+    var ROOMS = { macchine: [30, 50, 145, 128], cuccetta: [175, 50, 160, 40], corridoio: [175, 90, 160, 44], stagna: [175, 134, 160, 44], ponte: [335, 50, 130, 128] };
+    var ADJ = [['cuccetta', 'corridoio'], ['corridoio', 'ponte'], ['corridoio', 'macchine'], ['corridoio', 'stagna'], ['stagna', 'fondale']];
+    for (id in vis) { if (vis.hasOwnProperty(id)) { seen[id] = 1; } }
+    for (i = 0; i < ADJ.length; i++) { if (vis[ADJ[i][0]]) { seen[ADJ[i][1]] = 1; } if (vis[ADJ[i][1]]) { seen[ADJ[i][0]] = 1; } }
+
+    canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(H * k); canvas.style.width = cssW + 'px';
+    ctx.setTransform(k, 0, 0, k, 0, 0);
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+    ctx.lineWidth = 0.7;                                   /* acqua */
+    for (y = 9; y < 200; y += 7) {
+      ctx.beginPath();
+      for (x = 0; x < W; x += 6) { if (hash(x, y) > 0.35) { ctx.moveTo(x, y + 1.2 * Math.sin(x * 0.05 + y)); ctx.lineTo(x + 5, y + 1.2 * Math.sin((x + 5) * 0.05 + y)); } }
+      ctx.stroke();
+    }
+    ctx.fillStyle = PAPER; ctx.fillRect(0, 206, W, H - 206);  /* fondo */
+    ctx.lineWidth = 1.8; ctx.beginPath();
+    for (x = 0; x <= W; x += 8) { yy = 206 + 3 * Math.sin(x * 0.04) + 2 * Math.sin(x * 0.13); if (x === 0) { ctx.moveTo(x, yy); } else { ctx.lineTo(x, yy); } }
+    ctx.stroke();
+    ctx.lineWidth = 0.7; for (x = -30; x < W; x += 6) { line(ctx, x, 213, x + 16, H); }
+
+    ctx.lineWidth = 2.5; ctx.fillStyle = PAPER;            /* torretta, periscopio, elica */
+    ctx.fillRect(232, 30, 46, 24); ctx.strokeRect(232, 30, 46, 24);
+    ctx.beginPath(); ctx.arc(246, 42, 4, 0, 2 * PI); ctx.stroke(); ctx.beginPath(); ctx.arc(264, 42, 4, 0, 2 * PI); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(270, 30); ctx.lineTo(270, 12); ctx.lineTo(280, 12); ctx.stroke();
+    line(ctx, 30, 112, 12, 112); ctx.lineWidth = 5; line(ctx, 12, 96, 12, 128); ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(40, 96); ctx.lineTo(24, 78); ctx.lineTo(24, 96); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(40, 128); ctx.lineTo(24, 146); ctx.lineTo(24, 128); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+    hullPath(ctx); ctx.fillStyle = PAPER; ctx.fill();
+    ctx.save(); hullPath(ctx); ctx.clip();
+    for (id in ROOMS) {
+      if (ROOMS.hasOwnProperty(id) && !vis[id]) {
+        r = ROOMS[id];
+        ctx.save(); ctx.beginPath(); ctx.rect(r[0], r[1], r[2], r[3]); ctx.clip(); ctx.lineWidth = 0.8;
+        for (i = -r[3]; i < r[2] + r[3]; i += (seen[id] ? 7 : 4.5)) {
+          line(ctx, r[0] + i, r[1], r[0] + i + r[3], r[1] + r[3]);
+          if (!seen[id]) { line(ctx, r[0] + i + r[3], r[1], r[0] + i, r[1] + r[3]); }
+        }
+        ctx.restore();
+      }
+    }
+    ctx.lineWidth = 2;                                      /* paratie e ponti */
+    line(ctx, 175, 50, 175, 178); line(ctx, 335, 50, 335, 178); line(ctx, 175, 90, 335, 90); line(ctx, 175, 134, 335, 134);
+    ctx.fillStyle = PAPER;
+    if (vis.corridoio) { ctx.fillRect(172, 100, 6, 26); ctx.fillRect(332, 100, 6, 26); }
+    function ladder(lx, y1, y2) {
+      ctx.fillStyle = PAPER; ctx.fillRect(lx - 2, y1 + (y2 - y1) / 2 - 8, 16, 16);
+      ctx.lineWidth = 1.4; line(ctx, lx, y1, lx, y2); line(ctx, lx + 12, y1, lx + 12, y2);
+      for (var q = y1 + 4; q < y2; q += 6) { line(ctx, lx, q, lx + 12, q); }
+    }
+    if (vis.cuccetta || vis.corridoio) { ladder(192, 70, 114); }
+    if (vis.stagna || vis.corridoio) { ladder(306, 112, 158); }
+    ctx.lineWidth = 1.6;                                    /* arredi delle stanze viste */
+    if (vis.macchine) {
+      ctx.beginPath(); ctx.arc(82, 132, 15, 0, 2 * PI); ctx.stroke(); ctx.beginPath(); ctx.arc(82, 132, 4, 0, 2 * PI); ctx.stroke();
+      for (i = 0; i < 6; i++) { line(ctx, 82 + 4 * Math.cos(i * 1.047), 132 + 4 * Math.sin(i * 1.047), 82 + 15 * Math.cos(i * 1.047), 132 + 15 * Math.sin(i * 1.047)); }
+      ctx.beginPath(); ctx.arc(113, 146, 9, 0, 2 * PI); ctx.stroke(); line(ctx, 104, 146, 122, 146); line(ctx, 113, 137, 113, 155);
+      ctx.strokeRect(128, 120, 34, 22);
+    }
+    if (vis.ponte) {
+      ctx.beginPath(); ctx.arc(378, 138, 13, 0, 2 * PI); ctx.stroke(); ctx.beginPath(); ctx.arc(378, 138, 3, 0, 2 * PI); ctx.stroke();
+      for (i = 0; i < 8; i++) { line(ctx, 378 + 3 * Math.cos(i * 0.785), 138 + 3 * Math.sin(i * 0.785), 378 + 17 * Math.cos(i * 0.785), 138 + 17 * Math.sin(i * 0.785)); }
+      ctx.strokeRect(352, 76, 30, 8);
+    }
+    if (vis.cuccetta) { ctx.strokeRect(262, 74, 56, 7); ctx.strokeRect(264, 68, 12, 6); }
+    if (vis.stagna) {
+      if (st.suit) { ctx.beginPath(); ctx.arc(214, 148, 5, 0, 2 * PI); ctx.stroke(); ctx.strokeRect(209, 153, 10, 15); line(ctx, 211, 168, 211, 174); line(ctx, 217, 168, 217, 174); }
+    }
+    ctx.restore();
+    ctx.lineWidth = 3; hullPath(ctx); ctx.stroke();
+    ctx.fillStyle = PAPER; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(436, 108, 7, 0, 2 * PI); ctx.fill(); ctx.stroke();   /* oblo' di prua */
+    ctx.fillRect(244, 174, 24, 8); ctx.strokeRect(244, 174, 24, 8);               /* portello */
+    ctx.fillStyle = INK; for (x = 190; x < 326; x += 15) { ctx.beginPath(); ctx.arc(x, 55, 1.2, 0, 2 * PI); ctx.fill(); }
+
+    function label(text, cx, cy, here, known) {
+      var w;
+      ctx.font = '600 11.5px "IBM Plex Mono", "Courier New", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (!known) { text = '?'; }
+      w = ctx.measureText(text).width + 12;
+      ctx.fillStyle = here ? INK : PAPER; ctx.fillRect(cx - w / 2, cy - 9, w, 18);
+      if (!here && known) { ctx.lineWidth = 1; ctx.strokeRect(cx - w / 2, cy - 9, w, 18); }
+      ctx.fillStyle = here ? PAPER : INK; ctx.fillText(text, cx, cy + 0.5);
+    }
+    var LAB = { macchine: ['MACCHINE', 106, 96], cuccetta: ['CUCCETTA', 250, 62], corridoio: ['CORRIDOIO', 255, 112], stagna: ['C. STAGNA', 264, 156], ponte: ['PONTE', 392, 106], fondale: ['FONDALE', 256, 198] };
+    for (id in LAB) { if (LAB.hasOwnProperty(id) && seen[id]) { label(LAB[id][0], LAB[id][1], LAB[id][2], id === st.room, !!vis[id]); } }
+    ctx.fillStyle = INK; ctx.textAlign = 'left';
+    if (st.polpo) { ctx.font = 'italic 12px "Old Standard TT", Georgia, serif'; ctx.fillStyle = PAPER; ctx.fillRect(58, 104, 84, 12); ctx.fillStyle = INK; ctx.fillText('hic sunt polpi', 62, 111); }
+    ctx.font = '600 9.5px "IBM Plex Mono", "Courier New", monospace';
+    ctx.fillStyle = PAPER; ctx.fillRect(6, 6, 96, 28); ctx.fillStyle = INK;
+    ctx.fillText('◀ POPPA', 12, 14); ctx.textAlign = 'right';
+    ctx.fillStyle = PAPER; ctx.fillRect(W - 70, 6, 64, 14); ctx.fillStyle = INK; ctx.fillText('PRUA ▶', W - 12, 14);
+    ctx.textAlign = 'left'; ctx.fillRect(12, 22, 9, 9); ctx.fillText('sei qui', 25, 27);
+  }
+
+  return { make: make, drawMap: drawMap, scenes: SC };
+})();
+
+/* ==================================================================
+   INTERFACCIA. Un ridisegno per turno, niente animazioni.
+   ================================================================== */
+if (typeof document !== 'undefined') {
+  (function () {
+    var screen = document.getElementById('screen'), out = document.getElementById('out'), input = document.getElementById('cmd-input');
+    var prefs = { mode: 'pagina' }, turns = [], pos = 0, pending = null, atTop = true;
+    var canCanvas = !!document.createElement('canvas').getContext;
+    var DIR_LABEL = { prua: 'PRUA', poppa: 'POPPA', su: 'SU', giu: 'GIÙ', dentro: 'DENTRO', fuori: 'FUORI' };
+
+    try { var p = JSON.parse(localStorage.getItem('nerodiseppia.prefs') || 'null'); if (p && p.mode) { prefs = p; } } catch (e) { /* preferenze predefinite */ }
+
+    function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.appendChild(document.createTextNode(text)); } return e; }
+    function kw(label, word) { var k = el('span', 'kw', label); k.setAttribute('data-kw', word); k.setAttribute('role', 'button'); k.setAttribute('tabindex', '0'); return k; }
+
+    function addText(parent, s) {
+      var lines = s.split('\n'), i, re = /\[\[([^\]]+)\]\]/g, m, last;
+      for (i = 0; i < lines.length; i++) {
+        if (i) { parent.appendChild(document.createElement('br')); }
+        last = 0; re.lastIndex = 0;
+        while ((m = re.exec(lines[i]))) {
+          if (m.index > last) { parent.appendChild(document.createTextNode(lines[i].substring(last, m.index))); }
+          parent.appendChild(kw(m[1], m[1]));
+          last = m.index + m[0].length;
+        }
+        if (last < lines[i].length) { parent.appendChild(document.createTextNode(lines[i].substring(last))); }
+      }
+    }
+
+    function avail() { return Math.max(180, out.clientWidth - 36); }
+
+    function figure(canvas, cap) {
+      var f = el('figure');
+      if (canvas) { canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', cap || 'Tavola'); f.appendChild(canvas); }
+      if (cap) { f.appendChild(el('figcaption', '', cap)); }
+      return f;
+    }
+
+    function renderTurn(turn) {
+      var box = el('div', 'turn'), i, j, b, e, c, parts, dl, ul, who;
+      if (turn.cmd) { box.appendChild(el('p', 'echo', '> ' + turn.cmd)); }
+      for (i = 0; i < turn.blocks.length; i++) {
+        b = turn.blocks[i];
+        if (b.t === 'p' || b.t === 'note' || b.t === 'room') {
+          e = el('p', b.t === 'p' ? '' : b.t); addText(e, b.s); box.appendChild(e);
+        } else if (b.t === 'front') {
+          e = el('div', 'front'); e.appendChild(el('h2', '', b.s)); e.appendChild(el('span', '', b.sub)); box.appendChild(e);
+        } else if (b.t === 'prosa') {
+          e = el('div', 'prosa'); parts = b.s.split('\n\n');
+          for (j = 0; j < parts.length; j++) { e.appendChild(el('p', '', parts[j])); }
+          box.appendChild(e);
+        } else if (b.t === 'img') {
+          box.appendChild(figure(canCanvas ? Incisione.make(b.id, Math.min(avail(), 480)) : null, b.cap));
+        } else if (b.t === 'map') {
+          c = null;
+          if (canCanvas) { c = document.createElement('canvas'); Incisione.drawMap(c, b, Math.min(avail(), 480)); }
+          box.appendChild(figure(c, b.cap));
+        } else if (b.t === 'sheet') {
+          e = el('div', 'sheet');
+          e.appendChild(figure(canCanvas ? Incisione.make('ritratto', 124) : null, b.cap));
+          who = el('div', 'who'); who.appendChild(el('h2', '', b.name)); dl = el('dl');
+          for (j = 0; j < b.rows.length; j++) { dl.appendChild(el('dt', '', b.rows[j][0])); dl.appendChild(el('dd', '', b.rows[j][1])); }
+          who.appendChild(dl); e.appendChild(who); box.appendChild(e);
+          box.appendChild(el('p', 'facts-title', 'Cose che sai'));
+          ul = el('ul', 'facts'); for (j = 0; j < b.facts.length; j++) { ul.appendChild(el('li', '', b.facts[j])); }
+          box.appendChild(ul);
+        } else if (b.t === 'end') {
+          box.appendChild(el('p', 'end', b.s));
+        }
+      }
+      return box;
+    }
+
+    function renderPanel() {
+      var st = PC.status(), ex = PC.exits(), inv = PC.inventory(), dir = document.getElementById('chips-dir'), bag = document.getElementById('bag'), i, b;
+      var reading = prefs.mode === 'pagina' && turns[pos].kind === 'tavola';
+      document.getElementById('st-room').textContent = reading ? 'Prologo' : st.room;
+      document.getElementById('st-moves').textContent = 'Mosse ' + st.moves;
+      screen.className = 'screen ' + prefs.mode + (reading ? ' reading' : '');
+      document.getElementById('pg-label').textContent = 'Pag. ' + (pos + 1) + ' di ' + turns.length;
+      document.getElementById('pg-prev').disabled = pos === 0;
+      document.getElementById('pg-next').disabled = pos === turns.length - 1;
+
+      while (dir.firstChild) { dir.removeChild(dir.firstChild); }
+      for (i = 0; i < ex.length; i++) { b = el('button', 'chip', DIR_LABEL[ex[i]]); b.type = 'button'; b.setAttribute('data-cmd', ex[i]); dir.appendChild(b); }
+      dir.appendChild(el('span', 'spacer'));
+      b = el('button', 'chip', 'GUARDA'); b.type = 'button'; b.setAttribute('data-cmd', 'guarda'); dir.appendChild(b);
+
+      while (bag.firstChild) { bag.removeChild(bag.firstChild); }
+      for (i = 0; i < inv.length; i++) { if (i) { bag.appendChild(el('span', 'sep', '·')); } bag.appendChild(kw(inv[i].label, inv[i].word)); }
+      if (!inv.length) { bag.appendChild(document.createTextNode('niente')); }
+    }
+
+    function render() {
+      var i, from, b;
+      while (out.firstChild) { out.removeChild(out.firstChild); }
+      if (prefs.mode === 'pagina') {
+        out.appendChild(renderTurn(turns[pos]));
+        if (pos < turns.length - 1) {
+          b = el('button', 'chip go turn-next', 'Volta pagina ▶'); b.type = 'button'; b.id = 'turn-next';
+          b.onclick = function () { goPage(pos + 1); };
+          out.appendChild(b);
+        }
+        out.scrollTop = 0;
+      } else {
+        from = Math.max(0, turns.length - 30);
+        for (i = from; i < turns.length; i++) { out.appendChild(renderTurn(turns[i])); }
+        out.scrollTop = atTop ? 0 : out.scrollHeight;
+      }
+      renderPanel();
+    }
+
+    function goPage(n) { pos = Math.max(0, Math.min(turns.length - 1, n)); render(); }
+
+    function pushPrologue() {
+      var pages = PC.prologue(), i, first = turns.length;
+      for (i = 0; i < pages.length; i++) { turns.push({ cmd: null, blocks: pages[i], kind: 'tavola' }); }
+      return first;
+    }
+
+    function begin(forceNew) {
+      var st = PC.start(forceNew);
+      turns = []; pos = 0; atTop = true;
+      if (!st.resumed) { pushPrologue(); }
+      turns.push({ cmd: null, blocks: st.blocks, kind: 'turno' });
+      if (st.resumed) { pos = turns.length - 1; atTop = false; }
+      render();
+    }
+
+    function setPending(verb) {
+      var chips = document.getElementById('chips-verb').getElementsByTagName('button'), i;
+      pending = verb;
+      for (i = 0; i < chips.length; i++) { chips[i].className = chips[i].getAttribute('data-verb') === verb ? 'chip on' : 'chip'; }
+      input.value = verb ? verb + ' ' : '';
+      input.placeholder = verb ? 'ora tocca una parola sottolineata' : 'scrivi un comando, poi Invio';
+    }
+
+    function run(cmd) {
+      var blocks, first;
+      cmd = String(cmd).replace(/^\s+|\s+$/g, '');
+      if (!cmd) { return; }
+      blocks = PC.exec(cmd);
+      setPending(null);
+      if (blocks.length && blocks[0].t === 'restart') { begin(true); return; }
+      atTop = false;
+      if (blocks.length && blocks[0].t === 'prologue') {
+        first = pushPrologue();
+        turns.push({ cmd: null, blocks: PC.look(), kind: 'turno' });
+        pos = prefs.mode === 'pagina' ? first : turns.length - 1;
+      } else {
+        turns.push({ cmd: cmd, blocks: blocks, kind: 'turno' });
+        pos = turns.length - 1;
+      }
+      while (turns.length > 60) { turns.shift(); pos--; }
+      render();
+    }
+
+    function tapWord(w) {
+      if (PC.isDir(w)) { run(w); }
+      else if (pending) { run(pending + ' ' + w); }
+      else { run('esamina ' + w); }
+    }
+
+    screen.onclick = function (ev) {
+      var t = ev.target, cmd, verb;
+      if (!t || !t.getAttribute) { return; }
+      if (t.className === 'kw') { tapWord(t.getAttribute('data-kw')); return; }
+      cmd = t.getAttribute('data-cmd'); verb = t.getAttribute('data-verb');
+      if (cmd) { run(cmd); }
+      else if (verb) { setPending(pending === verb ? null : verb); }
+    };
+    screen.onkeydown = function (ev) {
+      var t = ev.target;
+      if (t && t.className === 'kw' && (ev.keyCode === 13 || ev.keyCode === 32)) { ev.preventDefault(); tapWord(t.getAttribute('data-kw')); }
+    };
+    document.getElementById('pg-prev').onclick = function () { goPage(pos - 1); };
+    document.getElementById('pg-next').onclick = function () { goPage(pos + 1); };
+    document.getElementById('cmd-form').onsubmit = function (ev) { ev.preventDefault(); run(input.value); };
+
+    function setMode(mode) {
+      prefs.mode = mode;
+      try { localStorage.setItem('nerodiseppia.prefs', JSON.stringify(prefs)); } catch (e) { /* non indispensabile */ }
+      syncSwitch(); render();
+    }
+    function syncSwitch() {
+      document.getElementById('mode-pagina').setAttribute('aria-pressed', prefs.mode === 'pagina' ? 'true' : 'false');
+      document.getElementById('mode-rullo').setAttribute('aria-pressed', prefs.mode === 'rullo' ? 'true' : 'false');
+    }
+    document.getElementById('mode-pagina').onclick = function () { setMode('pagina'); };
+    document.getElementById('mode-rullo').onclick = function () { setMode('rullo'); };
+
+    var resizeTimer = null, lastW = 0;
+    window.onresize = function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (out.clientWidth !== lastW) { lastW = out.clientWidth; render(); } }, 250);
+    };
+
+    syncSwitch();
+    begin(false);
+    lastW = out.clientWidth;
+    /* la mappa usa i font web: se arrivano dopo, basta ridisegnare una volta */
+    if (document.fonts && document.fonts.ready && document.fonts.ready.then) { document.fonts.ready.then(function () { render(); }); }
+  })();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Punta Cieca</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>
+/* Layout: una scrivania grigia con sopra un e-reader. Dentro lo schermo tutto e' carta e inchiostro,
+   senza grigi di sfondo, ombre o animazioni, come su un pannello e-ink. Tema unico per scelta. */
+:root {
+  color-scheme: light;
+  --desk: #c9cdcb;
+  --desk-ink: #23282a;
+  --bezel: #1d2022;
+  --paper: #f1f0ea;
+  --ink: #111111;
+  --ink-soft: #55595a;
+  --mono: "IBM Plex Mono", "Courier New", Courier, monospace;
+  --display: "VT323", "IBM Plex Mono", "Courier New", monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--desk); color: var(--desk-ink); font-family: var(--mono); font-size: 15px; line-height: 1.5; }
+
+.stage { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+
+.demo-bar { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; }
+.demo-bar h1 { font-family: var(--display); font-weight: 400; font-size: 38px; line-height: 0.9; margin: 0; letter-spacing: 1px; }
+.demo-bar p { margin: 2px 0 0; font-size: 12px; }
+.switches { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.switch { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.seg { display: flex; }
+.seg button { font: 600 12px/1 var(--mono); color: var(--desk-ink); background: transparent; border: 2px solid var(--desk-ink); padding: 0 10px; min-height: 32px; cursor: pointer; border-radius: 0; }
+.seg button + button { border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--desk-ink); color: var(--desk); }
+
+.device { flex: 1 1 auto; width: 100%; max-width: 600px; min-height: 520px; max-height: 820px; display: flex; background: var(--bezel); padding: 22px 22px 40px; border-radius: 18px; }
+.screen { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); }
+
+.status { display: flex; justify-content: space-between; gap: 12px; background: var(--ink); color: var(--paper); font-family: var(--display); font-size: 22px; line-height: 1; padding: 6px 16px 5px; letter-spacing: 1px; }
+.status span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.out { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 12px 16px 4px; }
+.out p { margin: 0 0 10px; max-width: 62ch; }
+.out .room { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+.out .echo { font-weight: 600; margin: 0 0 8px; }
+.out .turn + .turn { border-top: 1px dashed var(--ink); padding-top: 10px; margin-top: 4px; }
+.out .note { color: var(--ink-soft); }
+.out pre { font-family: var(--mono); font-size: 13px; line-height: 1.15; margin: 4px 0 12px; white-space: pre; overflow-x: auto; }
+.out canvas { display: block; margin: 4px 0 12px; border: 2px solid var(--ink); }
+.kw { font-weight: 600; border-bottom: 2px dotted var(--ink); cursor: pointer; }
+
+.pad { display: flex; flex-direction: column; gap: 6px; padding: 8px 16px 0; border-top: 2px solid var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 600 13px/1 var(--mono); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 0; padding: 0 9px; min-width: 40px; min-height: 38px; cursor: pointer; }
+.chip.on { background: var(--ink); color: var(--paper); }
+
+.cmd { display: flex; align-items: center; gap: 8px; padding: 10px 16px 14px; }
+.cmd label { font-weight: 600; font-size: 18px; }
+.cmd input { flex: 1 1 auto; min-width: 0; font: 400 16px/1.2 var(--mono); color: var(--ink); background: var(--paper); border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; padding: 6px 2px; }
+.cmd input::placeholder { color: var(--ink-soft); }
+
+button:focus-visible, input:focus-visible, .kw:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+.seg button:focus-visible { outline-color: var(--desk-ink); }
+
+.foot { width: 100%; max-width: 600px; margin: 0; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .stage { padding: 0; gap: 0; }
+  .demo-bar { padding: 10px 16px; }
+  .demo-bar h1 { font-size: 30px; }
+  .device { padding: 0; border-radius: 0; max-height: none; min-height: 440px; }
+  .foot { padding: 8px 16px; }
+}
+</style>
+</head>
+<body>
+<main class="stage">
+  <header class="demo-bar">
+    <div>
+      <h1>PUNTA CIECA</h1>
+      <p>Prototipo di avventura testuale per e-reader</p>
+    </div>
+    <div class="switches">
+      <div class="switch"><span id="lbl-mode">Schermo</span>
+        <div class="seg" role="group" aria-labelledby="lbl-mode">
+          <button type="button" id="mode-pagina" aria-pressed="true">Pagina</button>
+          <button type="button" id="mode-rullo" aria-pressed="false">Rullo</button>
+        </div>
+      </div>
+      <div class="switch"><span id="lbl-img">Immagini</span>
+        <div class="seg" role="group" aria-labelledby="lbl-img">
+          <button type="button" id="img-ascii" aria-pressed="true">ASCII</button>
+          <button type="button" id="img-bitmap" aria-pressed="false">Bitmap</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="device">
+    <div class="screen">
+      <div class="status"><span id="st-room">Molo</span><span id="st-moves">Mosse 0</span></div>
+      <div class="out" id="out" aria-live="polite"></div>
+      <div class="pad">
+        <div class="chips" id="chips-dir">
+          <button type="button" class="chip" id="c-n" data-cmd="nord">N</button>
+          <button type="button" class="chip" id="c-s" data-cmd="sud">S</button>
+          <button type="button" class="chip" id="c-e" data-cmd="est">E</button>
+          <button type="button" class="chip" id="c-o" data-cmd="ovest">O</button>
+          <button type="button" class="chip" id="c-su" data-cmd="su">SU</button>
+          <button type="button" class="chip" id="c-giu" data-cmd="giu">GIÙ</button>
+          <button type="button" class="chip" id="c-guarda" data-cmd="guarda">GUARDA</button>
+          <button type="button" class="chip" id="c-inv" data-cmd="inventario">ZAINO</button>
+          <button type="button" class="chip" id="c-mappa" data-cmd="mappa">MAPPA</button>
+        </div>
+        <div class="chips" id="chips-verb">
+          <button type="button" class="chip" id="v-esamina" data-verb="esamina">ESAMINA…</button>
+          <button type="button" class="chip" id="v-prendi" data-verb="prendi">PRENDI…</button>
+          <button type="button" class="chip" id="v-apri" data-verb="apri">APRI…</button>
+          <button type="button" class="chip" id="v-usa" data-verb="usa">USA…</button>
+          <button type="button" class="chip" id="v-accendi" data-verb="accendi">ACCENDI…</button>
+          <button type="button" class="chip" id="c-aiuto" data-cmd="aiuto">?</button>
+        </div>
+      </div>
+      <form class="cmd" id="cmd-form" autocomplete="off">
+        <label for="cmd-input">&gt;</label>
+        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando, poi Invio">
+      </form>
+    </div>
+  </div>
+
+  <p class="foot">Tocca le parole sottolineate o i tasti per giocare senza tastiera. Il codice è JavaScript ES5, senza librerie.</p>
+</main>
+
+<script type="text/plain" id="art-banner">
++----------------------------------+
+|     P U N T A    C I E C A       |
+|   avventura testuale  -  v0.1    |
++----------------------------------+
+</script>
+
+<script type="text/plain" id="art-faro-off">
+                  ^
+                 /_\
+                 |O|
+               __|_|__
+               \_____/
+                |   |
+                |###|
+                |   |
+                |###|
+               /     \
+               |     |
+               |#####|
+               |     |
+               |#####|
+              /   _   \
+              |  |#|  |
+      ________|__|#|__|________
+   __/                         \__
+~~/   .   '      .     '    .     \~~~
+~~~~   ~~~    ~~      ~~~~    ~~   ~~~
+</script>
+
+<script type="text/plain" id="art-faro-on">
+'-._              ^              _.-'
+    '-._         /_\         _.-'
+ - - - - '-._    |*|    _.-' - - - -
+               __|_|__
+               \_____/
+                |   |
+                |###|
+                |   |
+                |###|
+               /     \
+               |     |
+               |#####|
+               |     |
+               |#####|
+              /   _   \
+              |  |#|  |
+      ________|__|#|__|________
+   __/                         \__
+~~/   .   '      .     '    .     \~~~
+~~~~   ~~~    ~~      ~~~~    ~~   ~~~
+</script>
+
+<script>
+/* ------------------------------------------------------------------
+   MOTORE DI GIOCO. Nessuna dipendenza dal DOM: riceve una stringa,
+   restituisce una lista di "blocchi" (testo, titolo stanza, ASCII, immagine).
+   ------------------------------------------------------------------ */
+var PC = (function () {
+  var SAVE_KEY = 'puntacieca.v1';
+  var S;
+
+  var ROOM_NAME = { molo: 'Molo', sentiero: 'Sentiero', casa: 'Casa del guardiano', faro: 'Ai piedi del faro', cima: 'Sala della lanterna' };
+  var ROOM_LABEL = { molo: 'MOLO', sentiero: 'SENTIERO', casa: 'CASA', faro: 'FARO', cima: 'CIMA' };
+  var EXITS = {
+    molo: { nord: 'sentiero' },
+    sentiero: { sud: 'molo', nord: 'faro', est: 'casa' },
+    casa: { ovest: 'sentiero' },
+    faro: { sud: 'sentiero', su: 'cima' },
+    cima: { giu: 'faro' }
+  };
+  var ADJ = [['molo', 'sentiero'], ['sentiero', 'faro'], ['sentiero', 'casa'], ['faro', 'cima']];
+
+  function fresh() {
+    return { room: 'molo', moves: 0, visited: { molo: 1 }, loc: { lanterna: 'molo', chiave: 'cassetto' },
+      f: { mossa: 0, accesa: 0, cassetto: 0, porta: 0, won: 0 } };
+  }
+
+  /* ---------- parser ---------- */
+  var STOP = ' il lo la i gli le l un uno una del dello della dei degli delle dell al allo alla ai agli alle all nel nello nella nell sul sullo sulla sull con di da dal dalla per verso a ad in mio mia ';
+  var DIRS = { nord: 'nord', n: 'nord', sud: 'sud', s: 'sud', est: 'est', e: 'est', ovest: 'ovest', o: 'ovest', w: 'ovest',
+    su: 'su', sali: 'su', salgo: 'su', alto: 'su', giu: 'giu', scendi: 'giu', scendo: 'giu', basso: 'giu' };
+  var VERBS = {
+    guarda: 'guarda', g: 'guarda', l: 'guarda', osserva: 'guarda', descrivi: 'guarda',
+    esamina: 'esamina', x: 'esamina', ispeziona: 'esamina', controlla: 'esamina', studia: 'esamina',
+    prendi: 'prendi', raccogli: 'prendi', piglia: 'prendi', afferra: 'prendi', stacca: 'prendi',
+    lascia: 'lascia', posa: 'lascia', molla: 'lascia', appoggia: 'lascia',
+    inventario: 'inventario', inv: 'inventario', i: 'inventario', zaino: 'inventario',
+    apri: 'apri', sblocca: 'apri', chiudi: 'chiudi',
+    usa: 'usa', utilizza: 'usa', infila: 'usa', adopera: 'usa',
+    accendi: 'accendi', spegni: 'spegni', leggi: 'leggi',
+    vai: 'vai', va: 'vai', vado: 'vai', cammina: 'vai', corri: 'vai', torna: 'vai',
+    entra: 'entra', entro: 'entra', esci: 'esci', esco: 'esci',
+    mappa: 'mappa', m: 'mappa', cartina: 'mappa',
+    aiuto: 'aiuto', help: 'aiuto', comandi: 'aiuto',
+    ricomincia: 'ricomincia', restart: 'ricomincia', salva: 'salva', aspetta: 'aspetta', z: 'aspetta'
+  };
+  var NOUNS = {
+    lanterna: 'lanterna', lampada: 'lanterna', lume: 'lanterna',
+    chiave: 'chiave', porta: 'porta', portone: 'porta', ingresso: 'porta',
+    scrivania: 'scrivania', tavolo: 'scrivania', cassetto: 'cassetto',
+    fotografia: 'foto', foto: 'foto', cornice: 'foto', quadro: 'foto',
+    cartello: 'cartello', insegna: 'cartello',
+    lente: 'lente', bruciatore: 'lente', fresnel: 'lente',
+    palo: 'palo', gancio: 'palo', barca: 'barca', mare: 'mare', acqua: 'mare', nebbia: 'nebbia',
+    faro: 'faro', torre: 'faro', casa: 'casa', branda: 'branda', letto: 'branda', stufa: 'stufa',
+    scala: 'scala', scale: 'scala', gradini: 'scala', lettera: 'lettera',
+    molo: 'molo', sentiero: 'sentiero', mappa: 'mappa'
+  };
+  var SCENERY = { porta: ['faro'], scrivania: ['casa'], cassetto: ['casa'], foto: ['casa'], branda: ['casa'], stufa: ['casa'],
+    cartello: ['sentiero'], lente: ['cima'], palo: ['molo'], barca: ['molo'], scala: ['faro', 'cima'],
+    mare: ['molo', 'cima'], nebbia: ['molo', 'sentiero', 'faro', 'cima'], faro: ['sentiero', 'faro', 'molo'],
+    casa: ['sentiero', 'casa'], molo: ['molo', 'sentiero'], sentiero: ['sentiero', 'molo', 'faro'], lettera: '*' };
+
+  function norm(s) {
+    s = String(s).toLowerCase();
+    s = s.replace(/[àá]/g, 'a').replace(/[èé]/g, 'e').replace(/[ìí]/g, 'i').replace(/[òó]/g, 'o').replace(/[ùú]/g, 'u');
+    s = s.replace(/\?/g, ' aiuto ').replace(/['’`]/g, ' ').replace(/[^a-z0-9 ]/g, ' ');
+    return s.replace(/\s+/g, ' ').replace(/^ | $/g, '');
+  }
+  function tokens(s) {
+    var raw = s.split(' '), out = [], i;
+    if (raw.length === 1) { return raw; }
+    for (i = 0; i < raw.length; i++) { if (raw[i] && STOP.indexOf(' ' + raw[i] + ' ') < 0) { out.push(raw[i]); } }
+    /* "i" e "l" da soli sono comandi; dentro una frase sono articoli */
+    return out.length ? out : raw;
+  }
+
+  /* ---------- stato del mondo ---------- */
+  function has(id) { return S.loc[id] === 'inv'; }
+  function lit() { return S.room !== 'casa' || (S.f.accesa && (has('lanterna') || S.loc.lanterna === 'casa')); }
+  function present(id) {
+    if (id === 'lanterna') { return has(id) || S.loc.lanterna === S.room; }
+    if (id === 'chiave') { return has(id) || S.loc.chiave === S.room || (S.loc.chiave === 'cassetto' && S.room === 'casa' && S.f.cassetto); }
+    var sc = SCENERY[id];
+    if (!sc) { return false; }
+    if (sc === '*') { return true; }
+    for (var i = 0; i < sc.length; i++) { if (sc[i] === S.room) { return true; } }
+    return false;
+  }
+
+  /* ---------- blocchi di output ---------- */
+  function P(s) { return { t: 'p', s: s }; }
+  function NOTE(s) { return { t: 'note', s: s }; }
+
+  function describe(withImage) {
+    var b = [{ t: 'room', s: ROOM_NAME[S.room] }], r = S.room, d = '';
+    if (r === 'molo') {
+      d = 'Un molo di legno marcio, lungo e stretto, piantato nell\'acqua nera. La [[barca]] che ti ha portato qui è già solo un rumore di remi nella [[nebbia]].';
+      d += S.f.mossa ? ' C\'è un [[palo]] con un gancio vuoto.' : ' A un [[palo]] è appesa una vecchia [[lanterna]].';
+      d += '\nUn sentiero sale verso [[nord]].';
+    } else if (r === 'sentiero') {
+      d = 'Ghiaia e rovi. Il sentiero si divide davanti a un [[cartello]] storto: a [[nord]] sale verso il [[faro]], una torre spenta contro il cielo; a [[est]] porta a una [[casa]] bassa con le finestre buie.\nIl molo è a [[sud]].';
+      if (S.f.won) { d = d.replace('una torre spenta contro il cielo', 'che adesso spazza il cielo con la sua luce'); }
+    } else if (r === 'casa') {
+      if (!lit()) {
+        d = 'Buio pesto. Odore di polvere e di carta bagnata. Fai un passo e urti qualcosa di spigoloso: senza una luce qui dentro non combini niente.\nLa porta da cui sei entrato è a [[ovest]].';
+      } else {
+        d = 'La casa del guardiano: una stanza sola. Una [[branda]] sfatta, una [[stufa]] fredda, una [[scrivania]] sotto la finestra. Alla parete, una [[fotografia]] in cornice.\nL\'uscita è a [[ovest]].';
+      }
+    } else if (r === 'faro') {
+      if (withImage) { b.push({ t: 'img', lit: S.f.won ? 1 : 0 }); }
+      d = 'Da quaggiù la torre a fasce bianche e nere sembra piegarsi su di te. L\'unico ingresso è una [[porta]] di ferro mangiata dal sale';
+      d += S.f.porta ? ', ora spalancata su una scala a chiocciola che sale: [[su]].' : '.';
+      d += '\nIl sentiero torna a [[sud]].';
+    } else if (r === 'cima') {
+      d = 'In cima a centoquaranta gradini. Vetri tutt\'intorno, e la nebbia che ci preme contro. Al centro, alta quanto te, la grande [[lente]]';
+      d += S.f.won ? ', che gira lenta e lancia il suo fascio sul mare.' : ', cieca da anni.';
+      d += '\nLa scala scende: [[giù]].';
+    }
+    b.push(P(d));
+    if (lit()) {
+      var floor = [];
+      if (S.loc.lanterna === r && S.f.mossa) { floor.push('una [[lanterna]]' + (S.f.accesa ? ' accesa' : '')); }
+      if (S.loc.chiave === r) { floor.push('una [[chiave]] d\'ottone'); }
+      if (floor.length) { b.push(P('Per terra: ' + floor.join(', ') + '.')); }
+    }
+    return b;
+  }
+
+  function center(s, w) {
+    var l = Math.floor((w - s.length) / 2), out = '', i;
+    for (i = 0; i < l; i++) { out += ' '; }
+    out += s;
+    while (out.length < w) { out += ' '; }
+    return out;
+  }
+
+  /* Automappa ASCII: disegna solo cio' che il giocatore ha visto. */
+  function mapText() {
+    var cell = { cima: [0, 0], faro: [0, 1], sentiero: [0, 2], casa: [1, 2], molo: [0, 3] };
+    var CW = 12, GAP = 5, X0 = 1, W = X0 + CW * 2 + GAP, lines = [], i, id, k;
+    var seen = {};
+    for (id in S.visited) { if (S.visited.hasOwnProperty(id)) { seen[id] = 1; } }
+    for (i = 0; i < ADJ.length; i++) {
+      if (S.visited[ADJ[i][0]]) { seen[ADJ[i][1]] = 1; }
+      if (S.visited[ADJ[i][1]]) { seen[ADJ[i][0]] = 1; }
+    }
+    for (i = 0; i < 15; i++) { lines.push(center('', W)); }
+    function put(x, y, str) { lines[y] = lines[y].substr(0, x) + str + lines[y].substr(x + str.length); }
+    for (id in cell) {
+      if (cell.hasOwnProperty(id) && seen[id]) {
+        var x = X0 + cell[id][0] * (CW + GAP), y = cell[id][1] * 4;
+        var lab = S.visited[id] ? ROOM_LABEL[id] : '??';
+        lab = (id === S.room) ? '>' + center(lab, 8) + '<' : center(lab, 10);
+        put(x, y, '+----------+'); put(x, y + 1, '|' + lab + '|'); put(x, y + 2, '+----------+');
+      }
+    }
+    var link = [['cima', 'faro', ':'], ['faro', 'sentiero', '|'], ['sentiero', 'molo', '|']];
+    for (k = 0; k < link.length; k++) {
+      if (seen[link[k][0]] && seen[link[k][1]]) { put(X0 + 5, cell[link[k][1]][1] * 4 - 1, link[k][2]); }
+    }
+    if (seen.sentiero && seen.casa) { put(X0 + CW, 9, '-----'); }
+    while (lines.length && !/\S/.test(lines[0])) { lines.shift(); }
+    for (i = 0; i < lines.length; i++) { lines[i] = lines[i].replace(/\s+$/, ''); }
+    lines.push('');
+    lines.push(' > < sei qui   ?? inesplorato');
+    return lines.join('\n');
+  }
+
+  function intro() {
+    var b = [{ t: 'pre', art: 'banner', cols: 36 }];
+    b.push(P('Il barcaiolo non ha voluto aspettare. «Torno all\'alba», ha detto, e ha spinto via la barca prima ancora che tu finissi di salire sul molo. In tasca hai una [[lettera]] di tre righe.'));
+    b = b.concat(describe(true));
+    b.push(NOTE('Scrivi un comando oppure tocca le parole sottolineate. AIUTO per l\'elenco.'));
+    return b;
+  }
+
+  /* ---------- azioni ---------- */
+  function go(dir) {
+    var to = EXITS[S.room][dir];
+    if (!to) { return [P('Da quella parte non si passa.')]; }
+    if (S.room === 'faro' && dir === 'su' && !S.f.porta) { return [P('La porta di ferro è chiusa a chiave.')]; }
+    S.room = to; S.moves++;
+    var first = !S.visited[to];
+    S.visited[to] = 1;
+    return describe(first);
+  }
+
+  function examine(id) {
+    switch (id) {
+      case 'lanterna': return [P('Una lanterna a petrolio, di quelle da marina. Il serbatoio è mezzo pieno. ' + (S.f.accesa ? 'È accesa.' : 'È spenta.'))];
+      case 'chiave': return [P('Una chiave d\'ottone lunga un palmo. Sull\'anello è inciso un piccolo faro.')];
+      case 'porta': return [P(S.f.porta ? 'Spalancata. Dietro, la scala a chiocciola.' : 'Ferro spesso due dita, e una serratura grande come una moneta. Chiusa.')];
+      case 'scrivania': return [P('Noce gonfio d\'umidità. Sul piano, cerchi lasciati da una tazza. Ha un solo [[cassetto]]' + (S.f.cassetto ? ', aperto.' : '.'))];
+      case 'cassetto':
+        if (!S.f.cassetto) { return [P('È chiuso, ma non a chiave.')]; }
+        return [P(S.loc.chiave === 'cassetto' ? 'Dentro c\'è una [[chiave]] d\'ottone.' : 'Vuoto.')];
+      case 'foto': return [{ t: 'img', lit: 1 }, P('Una fotografia sbiadita: il faro acceso, come doveva essere. Sul retro, a matita: «Finché gira, tornano».')];
+      case 'cartello': return [{ t: 'pre', s: '  .------------------------.\n  |   P U N T A  C I E C A |\n  |  stazione dei segnali  |\n  |  VIETATO  L\'APPRODO    |\n  \'------------------------\'', cols: 30 }];
+      case 'lente': return [P(S.f.won ? 'Gira senza rumore. Non riesci a guardarla a lungo.' : 'Una lente di Fresnel: anelli di vetro uno dentro l\'altro. Sotto c\'è un bruciatore, asciutto ma intero. Gli basterebbe una fiamma.')];
+      case 'palo': return [P(S.f.mossa ? 'Un palo d\'ormeggio con un gancio arrugginito.' : 'Un palo d\'ormeggio. Qualcuno ci ha lasciato appesa una [[lanterna]].')];
+      case 'barca': return [P('Non si vede più. Si sente appena.')];
+      case 'mare': return [P('Nero e paziente.')];
+      case 'nebbia': return [P('Fitta. Dieci passi e non vedi più dove sei partito.')];
+      case 'faro': return [{ t: 'img', lit: S.f.won ? 1 : 0 }, P(S.f.won ? 'Acceso. Finalmente.' : 'Alto, a fasce, spento.')];
+      case 'casa': return [P(S.room === 'casa' ? 'Ci sei dentro.' : 'Una casa bassa, di pietra. La porta è accostata.')];
+      case 'branda': return [P('Le coperte sono fredde da molto tempo.')];
+      case 'stufa': return [P('Cenere vecchia. Niente di utile.')];
+      case 'scala': return [P('Ferro e ruggine. Regge.')];
+      case 'lettera': return [P('«Riaccendi il faro. Ti prego.» Nessuna firma.')];
+      case 'molo': case 'sentiero': return describe(false);
+    }
+    return [P('Niente di speciale.')];
+  }
+
+  function win() {
+    S.f.won = 1;
+    return [{ t: 'img', lit: 1 },
+      P('Avvicini la fiamma al bruciatore. Un soffio, un colpo di tosse, poi la luce: bianca, enorme. La lente comincia a girare e il fascio apre la nebbia fino all\'orizzonte. Lontano, sul mare, una sirena risponde due volte.'),
+      P('*** HAI RIACCESO IL FARO in ' + S.moves + ' mosse ***'),
+      NOTE('Scrivi RICOMINCIA per giocare di nuovo.')];
+  }
+
+  function lightLens() {
+    if (S.f.won) { return [P('È già acceso.')]; }
+    if (!has('lanterna')) { return [P('Ti serve una fiamma.')]; }
+    if (!S.f.accesa) { return [P('La lanterna è spenta.')]; }
+    S.moves++;
+    return win();
+  }
+
+  function openDoor() {
+    if (S.f.porta) { return [P('È già aperta.')]; }
+    if (!has('chiave')) { return [P('È chiusa a chiave.')]; }
+    S.f.porta = 1; S.moves++;
+    return [P('La chiave gira con un lamento. La porta si apre su una scala a chiocciola che sale nel buio: [[su]].')];
+  }
+
+  function act(verb, id) {
+    switch (verb) {
+      case 'esamina': case 'leggi': S.moves++; return examine(id);
+      case 'prendi':
+        if (id === 'lanterna' || id === 'chiave') {
+          if (has(id)) { return [P('Ce l\'hai già.')]; }
+          S.loc[id] = 'inv'; S.moves++;
+          if (id === 'lanterna') { S.f.mossa = 1; return [P('Stacchi la lanterna dal gancio. Il petrolio sciaborda nel serbatoio.')]; }
+          return [P('Presa. È più pesante di quanto sembra.')];
+        }
+        if (id === 'lettera') { return [P('È già in tasca.')]; }
+        return [P('Non puoi portartelo via.')];
+      case 'lascia':
+        if ((id === 'lanterna' || id === 'chiave') && has(id)) { S.loc[id] = S.room; S.moves++; return [P('Fatto.')]; }
+        return [P('Non ce l\'hai.')];
+      case 'apri':
+        if (id === 'cassetto') {
+          if (S.f.cassetto) { return [P('È già aperto.')]; }
+          S.f.cassetto = 1; S.moves++;
+          return [P('Il cassetto resiste, poi cede di colpo. Dentro c\'è una [[chiave]] d\'ottone.')];
+        }
+        if (id === 'porta') { return openDoor(); }
+        if (id === 'scrivania') { return act('apri', 'cassetto'); }
+        return [P('Non si apre.')];
+      case 'chiudi': return [P('Non serve.')];
+      case 'usa':
+        if (id === 'chiave') {
+          if (!has('chiave')) { return [P('Prima dovresti prenderla.')]; }
+          return S.room === 'faro' ? openDoor() : [P('Qui non c\'è niente da aprire con questa chiave.')];
+        }
+        if (id === 'lanterna') {
+          if (!has('lanterna')) { return [P('Prima dovresti prenderla.')]; }
+          if (S.room === 'cima' && S.f.accesa) { return lightLens(); }
+          return act('accendi', 'lanterna');
+        }
+        if (id === 'porta' || id === 'cassetto') { return act('apri', id); }
+        if (id === 'lente') { return lightLens(); }
+        if (id === 'scala') { return go(S.room === 'cima' ? 'giu' : 'su'); }
+        return [P('Non sai bene come.')];
+      case 'accendi':
+        if (id === 'lanterna') {
+          if (!has('lanterna')) { return [P('Prima dovresti prenderla.')]; }
+          if (S.f.accesa) { return [P('È già accesa.')]; }
+          S.f.accesa = 1; S.moves++;
+          var b = [P('Giri la rotella. Lo stoppino prende e la fiamma si alza, gialla e ferma.')];
+          return S.room === 'casa' ? b.concat(describe(false)) : b;
+        }
+        if (id === 'lente' || (id === 'faro' && S.room === 'cima')) { return lightLens(); }
+        if (id === 'faro') { return [P('Da qui? Bisogna salire fino alla lente.')]; }
+        if (id === 'stufa') { return [P('Non c\'è legna.')]; }
+        return [P('Non è cosa che si accenda.')];
+      case 'spegni':
+        return [P(id === 'lanterna' ? 'Con questa nebbia? Meglio di no.' : 'Non è acceso.')];
+    }
+    return [P('Non succede niente.')];
+  }
+
+  var HELP = 'COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa\nAgire: PRENDI, LASCIA, APRI, USA, ACCENDI, LEGGI cosa\nAltro: INVENTARIO (I), MAPPA (M), RICOMINCIA\nBastano verbo e oggetto: «prendi la lanterna», «apri porta».';
+
+  function exec(input) {
+    var s = norm(input);
+    if (!s) { return [P('Come?')]; }
+    var t = tokens(s), w = t[0], verb, id, i;
+
+    if (DIRS[w] && t.length === 1) { return done(go(DIRS[w])); }
+    verb = VERBS[w];
+    if (!verb) {
+      /* un nome da solo vale come "esamina" */
+      if (NOUNS[w]) { verb = 'esamina'; t.unshift('esamina'); }
+      else { return [P('Non conosco il verbo «' + w + '». Scrivi AIUTO per l\'elenco dei comandi.')]; }
+    }
+
+    if (verb === 'aiuto') { return [P(HELP)]; }
+    if (verb === 'mappa') { return [{ t: 'pre', s: mapText(), cols: 30 }]; }
+    if (verb === 'salva') { return [P('La partita si salva da sola a ogni mossa.')]; }
+    if (verb === 'ricomincia') { S = fresh(); return done(intro()); }
+    if (verb === 'aspetta') { S.moves++; return done([P('Il tempo passa. La nebbia no.')]); }
+    if (verb === 'inventario') {
+      var inv = ['una lettera'];
+      if (has('lanterna')) { inv.push('una lanterna (' + (S.f.accesa ? 'accesa' : 'spenta') + ')'); }
+      if (has('chiave')) { inv.push('una chiave d\'ottone'); }
+      return [P('Hai con te: ' + inv.join(', ') + '.')];
+    }
+    if (verb === 'entra') { return done(S.room === 'sentiero' ? go('est') : S.room === 'faro' ? go('su') : [P('Entrare dove?')]); }
+    if (verb === 'esci') { return done(S.room === 'casa' ? go('ovest') : S.room === 'cima' ? go('giu') : [P('Sei già all\'aperto.')]); }
+    if (verb === 'vai') {
+      for (i = 1; i < t.length; i++) {
+        if (DIRS[t[i]]) { return done(go(DIRS[t[i]])); }
+        var place = NOUNS[t[i]], ex = EXITS[S.room], d;
+        if (place === 'lente') { place = 'cima'; }
+        for (d in ex) { if (ex.hasOwnProperty(d) && ex[d] === place) { return done(go(d)); } }
+      }
+      return [P('In che direzione? Prova NORD, SUD, EST, OVEST, SU o GIÙ.')];
+    }
+    if (verb === 'guarda' && t.length === 1) { S.moves++; return done(describe(true)); }
+    if (verb === 'guarda') { verb = 'esamina'; }
+
+    for (i = 1; i < t.length && !id; i++) { id = NOUNS[t[i]]; }
+    if (!id && t.length > 1 && DIRS[t[1]]) { return [P('Per muoverti basta la direzione: ' + DIRS[t[1]].toUpperCase() + '.')]; }
+    if (!id) { return [P(t.length > 1 ? 'Non so cosa sia «' + t[1] + '».' : 'Cosa, di preciso?')]; }
+    if (id === 'mappa') { return [{ t: 'pre', s: mapText(), cols: 30 }]; }
+    if (id === 'faro' && S.room === 'cima') { id = 'lente'; }
+    if (!lit() && !has(id) && id !== 'lettera') { return [P('È troppo buio per vedere qualcosa.')]; }
+    if (!present(id)) { return [P('Qui non vedi niente del genere.')]; }
+    return done(act(verb, id));
+  }
+
+  function done(blocks) { save(); return blocks; }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* senza salvataggio si gioca lo stesso */ } }
+  function load() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY), o = raw && JSON.parse(raw);
+      if (o && o.room && ROOM_NAME[o.room] && o.loc && o.f && o.visited) { return o; }
+    } catch (e) { /* salvataggio assente o illeggibile */ }
+    return null;
+  }
+
+  function start() {
+    var saved = load();
+    if (saved && saved.moves > 0) {
+      S = saved;
+      return [NOTE('Partita ripresa da dove l\'avevi lasciata. RICOMINCIA per ripartire da capo.')].concat(describe(true));
+    }
+    S = fresh();
+    return intro();
+  }
+
+  return {
+    start: start, exec: exec,
+    status: function () { return { room: ROOM_NAME[S.room], moves: S.moves }; },
+    isDir: function (w) { return !!DIRS[norm(w)]; }
+  };
+})();
+
+/* ------------------------------------------------------------------
+   IMMAGINE BITMAP A 1 BIT. Una scena calcolata in toni di grigio e poi
+   ridotta a solo bianco e nero con retino ordinato (Bayer 4x4).
+   ------------------------------------------------------------------ */
+var Bitmap = (function () {
+  var W = 200, H = 120, HZ = 84, TX = 128;
+  var BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+  function hash(x, y) { var v = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453; return v - Math.floor(v); }
+  function groundY(x) { return 80 + Math.max(0, 100 - x) * 0.55 + 1.5 * Math.sin(x * 0.21); }
+
+  function gray(x, y, lit) {
+    var g, dx, dy, d, ax = Math.abs(x - TX);
+    /* torre, dall'alto in basso */
+    if (y >= 13 && y < 16 && ax < 1) { return 0; }
+    if (y >= 16 && y < 22 && ax <= (y - 15) * 0.8) { return 0; }
+    if (y >= 22 && y < 31 && ax <= 4) { if (lit) { return 1; } return (ax === 4 || ax === 0 || y === 22) ? 0 : 0.42; }
+    if (y >= 31 && y < 34 && ax <= 8) { return y === 31 ? 0.95 : 0; }
+    if (y >= 34 && y < 82) {
+      var hw = 5 + (y - 34) * (5 / 48);
+      if (ax <= hw) {
+        if (ax > hw - 1) { return 0; }
+        if (y >= 74 && ax <= 2) { return 0; }
+        if (y >= 50 && y < 55 && ax <= 1) { return 0; }
+        var band = Math.floor((y - 34) / 8) % 2;
+        g = band ? 0.04 : 0.97;
+        if (x > TX + hw * 0.25) { g *= 0.62; }
+        return g;
+      }
+    }
+    /* terra */
+    if (y >= groundY(x)) { return hash(x, y) > 0.94 ? 0.6 : 0.02; }
+    /* cielo o mare */
+    if (y < HZ) {
+      g = 0.08 + 0.26 * (y / HZ);
+      dx = x - 44; dy = y - 26; d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 9) { g = 1; } else if (d < 28) { g += 0.38 * (1 - (d - 9) / 19); }
+      if (y < 62 && hash(x, y) > 0.993) { g = 1; }
+    } else {
+      var t = (y - HZ) / (H - HZ);
+      g = 0.16 + 0.08 * t + 0.15 * Math.sin(y * 1.9 + Math.sin(x * 0.11 + y * 0.5) * 2.2);
+      var w = 4 + t * 18, mdx = Math.abs(x - 44);
+      if (mdx < w) { g += 0.55 * (1 - mdx / w) * (0.6 + 0.4 * Math.sin(y * 2.7 + x * 0.9)); }
+    }
+    g += 0.12 * Math.exp(-Math.pow((y - HZ) / 9, 2));
+    if (lit) {
+      var bx = x - TX, by = y - 26, dist = Math.sqrt(bx * bx + by * by);
+      var ang = Math.atan2(by, Math.abs(bx)), a0 = bx < 0 ? 0.13 : -0.07, da = Math.abs(ang - a0), spread = 0.11;
+      if (da < spread && dist > 4) { g += (bx < 0 ? 0.85 : 0.7) * (1 - da / spread) * Math.max(0.3, 1 - dist / 200); }
+      if (dist < 16) { g += 0.7 * (1 - dist / 16); }
+    }
+    return g;
+  }
+
+  function draw(canvas, lit, scale) {
+    var ctx = canvas.getContext('2d'), x, y, run;
+    canvas.width = W * scale; canvas.height = H * scale;
+    ctx.fillStyle = '#f1f0ea'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#111111';
+    for (y = 0; y < H; y++) {
+      run = -1;
+      for (x = 0; x <= W; x++) {
+        var black = x < W && gray(x, y, lit) <= (BAYER[(y % 4) * 4 + (x % 4)] + 0.5) / 16;
+        if (black && run < 0) { run = x; }
+        if (!black && run >= 0) { ctx.fillRect(run * scale, y * scale, (x - run) * scale, scale); run = -1; }
+      }
+    }
+  }
+  return { W: W, H: H, draw: draw, gray: gray };
+})();
+
+/* ------------------------------------------------------------------
+   INTERFACCIA. Ogni turno ridisegna lo schermo una volta sola:
+   niente animazioni, niente effetto macchina da scrivere.
+   ------------------------------------------------------------------ */
+if (typeof document !== 'undefined') {
+  (function () {
+    var out = document.getElementById('out'), input = document.getElementById('cmd-input');
+    var prefs = { mode: 'pagina', img: 'ascii' }, turns = [], pending = null;
+    var canCanvas = !!document.createElement('canvas').getContext;
+
+    try { var p = JSON.parse(localStorage.getItem('puntacieca.prefs') || 'null'); if (p && p.mode && p.img) { prefs = p; } } catch (e) { /* preferenze predefinite */ }
+
+    function art(id) { return document.getElementById('art-' + id).textContent.replace(/^\n/, '').replace(/\s+$/, ''); }
+
+    function addText(parent, s) {
+      var lines = s.split('\n'), i, re = /\[\[([^\]]+)\]\]/g, m, last;
+      for (i = 0; i < lines.length; i++) {
+        if (i) { parent.appendChild(document.createElement('br')); }
+        last = 0; re.lastIndex = 0;
+        while ((m = re.exec(lines[i]))) {
+          if (m.index > last) { parent.appendChild(document.createTextNode(lines[i].substring(last, m.index))); }
+          var k = document.createElement('span');
+          k.className = 'kw'; k.setAttribute('data-kw', m[1]); k.setAttribute('role', 'button'); k.setAttribute('tabindex', '0');
+          k.appendChild(document.createTextNode(m[1]));
+          parent.appendChild(k);
+          last = m.index + m[0].length;
+        }
+        if (last < lines[i].length) { parent.appendChild(document.createTextNode(lines[i].substring(last))); }
+      }
+    }
+
+    function avail() { return Math.max(160, out.clientWidth - 34); }
+
+    function addPre(parent, text, cols) {
+      var pre = document.createElement('pre');
+      /* il corpo si adatta alla larghezza: un carattere monospazio e' largo circa 0,6 em */
+      var fs = Math.floor(avail() / (cols * 0.61) * 2) / 2;
+      pre.style.fontSize = Math.max(7, Math.min(15, fs)) + 'px';
+      pre.appendChild(document.createTextNode(text));
+      parent.appendChild(pre);
+    }
+
+    function renderTurn(turn) {
+      var box = document.createElement('div'), i, b, e;
+      box.className = 'turn';
+      if (turn.cmd) { e = document.createElement('p'); e.className = 'echo'; e.appendChild(document.createTextNode('> ' + turn.cmd)); box.appendChild(e); }
+      for (i = 0; i < turn.blocks.length; i++) {
+        b = turn.blocks[i];
+        if (b.t === 'p' || b.t === 'note' || b.t === 'room') {
+          e = document.createElement('p');
+          if (b.t !== 'p') { e.className = b.t; }
+          addText(e, b.s); box.appendChild(e);
+        } else if (b.t === 'pre') {
+          addPre(box, b.art ? art(b.art) : b.s, b.cols);
+        } else if (b.t === 'img') {
+          if (prefs.img === 'bitmap' && canCanvas) {
+            e = document.createElement('canvas');
+            e.setAttribute('role', 'img');
+            e.setAttribute('aria-label', b.lit ? 'Il faro acceso, di notte' : 'Il faro spento, di notte');
+            Bitmap.draw(e, !!b.lit, Math.max(1, Math.min(3, Math.floor(avail() / Bitmap.W))));
+            box.appendChild(e);
+          } else {
+            addPre(box, art(b.lit ? 'faro-on' : 'faro-off'), 38);
+          }
+        }
+      }
+      return box;
+    }
+
+    function render() {
+      var i, from = prefs.mode === 'pagina' ? turns.length - 1 : Math.max(0, turns.length - 20), st = PC.status();
+      while (out.firstChild) { out.removeChild(out.firstChild); }
+      for (i = from; i < turns.length; i++) { out.appendChild(renderTurn(turns[i])); }
+      out.scrollTop = prefs.mode === 'pagina' ? 0 : out.scrollHeight;
+      document.getElementById('st-room').textContent = st.room;
+      document.getElementById('st-moves').textContent = 'Mosse ' + st.moves;
+    }
+
+    function setPending(verb) {
+      var chips = document.getElementById('chips-verb').getElementsByTagName('button'), i;
+      pending = verb;
+      for (i = 0; i < chips.length; i++) { chips[i].className = chips[i].getAttribute('data-verb') === verb ? 'chip on' : 'chip'; }
+      input.value = verb ? verb + ' ' : '';
+      input.placeholder = verb ? 'tocca una parola sottolineata' : 'scrivi un comando, poi Invio';
+    }
+
+    function run(cmd) {
+      cmd = String(cmd).replace(/^\s+|\s+$/g, '');
+      if (!cmd) { return; }
+      turns.push({ cmd: cmd, blocks: PC.exec(cmd) });
+      if (turns.length > 40) { turns.shift(); }
+      setPending(null);
+      render();
+    }
+
+    function tapWord(w) {
+      if (PC.isDir(w)) { run(w); }
+      else if (pending) { run(pending + ' ' + w); }
+      else { run('esamina ' + w); }
+    }
+
+    out.onclick = function (ev) {
+      var t = ev.target;
+      if (t && t.className === 'kw') { tapWord(t.getAttribute('data-kw')); }
+    };
+    out.onkeydown = function (ev) {
+      var t = ev.target;
+      if (t && t.className === 'kw' && (ev.keyCode === 13 || ev.keyCode === 32)) { ev.preventDefault(); tapWord(t.getAttribute('data-kw')); }
+    };
+
+    function chipClick(ev) {
+      var t = ev.target, cmd = t.getAttribute && t.getAttribute('data-cmd'), verb = t.getAttribute && t.getAttribute('data-verb');
+      if (cmd) { run(cmd); }
+      else if (verb) { setPending(pending === verb ? null : verb); }
+    }
+    document.getElementById('chips-dir').onclick = chipClick;
+    document.getElementById('chips-verb').onclick = chipClick;
+
+    document.getElementById('cmd-form').onsubmit = function (ev) { ev.preventDefault(); run(input.value); };
+
+    function setPref(key, val) {
+      prefs[key] = val;
+      try { localStorage.setItem('puntacieca.prefs', JSON.stringify(prefs)); } catch (e) { /* non indispensabile */ }
+      syncSwitches(); render();
+    }
+    function syncSwitches() {
+      var pairs = [['mode-pagina', prefs.mode === 'pagina'], ['mode-rullo', prefs.mode === 'rullo'], ['img-ascii', prefs.img === 'ascii'], ['img-bitmap', prefs.img === 'bitmap']], i;
+      for (i = 0; i < pairs.length; i++) { document.getElementById(pairs[i][0]).setAttribute('aria-pressed', pairs[i][1] ? 'true' : 'false'); }
+    }
+    document.getElementById('mode-pagina').onclick = function () { setPref('mode', 'pagina'); };
+    document.getElementById('mode-rullo').onclick = function () { setPref('mode', 'rullo'); };
+    document.getElementById('img-ascii').onclick = function () { setPref('img', 'ascii'); };
+    document.getElementById('img-bitmap').onclick = function () { setPref('img', 'bitmap'); };
+
+    var resizeTimer = null;
+    window.onresize = function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 200); };
+
+    turns.push({ cmd: null, blocks: PC.start() });
+    syncSwitches();
+    render();
+    /* i font web arrivano dopo: una sola ridisegnata quando sono pronti */
+    window.onload = function () { render(); };
+  })();
+}
+</script>
+</body>
+</html>
