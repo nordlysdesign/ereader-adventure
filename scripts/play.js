@@ -81,12 +81,15 @@ Object.keys(SC).forEach(function (id) {
       if (f === 1) { for (i = 0; i < g.d.length; i++) if (g.d[i] !== g0.d[i]) diff++; }
     }
     console.log('scena ' + id + ': fotogrammi=' + sc.n + ' punti non validi=' + bad + ' nero=' + Math.round(100 * black / g0.d.length) + '% cambiano tra f0 e f1=' + diff);
-    if (bad || !diff) fails++;
+    if (bad || (sc.n > 1 && !diff)) fails++;
   } catch (e) { fails++; console.log('scena ' + id + ': ERRORE ' + e.message); }
 });
 // ogni tavola chiamata dalla storia deve esistere
 var eng = fs.readFileSync(dir + '/engine.js', 'utf8'), re = /IMG\(([^,]+),/g, m, ids = {};
 while ((m = re.exec(eng))) { (m[1].match(/"([^"]+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; }); }
+var pic = /var PIC = \{([\s\S]*?)\};/.exec(eng)[1], pk = /(\w+):/g;
+while ((m = pk.exec(pic))) { ids['o_' + m[1]] = 1; }
+delete ids['o_'];
 Object.keys(ids).forEach(function (id) { if (!SC[id] && !/^tx$/.test(id)) { fails++; console.log('tavola mancante: ' + id); } });
 console.log('tavole chiamate dalla storia: ' + Object.keys(ids).length);
 var gm = new ctx.Pix.Gfx(240, 150); ctx.Pix.drawMap(gm, { visited: { molo: 1, piazza: 1 }, room: 'piazza', cala: 0 });

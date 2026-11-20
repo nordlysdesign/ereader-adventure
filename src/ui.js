@@ -59,7 +59,7 @@ if (typeof document !== "undefined") {
           for (j = 0; j < parts.length; j++) { e.appendChild(el("p", "", parts[j])); }
           box.appendChild(e);
         } else if (b.t === "img") {
-          box.appendChild(figure(canCanvas ? Pix.make(b.id, Math.min(avail(), 480)) : null, b.cap));
+          box.appendChild(figure(canCanvas ? Pix.make(b.id, Math.min(avail(), Pix.scenes[b.id].w > 120 ? 480 : 240)) : null, b.cap));
         } else if (b.t === "map") {
           box.appendChild(figure(canCanvas ? Pix.makeMap(b, Math.min(avail(), 480)) : null, b.cap));
         } else if (b.t === "code") {

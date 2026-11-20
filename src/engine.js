@@ -454,6 +454,36 @@ var PC = (function () {
     return [P("Non gli interessa.")];
   }
 
+  /* ---------- immagini degli oggetti: si vedono la prima volta che li esamini ---------- */
+  var seenPic = {};
+  var PIC = { tesserino: "Tesserino", sigarette: "Nazionali e accendino", chiave: "La chiave della 7", gettone: "Un gettone", pistola: "Beretta 34",
+    foto: "Fotografia in cornice", mazzo: "Le chiavi di Zanon", quaderno: "Il quaderno nero", telefono: "Il telefono a gettoni", banco: "La licenza",
+    grappa: "Senza etichetta", giornale: "Listini di borsa", stufa: "Ghisa e lignite", stufaCenere: "Quello che non è bruciato", valigia: "La tua valigia",
+    finestraRetro: "Il retro della casa", letto: "Il letto della 7", lampione: "Il lampione", acqua: "Sotto le assi", manifesto: "VOTATE",
+    fascicolo: "Il fascicolo Zanon", polsi: "La seconda fotografia", armadietto: "L'armadietto", sigilli: "I sigilli", muretto: "Il muretto",
+    porta: "La porta del faro", scrivania: "Sotto il piano", registro: "Il registro dei fari", leva: "Il quadro", levaM: "Il quadro, su MANUALE",
+    sportello: "Lo sportello", sportelloAperto: "Lo sportello, aperto", sportelloVuoto: "Lo sportello, vuoto", macchina: "L'Aprilia di Brandi", barca: "Una lanterna al largo",
+    nives: "Nives Bressan", kessel: "Kessel", lodi: "Il brigadiere Lodi", brandi: "Il capitano Brandi", uomini: "Gli uomini di Brandi" };
+  function picFor(id) {
+    var r = S.room, f = S.f;
+    if (id === "stufa") { return r === "casa" ? "stufaCenere" : "stufa"; }
+    if (id === "finestra") { return r === "strada" && f.retro ? "finestraRetro" : null; }
+    if (id === "letto") { return r === "camera" ? "letto" : null; }
+    if (id === "acqua") { return r === "molo" ? "acqua" : null; }
+    if (id === "porta") { return r === "faro" ? "porta" : "sigilli"; }
+    if (id === "polsi") { return f.fascicolo ? "polsi" : null; }
+    if (id === "leva") { return f.manuale ? "levaM" : "leva"; }
+    if (id === "sportello") { return !f.sportello ? "sportello" : (S.loc.quaderno === "sportello" ? "sportelloAperto" : "sportelloVuoto"); }
+    if (id === "faro" || id === "lente") { return null; }
+    return PIC[id] ? id : null;
+  }
+  function withPic(id, blocks) {
+    var k = picFor(id);
+    if (!k || seenPic[k] || (blocks.length && blocks[0].t === "img")) { return blocks; }
+    seenPic[k] = 1;
+    return [IMG("o_" + k, PIC[k])].concat(blocks);
+  }
+
   /* ---------- esame ---------- */
   function examine(id) {
     var r = S.room, c = S.ch, f = S.f;
@@ -535,12 +565,12 @@ var PC = (function () {
 
   function act(verb, id, id2) {
     var r = S.room, c = S.ch, f = S.f;
-    if (isNpc(id) && (verb === "esamina" || verb === "parla")) { return verb === "parla" ? talk(id) : (S.moves++, examine(id)); }
+    if (isNpc(id) && (verb === "esamina" || verb === "parla")) { return verb === "parla" ? talk(id) : (S.moves++, withPic(id, examine(id))); }
     switch (verb) {
-      case "esamina": S.moves++; return examine(id);
+      case "esamina": S.moves++; return withPic(id, examine(id));
       case "leggi":
         if (id === "quaderno") { S.moves++; return readBook(); }
-        if (id === "registro" || id === "fascicolo" || id === "manifesto" || id === "giornale" || id === "polsi" || id === "tesserino" || id === "foto") { S.moves++; return examine(id); }
+        if (id === "registro" || id === "fascicolo" || id === "manifesto" || id === "giornale" || id === "polsi" || id === "tesserino" || id === "foto") { S.moves++; return withPic(id, examine(id)); }
         return [P("Non c'è niente da leggere.")];
       case "prendi":
         if (id === "grappa") {
@@ -651,7 +681,7 @@ var PC = (function () {
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }
     if (verb === "salva") { save(); return [P("Il codice di questa partita:"), { t: "code", s: encode() }, NOTE("Scrivilo da qualche parte. Per riprendere, anche su un altro dispositivo: CARICA e il codice. Su questo dispositivo la partita si salva comunque da sola a ogni mossa.")]; }
-    if (verb === "ricomincia") { S = fresh(); save(); return [{ t: "restart" }]; }
+    if (verb === "ricomincia") { S = fresh(); seenPic = {}; save(); return [{ t: "restart" }]; }
     if (verb === "aspetta") { S.moves++; return done([P(night() ? "Aspetti. La luce passa, e ripassa. Non è lei che deve decidere." : "Aspetti. Il porto fa finta di non guardarti.")]); }
     if (verb === "inventario") {
       var inv = inventory(), names = [];

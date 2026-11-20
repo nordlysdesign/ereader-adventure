@@ -672,6 +672,36 @@ var PC = (function () {
     return [P("Non gli interessa.")];
   }
 
+  /* ---------- immagini degli oggetti: si vedono la prima volta che li esamini ---------- */
+  var seenPic = {};
+  var PIC = { tesserino: "Tesserino", sigarette: "Nazionali e accendino", chiave: "La chiave della 7", gettone: "Un gettone", pistola: "Beretta 34",
+    foto: "Fotografia in cornice", mazzo: "Le chiavi di Zanon", quaderno: "Il quaderno nero", telefono: "Il telefono a gettoni", banco: "La licenza",
+    grappa: "Senza etichetta", giornale: "Listini di borsa", stufa: "Ghisa e lignite", stufaCenere: "Quello che non è bruciato", valigia: "La tua valigia",
+    finestraRetro: "Il retro della casa", letto: "Il letto della 7", lampione: "Il lampione", acqua: "Sotto le assi", manifesto: "VOTATE",
+    fascicolo: "Il fascicolo Zanon", polsi: "La seconda fotografia", armadietto: "L'armadietto", sigilli: "I sigilli", muretto: "Il muretto",
+    porta: "La porta del faro", scrivania: "Sotto il piano", registro: "Il registro dei fari", leva: "Il quadro", levaM: "Il quadro, su MANUALE",
+    sportello: "Lo sportello", sportelloAperto: "Lo sportello, aperto", sportelloVuoto: "Lo sportello, vuoto", macchina: "L'Aprilia di Brandi", barca: "Una lanterna al largo",
+    nives: "Nives Bressan", kessel: "Kessel", lodi: "Il brigadiere Lodi", brandi: "Il capitano Brandi", uomini: "Gli uomini di Brandi" };
+  function picFor(id) {
+    var r = S.room, f = S.f;
+    if (id === "stufa") { return r === "casa" ? "stufaCenere" : "stufa"; }
+    if (id === "finestra") { return r === "strada" && f.retro ? "finestraRetro" : null; }
+    if (id === "letto") { return r === "camera" ? "letto" : null; }
+    if (id === "acqua") { return r === "molo" ? "acqua" : null; }
+    if (id === "porta") { return r === "faro" ? "porta" : "sigilli"; }
+    if (id === "polsi") { return f.fascicolo ? "polsi" : null; }
+    if (id === "leva") { return f.manuale ? "levaM" : "leva"; }
+    if (id === "sportello") { return !f.sportello ? "sportello" : (S.loc.quaderno === "sportello" ? "sportelloAperto" : "sportelloVuoto"); }
+    if (id === "faro" || id === "lente") { return null; }
+    return PIC[id] ? id : null;
+  }
+  function withPic(id, blocks) {
+    var k = picFor(id);
+    if (!k || seenPic[k] || (blocks.length && blocks[0].t === "img")) { return blocks; }
+    seenPic[k] = 1;
+    return [IMG("o_" + k, PIC[k])].concat(blocks);
+  }
+
   /* ---------- esame ---------- */
   function examine(id) {
     var r = S.room, c = S.ch, f = S.f;
@@ -753,12 +783,12 @@ var PC = (function () {
 
   function act(verb, id, id2) {
     var r = S.room, c = S.ch, f = S.f;
-    if (isNpc(id) && (verb === "esamina" || verb === "parla")) { return verb === "parla" ? talk(id) : (S.moves++, examine(id)); }
+    if (isNpc(id) && (verb === "esamina" || verb === "parla")) { return verb === "parla" ? talk(id) : (S.moves++, withPic(id, examine(id))); }
     switch (verb) {
-      case "esamina": S.moves++; return examine(id);
+      case "esamina": S.moves++; return withPic(id, examine(id));
       case "leggi":
         if (id === "quaderno") { S.moves++; return readBook(); }
-        if (id === "registro" || id === "fascicolo" || id === "manifesto" || id === "giornale" || id === "polsi" || id === "tesserino" || id === "foto") { S.moves++; return examine(id); }
+        if (id === "registro" || id === "fascicolo" || id === "manifesto" || id === "giornale" || id === "polsi" || id === "tesserino" || id === "foto") { S.moves++; return withPic(id, examine(id)); }
         return [P("Non c'è niente da leggere.")];
       case "prendi":
         if (id === "grappa") {
@@ -869,7 +899,7 @@ var PC = (function () {
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }
     if (verb === "salva") { save(); return [P("Il codice di questa partita:"), { t: "code", s: encode() }, NOTE("Scrivilo da qualche parte. Per riprendere, anche su un altro dispositivo: CARICA e il codice. Su questo dispositivo la partita si salva comunque da sola a ogni mossa.")]; }
-    if (verb === "ricomincia") { S = fresh(); save(); return [{ t: "restart" }]; }
+    if (verb === "ricomincia") { S = fresh(); seenPic = {}; save(); return [{ t: "restart" }]; }
     if (verb === "aspetta") { S.moves++; return done([P(night() ? "Aspetti. La luce passa, e ripassa. Non è lei che deve decidere." : "Aspetti. Il porto fa finta di non guardarti.")]); }
     if (verb === "inventario") {
       var inv = inventory(), names = [];
@@ -1935,6 +1965,305 @@ var Pix = (function () {
     man(g, 132, 116, 38, { coat: 11, key: 0, f: f });
   }
 
+  /* ================= OGGETTI: tavolette 120x75 con il cartellino ================= */
+  var OW = 120, OH = 75, NREP = 0;
+  function plate(label, bg, draw) {
+    var n = ++NREP, num = (n < 10 ? "0" : "") + n;
+    return function (g, f) {
+      g.rect(0, 0, 119, 74, bg === undefined ? 2 : bg);
+      draw(g, f);
+      g.c = null; g.rect(0, 66, 119, 74, 16); g.text(3, 68, "N." + num + " " + label, 0, 1); g.frame(0, 0, 119, 74, 16);
+    };
+  }
+  /* testo inciso: un filo chiaro sotto, il segno scuro sopra */
+  function carve(g, x, y, s, sc) { g.text(x + 1, y + 1, s, 0, sc); g.text(x, y, s, 16, sc); }
+  function shadow(g, x0, x1, y) { g.hline(x0 + 2, x1 + 2, y, 12); g.hline(x0 + 3, x1 + 3, y + 1, 6); }
+
+  var OBJ = {};
+  OBJ.tesserino = plate("TESSERINO", 3, function (g) {
+    g.rect(24, 13, 100, 59, 13); g.rect(22, 11, 98, 57, 0); g.frame(22, 11, 98, 57, 16);
+    g.rect(22, 11, 98, 19, 16); g.text(26, 13, "SERVIZIO FARI", 0, 1);
+    g.rect(27, 24, 45, 50, 4); g.frame(27, 24, 45, 50, 16); g.ell(36, 33, 5, 6, 16); g.poly([[28, 50], [30, 42], [36, 40], [42, 42], [44, 50]], 16); g.hline(34, 38, 34, 0);
+    g.text(50, 24, "CORVI ADA", 16, 1); g.text(50, 32, "ISPETTRICE", 16, 1); g.hline(50, 92, 40, 9); g.hline(50, 84, 44, 9);
+    g.ring(82, 48, 8, 6, 16); g.ring(82, 48, 6, 4, 16); g.text(77, 46, "SFS", 16, 1);
+  });
+  OBJ.sigarette = plate("NAZIONALI", 3, function (g) {
+    g.rect(22, 18, 60, 60, 13); g.maskOn(); g.rect(20, 16, 58, 58, 0); g.keyline(16);
+    g.rect(20, 30, 58, 40, 16); g.text(22, 33, "NAZIONALI", 0, 1); g.hline(20, 58, 22, 9);
+    for (var i = 0; i < 3; i++) { g.maskOn(); g.rect(25 + i * 7, 8 + (i % 2) * 3, 29 + i * 7, 16, 0); g.keyline(16); g.hline(25 + i * 7, 29 + i * 7, 9 + (i % 2) * 3, 6); }
+    g.rect(74, 28, 94, 60, 13); g.maskOn(); g.rect(72, 26, 92, 58, 6); g.rect(72, 19, 92, 25, 9); g.keyline(16);
+    g.hline(72, 92, 25, 16); g.vline(75, 27, 57, 0); g.rect(76, 12, 84, 19, 0); g.frame(76, 12, 84, 19, 16); g.px(78, 15, 16); g.px(81, 15, 16); g.px(78, 17, 16); g.px(81, 17, 16);
+    g.ell(88, 15, 3, 3, 12); g.ring(88, 15, 3, 3, 16);
+  });
+  OBJ.chiave = plate("CHIAVE CAMERA 7", 3, function (g) {
+    shadow(g, 20, 96, 46);
+    g.maskOn(); g.ell(32, 32, 13, 13, 6); g.rect(44, 29, 96, 35, 6); g.rect(80, 35, 85, 46, 6); g.rect(89, 35, 93, 42, 6); g.rect(46, 26, 50, 38, 6); g.keyline(16);
+    g.ell(32, 32, 5, 5, 3); g.ring(32, 32, 5, 5, 16); g.ring(32, 32, 10, 10, 9); g.hline(46, 94, 30, 0); g.hline(46, 94, 34, 12);
+    g.text(25, 25, "7", 16, 1); g.text(26, 26, "7", 0, 1); g.text(25, 25, "7", 16, 1);
+  });
+  OBJ.gettone = plate("GETTONE TELEFONICO", 3, function (g) {
+    g.ell(62, 36, 24, 24, 13); g.ell(60, 33, 24, 24, 6); g.ring(60, 33, 24, 24, 16); g.ring(60, 33, 21, 21, 9);
+    g.rect(50, 16, 52, 50, 16); g.rect(68, 16, 70, 50, 16); g.vline(53, 16, 50, 0); g.vline(71, 16, 50, 0);
+    g.arc(60, 33, 17, 17, -2.6, -0.5, 0);
+  });
+  OBJ.pistola = plate("BERETTA MOD. 34", 3, function (g) {
+    shadow(g, 22, 94, 60);
+    g.maskOn();
+    g.poly([[20, 20], [94, 20], [96, 23], [96, 30], [20, 30]], 16);
+    g.poly([[26, 30], [66, 30], [66, 34], [56, 36], [50, 60], [34, 60], [36, 36], [26, 34]], 16);
+    g.keyline(0);
+    g.hline(22, 94, 21, 0); g.px(95, 25, 0); for (var x = 24; x < 34; x += 2) { g.vline(x, 22, 28, 0); }
+    g.rect(37, 38, 49, 57, "d"); g.frame(37, 38, 49, 57, 0); g.ell(43, 47, 2, 2, 0);
+    g.arc(60, 38, 7, 6, 0, PI, 16); g.arc(60, 38, 8, 7, 0, PI, 0); g.line(59, 34, 57, 40, 0);
+    g.px(19, 22, 16); g.px(18, 23, 16); g.text(60, 23, "PB", 0, 1);
+  });
+  OBJ.foto = plate("FOTOGRAFIA IN CORNICE", 4, function (g) {
+    g.rect(22, 3, 98, 64, 16); g.rect(25, 6, 95, 61, 9); g.frame(22, 3, 98, 64, 0);
+    g.rect(29, 10, 91, 57, 0);
+    g.rect(32, 13, 88, 47, 3); g.rect(32, 40, 88, 47, 6);
+    for (var y = 15; y <= 40; y++) { var hh = 3 + (y - 15) * 0.08; g.hline(78 - hh, 78 + hh, y, Math.floor((y - 15) / 5) % 2 ? 16 : 0); } g.rect(75, 12, 81, 15, 16);
+    g.maskOn(); g.ell(48, 21, 3, 4, 16); g.poly([[44, 25], [52, 25], [53, 40], [50, 46], [46, 46], [43, 40]], 16); g.keyline(0); g.hline(46, 50, 20, 0);
+    g.maskOn(); g.ell(60, 23, 3, 4, 16); g.poly([[57, 27], [63, 27], [64, 34], [68, 46], [52, 46], [56, 34]], 12); g.ell(60, 19, 4, 2, 16); g.keyline(0); g.px(59, 24, 0); g.px(61, 24, 0);
+    g.line(33, 51, 50, 51, 9); g.line(52, 51, 70, 52, 9); g.line(33, 54, 46, 54, 9);
+  });
+  OBJ.mazzo = plate("LE CHIAVI DI ZANON", 3, function (g) {
+    g.ring(30, 18, 9, 9, 16); g.ring(30, 18, 8, 8, 16); g.ring(30, 18, 10, 10, 0);
+    g.maskOn(); g.ell(40, 26, 6, 6, 13); g.line(44, 30, 92, 56, 13, 1); g.line(45, 31, 92, 57, 13, 1); g.rect(84, 52, 90, 62, 13); g.rect(78, 50, 82, 58, 13); g.keyline(0);
+    g.ell(40, 26, 2, 2, 2);
+    g.maskOn(); g.ell(30, 32, 4, 4, 6); g.rect(29, 35, 31, 52, 6); g.rect(31, 46, 34, 50, 6); g.keyline(16);
+    g.maskOn(); g.ell(22, 30, 4, 4, 10); g.line(20, 33, 12, 50, 10, 1); g.rect(10, 46, 14, 50, 10); g.keyline(0);
+    g.maskOn(); g.ell(36, 30, 3, 3, 4); g.line(37, 33, 50, 54, 4, 1); g.rect(48, 50, 53, 54, 4); g.keyline(16);
+  });
+  OBJ.quaderno = plate("IL QUADERNO NERO", 7, function (g) {
+    g.poly([[12, 8], [104, 4], [110, 60], [8, 63]], 3); g.pline([[12, 8], [104, 4], [110, 60], [8, 63], [12, 8]], 16);
+    for (var i = 0; i < 6; i++) { g.line(14 + i * 16, 8, 12 + i * 16, 62, 6); }
+    g.rect(40, 16, 86, 58, 12); g.maskOn(); g.rect(36, 12, 82, 54, 16); g.keyline(0);
+    g.vline(40, 12, 54, 12); g.vline(74, 12, 54, 9); g.rect(46, 20, 68, 28, 0); g.frame(46, 20, 68, 28, 16); g.hline(49, 65, 24, 9);
+    g.hline(37, 81, 55, 0); g.hline(38, 81, 56, 3);
+  });
+  OBJ.telefono = plate("TELEFONO A GETTONI", 4, function (g) {
+    g.rect(42, 8, 84, 62, 13); g.maskOn(); g.rect(38, 4, 80, 58, 16); g.keyline(0);
+    g.ell(59, 22, 11, 11, 13); g.ring(59, 22, 11, 11, 0); for (var i = 0; i < 10; i++) { g.ell(59 + 8 * Math.cos(i * 0.55 + 0.6), 22 + 8 * Math.sin(i * 0.55 + 0.6), 1, 1, 0); } g.ell(59, 22, 3, 3, 0);
+    g.rect(55, 40, 63, 42, 0); g.rect(42, 46, 76, 54, 0); g.text(45, 48, "GETTONE", 16, 1);
+    g.maskOn(); g.rect(30, 8, 35, 42, 16); g.ell(32, 8, 4, 3, 16); g.ell(32, 42, 4, 3, 16); g.keyline(0); g.rect(35, 14, 38, 16, 0);
+    g.line(32, 44, 30, 52, 16); g.line(30, 52, 36, 58, 16);
+    g.rect(88, 30, 108, 60, 0); g.frame(88, 30, 108, 60, 16); for (var y = 34; y < 58; y += 3) { g.hline(90, 106, y, 9); } g.line(98, 22, 98, 30, 16); g.px(98, 21, 16);
+  });
+  OBJ.banco = plate("LA LICENZA", 5, function (g) {
+    g.rect(22, 4, 98, 34, 16); g.rect(24, 6, 96, 32, 0); g.frame(25, 7, 95, 31, 9);
+    g.text(46, 9, "LICENZA", 16, 1); g.text(32, 17, "BRESSAN NIVES", 16, 1); g.text(28, 24, "MESCITA ALLOGGIO", 16, 1);
+    g.rect(0, 46, 119, 65, 10); g.rect(0, 42, 119, 46, 0); g.hline(0, 119, 41, 16); g.hline(0, 119, 47, 16);
+    g.arc(30, 44, 5, 2, 0, PI, 9); g.arc(86, 44, 4, 2, 0, PI, 9);
+    g.maskOn(); g.poly([[60, 30], [70, 30], [69, 42], [61, 42]], 0); g.keyline(16); g.rect(62, 36, 68, 41, 4);
+  });
+  OBJ.grappa = plate("SENZA ETICHETTA", 11, function (g) {
+    g.maskOn(); g.rect(42, 22, 62, 60, 3); g.rect(48, 8, 56, 22, 3); g.poly([[42, 22], [48, 16], [56, 16], [62, 22]], 3); g.keyline(16);
+    g.rect(48, 3, 56, 8, 14); g.rect(43, 34, 61, 60, 6); g.vline(45, 24, 58, 0); g.vline(46, 24, 40, 0);
+    g.maskOn(); g.poly([[72, 40], [88, 40], [86, 60], [74, 60]], 0); g.keyline(16); g.rect(75, 50, 85, 59, 5); g.vline(74, 42, 58, 16);
+    g.rect(30, 61, 100, 65, 13);
+  });
+  OBJ.giornale = plate("LISTINI DI BORSA", 12, function (g) {
+    g.maskOn(); g.poly([[18, 6], [100, 4], [102, 62], [16, 63]], 0); g.keyline(16);
+    g.text(24, 8, "SKRZYDLA", 16, 2); g.hline(20, 98, 19, 16); g.hline(20, 98, 21, 16);
+    for (var c = 0; c < 3; c++) { for (var y = 25; y < 60; y += 3) { g.hline(22 + c * 26, 40 + c * 26 - (y % 9 === 1 ? 6 : 0), y, 9); } }
+    g.rect(48, 28, 66, 40, 16); for (var i = 0; i < 4; i++) { g.text(49, 29 + 0, "", 0, 1); } g.text(49, 30, "142", 0, 1); g.text(49, 36, "-7", 0, 1);
+    g.vline(59, 5, 62, 6);
+  });
+  OBJ.stufa = plate("GHISA E LIGNITE", 4, function (g, f) {
+    g.maskOn(); g.rect(40, 20, 80, 58, 16); g.rect(54, 0, 62, 20, 16); g.rect(36, 18, 84, 21, 16); g.keyline(0);
+    g.rect(48, 30, 72, 48, 6); g.frame(48, 30, 72, 48, 0); for (var y = 32; y < 48; y += 3) { g.hline(49, 71, y, 16); }
+    g.rect(42, 59, 46, 64, 16); g.rect(74, 59, 78, 64, 16); g.hline(54, 62, 8, 0);
+    g.rect(0, 62, 119, 65, 9); g.ring(90, 30, 3, 3, 9); g.ring(94, 22, 4, 4, 6);
+  });
+  OBJ.stufaCenere = plate("CARTA BRUCIATA", 14, function (g) {
+    for (var i = 0; i < 40; i++) { g.px(4 + h1(i) * 112, 4 + h1(i + 40) * 60, 0); }
+    g.maskOn(); g.poly([[20, 10], [92, 6], [96, 20], [88, 26], [98, 38], [84, 48], [90, 60], [62, 56], [50, 62], [36, 54], [22, 58], [26, 40], [16, 28]], 1); g.keyline(12);
+    g.text(30, 14, "B.", 16, 2); g.text(30, 34, "K.", 16, 2);
+    g.text(52, 14, "1200", 16, 1); g.text(52, 21, " 850", 16, 1); g.text(52, 28, "3400", 16, 1); g.text(52, 37, " 600", 16, 1); g.text(52, 44, "1100", 16, 1);
+    g.hline(50, 70, 50, 16);
+    g.pline([[84, 48], [90, 60], [62, 56], [50, 62]], 16); g.pline([[92, 6], [96, 20], [88, 26], [98, 38], [84, 48]], 16);
+  });
+  OBJ.valigia = plate("LA TUA VALIGIA", 5, function (g) {
+    g.maskOn(); g.poly([[14, 30], [104, 30], [96, 4], [22, 4]], 12); g.keyline(16); g.poly([[20, 28], [98, 28], [92, 8], [26, 8]], 3);
+    g.maskOn(); g.rect(10, 32, 108, 62, 13); g.keyline(16);
+    g.rect(14, 34, 104, 52, 2); g.maskOn(); g.poly([[18, 36], [60, 36], [62, 48], [16, 50]], 0); g.keyline(16); g.hline(20, 58, 41, 9);
+    g.maskOn(); g.poly([[64, 36], [100, 36], [100, 50], [66, 50]], 9); g.keyline(16);
+    g.poly([[70, 44], [100, 40], [102, 52], [72, 54]], 16);
+    g.rect(30, 30, 34, 34, 0); g.rect(84, 30, 88, 34, 0);
+  });
+  OBJ.finestraRetro = plate("IL RETRO DELLA CASA", "stone", function (g) {
+    g.rect(40, 10, 80, 54, 16); g.frame(38, 8, 82, 56, 0); g.frame(37, 7, 83, 57, 16);
+    g.maskOn(); g.poly([[80, 10], [100, 4], [100, 60], [80, 54]], 6); g.keyline(16); for (var y = 10; y < 58; y += 4) { g.line(81, y + 1, 99, y - 3 + (y - 10) * 0.12, 16); }
+    g.maskOn(); g.rect(40, 10, 58, 54, 9); g.keyline(16); for (y = 14; y < 54; y += 4) { g.hline(41, 57, y, 16); }
+    g.line(82, 30, 88, 26, 0, 1); g.line(88, 26, 86, 22, 0); g.rect(34, 57, 86, 60, 0); g.frame(34, 57, 86, 60, 16);
+  });
+  OBJ.letto = plate("IL LETTO DELLA 7", 4, function (g) {
+    g.rect(14, 6, 16, 64, 16); g.hline(14, 46, 8, 16); g.hline(14, 46, 12, 16); for (var x = 20; x <= 44; x += 6) { g.vline(x, 12, 40, 16); g.ell(x, 26, 1, 2, 16); } g.rect(44, 6, 46, 40, 16);
+    g.maskOn(); g.poly([[14, 38], [116, 34], [116, 56], [14, 60]], 0); g.keyline(16);
+    g.maskOn(); g.ell(30, 38, 13, 5, 0); g.keyline(16);
+    g.poly([[50, 40], [116, 36], [116, 56], [50, 58]], "h3"); g.line(70, 40, 74, 57, 16); g.line(92, 38, 96, 56, 16);
+    g.ell(60, 47, 6, 2, 3); g.ell(84, 45, 8, 2, 3);
+  });
+  OBJ.lampione = plate("IL LAMPIONE", 16, function (g) {
+    g.poly([[52, 16], [68, 16], [96, 64], [24, 64]], 6); g.poly([[55, 16], [65, 16], [80, 64], [40, 64]], 3);
+    g.rect(58, 18, 61, 64, 16); g.vline(58, 18, 64, 0);
+    g.poly([[50, 10], [70, 10], [66, 18], [54, 18]], 16); g.pline([[50, 10], [70, 10], [66, 18], [54, 18], [50, 10]], 0); g.rect(56, 11, 64, 16, 0); g.poly([[54, 10], [60, 4], [66, 10]], 16); g.pline([[54, 10], [60, 4], [66, 10]], 0);
+    for (var i = 0; i < 30; i++) { var x = 30 + h1(i) * 62, y = 18 + h1(i + 33) * 40; g.line(x, y, x - 1, y + 3, 16); }
+    for (i = 0; i < 18; i++) { x = h1(i + 9) * 118; y = 4 + h1(i + 61) * 58; if (x < 24 || x > 96) { g.line(x, y, x - 1, y + 3, 0); } }
+  });
+  OBJ.acqua = plate("SOTTO LE ASSI", 16, function (g, f) {
+    g.rect(0, 0, 119, 12, 6); for (var x = 0; x < 120; x += 12) { g.vline(x, 0, 12, 16); } g.hline(0, 119, 12, 16); g.hline(0, 119, 13, 0);
+    for (var i = 0; i < 4; i++) { x = 12 + i * 30; g.rect(x, 14, x + 6, 64, 12); g.vline(x, 14, 64, 0); for (var y = 40; y < 64; y += 3) { g.px(x + 3, y, 0); } }
+    for (y = 36; y < 66; y += 4) { for (x = (y * 7) % 11; x < 120; x += 14) { g.hline(x, x + 4, y, 0); } }
+    g.hline(0, 119, 34, 9);
+  });
+  OBJ.manifesto = plate("VOTATE", 9, function (g) {
+    g.maskOn(); g.poly([[28, 4], [92, 4], [92, 52], [86, 56], [80, 50], [72, 58], [62, 52], [52, 60], [40, 54], [28, 58]], 0); g.keyline(16);
+    g.text(36, 8, "VOTATE", 16, 2); g.rect(30, 20, 90, 34, 3); g.rect(34, 24, 86, 30, 5);
+    g.rect(40, 36, 82, 50, 0); g.frame(40, 36, 82, 50, 16); g.text(42, 38, "COPRIFUOCO", 16, 1); g.hline(43, 79, 44, 9); g.hline(43, 72, 47, 9);
+    g.poly([[92, 4], [92, 14], [84, 4]], 9); g.pline([[84, 4], [90, 12], [92, 14]], 16);
+  });
+  OBJ.fascicolo = plate("FASCICOLO ZANON", 10, function (g) {
+    g.maskOn(); g.poly([[10, 10], [104, 6], [108, 62], [12, 64]], 4); g.keyline(16); g.text(70, 54, "PS", 16, 1);
+    g.maskOn(); g.poly([[24, 12], [74, 10], [76, 60], [26, 62]], 0); g.keyline(16);
+    g.maskOn(); g.poly([[20, 8], [70, 6], [72, 56], [22, 58]], 0); g.keyline(16);
+    g.text(30, 11, "VERBALE", 16, 1); for (var y = 20; y < 52; y += 3) { g.hline(26, 64 - (y % 6), y, 9); }
+    g.text(28, 44, "ORE 2.10", 16, 1);
+    for (var i = 0; i < 3; i++) { g.maskOn(); g.rect(80 + i * 3, 14 + i * 12, 100 + i * 2, 26 + i * 12, 13); g.keyline(0); }
+    g.line(24, 4, 24, 14, 16, 1); g.ring(24, 10, 2, 5, 16);
+  });
+  OBJ.polsi = plate("LA SECONDA FOTOGRAFIA", 3, function (g) {
+    g.rect(20, 6, 100, 62, 0); g.frame(20, 6, 100, 62, 16); g.rect(24, 10, 96, 52, 14);
+    g.poly([[24, 34], [70, 26], [96, 28], [96, 40], [70, 40], [24, 46]], 5);
+    g.poly([[70, 26], [84, 22], [96, 24], [96, 28]], 7);
+    g.line(54, 29, 56, 43, 16); g.line(58, 28, 60, 42, 16); g.line(55, 29, 57, 43, 12); g.line(59, 28, 61, 42, 12);
+    g.text(26, 55, "2", 16, 1); g.line(32, 57, 60, 56, 9);
+  });
+  OBJ.armadietto = plate("ARMADIETTO", 9, function (g) {
+    g.maskOn(); g.rect(24, 2, 96, 64, 3); g.keyline(16); g.frame(24, 2, 96, 64, 16); g.vline(60, 2, 64, 16);
+    for (var y = 8; y < 22; y += 3) { g.hline(30, 54, y, 16); g.hline(66, 90, y, 16); }
+    g.text(34, 26, "RISERVATO", 16, 1);
+    g.rect(52, 34, 56, 48, 16); g.rect(64, 34, 68, 48, 16);
+    g.maskOn(); g.rect(54, 46, 66, 58, 12); g.keyline(16); g.arc(60, 46, 4, 6, PI, 2 * PI, 16); g.arc(60, 46, 5, 7, PI, 2 * PI, 16); g.rect(59, 50, 61, 54, 0);
+  });
+  OBJ.sigilli = plate("I SIGILLI", "v3", function (g) {
+    g.rect(0, 0, 119, 65, "v3"); g.rect(10, 0, 110, 65, 13); for (var x = 12; x < 110; x += 6) { g.vline(x, 0, 65, 16); }
+    g.maskOn(); g.poly([[16, 4], [26, 4], [104, 62], [94, 62]], 0); g.poly([[94, 4], [104, 4], [26, 62], [16, 62]], 0); g.keyline(16);
+    g.maskOn(); g.ell(60, 33, 11, 11, 0); g.keyline(16); g.ring(60, 33, 9, 9, 16); g.ring(60, 33, 7, 7, 9); g.text(54, 31, "PS", 16, 1);
+    g.text(26, 14, "POLIZIA", 9, 1);
+  });
+  OBJ.muretto = plate("IL MURETTO", 2, function (g) {
+    g.rect(0, 22, 119, 65, 7); for (var y = 25; y < 50; y += 4) { for (var x = (y * 5) % 13; x < 120; x += 16) { g.hline(x, x + 3, y, 0); } } g.hline(0, 119, 22, 9);
+    var i, r, x0, n;
+    for (r = 0; r < 3; r++) {
+      for (i = 0; i < 9; i++) {
+        x0 = i * 14 + (r % 2) * 7 - 4; n = 46 + r * 7;
+        if (x0 > 44 && x0 < 72 && r < 2) { continue; }
+        g.maskOn(); g.ell(x0 + 6, n, 7, 4, [0, 4, 3, 6][(i + r) % 4]); g.keyline(16);
+      }
+    }
+    g.maskOn(); g.ell(58, 58, 5, 3, 4); g.ell(66, 61, 4, 2, 0); g.keyline(16);
+  });
+  OBJ.porta = plate("LA PORTA DEL FARO", "stone", function (g) {
+    g.maskOn(); g.rect(30, 4, 90, 65, 13); g.ell(60, 4, 30, 6, 13); g.keyline(0); g.frame(30, 4, 90, 65, 16);
+    for (var y = 8; y < 64; y += 8) { for (var x = 34; x < 88; x += 8) { g.px(x, y, 0); } } g.hline(30, 89, 22, 16); g.hline(30, 89, 46, 16);
+    g.maskOn(); g.rect(72, 28, 82, 42, 4); g.keyline(16); g.ell(77, 33, 2, 2, 16); g.rect(76, 33, 78, 38, 16);
+    for (var i = 0; i < 6; i++) { g.line(38 + i * 9, 24, 36 + i * 9, 30 + (i % 3) * 3, 9); }
+  });
+  OBJ.scrivania = plate("SOTTO IL PIANO", 10, function (g) {
+    for (var y = 2; y < 64; y += 3) { g.hline(0, 119, y, Math.floor(y / 7) % 2 ? 16 : 12); }
+    g.rect(16, 18, 104, 50, 6); g.frame(16, 18, 104, 50, 16);
+    carve(g, 22, 22, "1-3  2-1", 2); carve(g, 22, 36, "2-2  3-1", 2);
+  });
+  OBJ.registro = plate("IL REGISTRO DEI FARI", 12, function (g) {
+    g.maskOn(); g.poly([[8, 8], [58, 10], [58, 62], [6, 60]], 0); g.poly([[62, 10], [112, 8], [114, 60], [62, 62]], 0); g.keyline(16); g.vline(60, 9, 62, 16);
+    g.text(14, 12, "REGISTRO", 16, 1); for (var y = 20; y < 58; y += 4) { g.hline(10, 56, y, 9); g.px(22, y - 1, 16); g.px(34, y - 2, 16); } g.vline(20, 18, 58, 9); g.vline(38, 18, 58, 9);
+    for (var i = 0; i < 3; i++) { g.rect(62 + i * 3, 10, 63 + i * 3, 62, i % 2 ? 0 : 3); g.vline(64 + i * 3, 10, 62, 16); }
+    for (y = 20; y < 58; y += 4) { g.hline(74, 110, y, 9); } g.text(76, 12, "NOV.", 16, 1);
+  });
+  function quadro(man) {
+    return function (g) {
+      g.rect(10, 4, 110, 62, 9); g.frame(10, 4, 110, 62, 16); g.frame(12, 6, 108, 60, 0);
+      g.rect(18, 12, 66, 22, 0); g.text(20, 15, "AUTOMATICO", 16, 1); g.rect(18, 44, 66, 54, 0); g.text(26, 47, "MANUALE", 16, 1);
+      g.ell(42, 33, 6, 6, 12); g.ring(42, 33, 6, 6, 0);
+      if (man) { g.line(42, 33, 42, 44, 16, 1); g.ell(42, 45, 3, 3, 16); } else { g.line(42, 33, 42, 22, 16, 1); g.ell(42, 21, 3, 3, 16); }
+      g.maskOn(); g.ell(88, 36, 11, 8, 4); g.keyline(16); g.ell(88, 34, 8, 5, 1); g.ring(88, 36, 11, 8, 16); g.text(78, 48, "TASTO", 0, 1);
+    };
+  }
+  OBJ.leva = plate("IL QUADRO", 3, quadro(false));
+  OBJ.levaM = plate("IL QUADRO", 3, quadro(true));
+  function sportello(st) {
+    return function (g) {
+      g.rect(0, 0, 119, 65, 11); for (var i = 0; i < 8; i++) { g.hline(0, 119, 4 + i * 2, i % 2 ? 9 : 4); }
+      g.rect(30, 22, 90, 62, 16); g.frame(28, 20, 92, 64, 0);
+      if (!st) {
+        g.rect(30, 22, 90, 62, 6); g.frame(30, 22, 90, 62, 16); g.maskOn(); g.rect(78, 38, 84, 46, 4); g.keyline(16); g.rect(80, 41, 82, 44, 16);
+        for (i = 34; i < 76; i += 8) { g.px(i, 26, 16); g.px(i, 58, 16); }
+      } else {
+        g.maskOn(); g.poly([[30, 22], [14, 16], [14, 64], [30, 62]], 6); g.keyline(16);
+        if (st === "pieno") { g.maskOn(); g.poly([[40, 42], [80, 38], [82, 58], [38, 60]], 9); g.keyline(0); g.line(46, 42, 74, 56, 6); g.line(42, 50, 70, 40, 6); }
+        else { g.hline(32, 88, 58, 9); }
+      }
+    };
+  }
+  OBJ.sportello = plate("LO SPORTELLO", 3, sportello(""));
+  OBJ.sportelloAperto = plate("LO SPORTELLO", 3, sportello("pieno"));
+  OBJ.sportelloVuoto = plate("LO SPORTELLO", 3, sportello("vuoto"));
+  OBJ.macchina = plate("APRILIA TARGA ROMA", 13, function (g) {
+    g.rect(0, 52, 119, 65, 12);
+    g.maskOn(); g.poly([[8, 46], [12, 34], [30, 30], [44, 16], [74, 14], [96, 26], [110, 32], [112, 46], [104, 50], [14, 50]], 16); g.keyline(0);
+    g.poly([[46, 19], [72, 17], [74, 28], [46, 29]], 6); g.poly([[76, 18], [92, 27], [76, 28]], 6); g.vline(74, 17, 29, 16);
+    g.ell(28, 50, 8, 8, 16); g.ring(28, 50, 8, 8, 0); g.ell(28, 50, 3, 3, 9); g.ell(94, 50, 8, 8, 16); g.ring(94, 50, 8, 8, 0); g.ell(94, 50, 3, 3, 9);
+    g.hline(14, 104, 38, 9); g.ell(12, 38, 3, 3, 4); g.rect(102, 40, 116, 46, 0); g.text(103, 41, "ROMA", 16, 1);
+  });
+  OBJ.barca = plate("UNA LANTERNA AL LARGO", 16, function (g) {
+    for (var i = 0; i < 20; i++) { g.px(h1(i) * 118, h1(i + 20) * 30, 0); }
+    g.hline(0, 119, 36, 9); for (var y = 40; y < 66; y += 3) { for (var x = (y * 3) % 17; x < 120; x += 18) { g.hline(x, x + 2 + (y - 40) / 6, y, 0); } }
+    g.poly([[52, 38], [72, 38], [68, 42], [56, 42]], 16); g.pline([[52, 38], [72, 38], [68, 42], [56, 42], [52, 38]], 9); g.vline(62, 28, 38, 9);
+    g.ell(66, 34, 2, 2, 0); g.ring(66, 34, 4, 4, 6); for (y = 44; y < 64; y += 2) { g.hline(65 - (y % 3), 67 + (y % 2), y, 0); }
+  });
+
+  /* ---------- ritratti a mezzo busto ---------- */
+  function bust(g, cx, cy, s, o) {
+    function X(a) { return Math.round(cx + a * s); }
+    function Y(b) { return Math.round(cy + b * s); }
+    var ct = o.coat === undefined ? 16 : o.coat;
+    g.maskOn();
+    g.poly([[X(-40), Y(60)], [X(-36), Y(34)], [X(-16), Y(24)], [X(16), Y(24)], [X(36), Y(34)], [X(40), Y(60)]], ct);
+    if (o.hair) { g.ell(X(0), Y(-2), Math.round(14 * s), Math.round(17 * s), 16); g.ell(X(9), Y(-14), Math.round(6 * s), Math.round(6 * s), 16); }
+    g.keyline(o.key === undefined ? 0 : o.key);
+    g.rect(X(-5), Y(12), X(5), Y(26), 0); g.hline(X(-5), X(5), Y(22), 9);
+    g.ell(X(0), Y(0), Math.round(11 * s), Math.round(14 * s), 0); g.ring(X(0), Y(0), Math.round(11 * s), Math.round(14 * s), 16);
+    if (o.hair) { g.poly([[X(-12), Y(-2)], [X(-10), Y(-12)], [X(0), Y(-15)], [X(10), Y(-12)], [X(12), Y(-2)], [X(6), Y(-9)], [X(-6), Y(-9)]], 16); }
+    g.hline(X(-6), X(-2), Y(-2), 16); g.hline(X(2), X(6), Y(-2), 16);
+    g.px(X(-4), Y(1), 16); g.px(X(4), Y(1), 16); g.px(X(-3), Y(1), 16); g.px(X(3), Y(1), 16);
+    g.vline(X(0), Y(1), Y(6), 9); g.px(X(1), Y(6), 16);
+    g.hline(X(-3), X(3), Y(9), 16);
+    if (o.tired) { g.px(X(-5), Y(3), 9); g.px(X(5), Y(3), 9); g.hline(X(-4), X(-2), Y(4), 9); g.hline(X(2), X(4), Y(4), 9); }
+    if (o.mous) { g.rect(X(-5), Y(7), X(5), Y(8), 16); g.px(X(-6), Y(9), 16); g.px(X(6), Y(9), 16); }
+    if (o.smirk) { g.px(X(4), Y(8), 16); }
+    if (o.glasses) { g.ring(X(-4), Y(1), Math.max(2, Math.round(3 * s)), Math.max(2, Math.round(3 * s)), 16); g.ring(X(4), Y(1), Math.max(2, Math.round(3 * s)), Math.max(2, Math.round(3 * s)), 16); g.hline(X(-1), X(1), Y(0), 16); }
+    if (o.hat === "fedora") { g.maskOn(); g.poly([[X(-10), Y(-10)], [X(10), Y(-10)], [X(9), Y(-24)], [X(-9), Y(-24)]], o.hatT || 16); g.ell(X(0), Y(-10), Math.round(20 * s), Math.round(3 * s), o.hatT || 16); g.keyline(0); g.hline(X(-9), X(9), Y(-14), o.hatT ? 16 : 0); }
+    if (o.hat === "kepi") { g.maskOn(); g.rect(X(-11), Y(-24), X(11), Y(-11), 16); g.poly([[X(-11), Y(-11)], [X(16), Y(-11)], [X(14), Y(-8)], [X(-11), Y(-8)]], 16); g.keyline(0); g.hline(X(-10), X(10), Y(-14), 0); g.ell(X(0), Y(-19), 2, 2, 0); }
+    if (o.cap) { g.maskOn(); g.ell(X(0), Y(-12), Math.round(13 * s), Math.round(5 * s), 16); g.poly([[X(-4), Y(-11)], [X(16), Y(-11)], [X(14), Y(-8)], [X(-4), Y(-8)]], 16); g.keyline(0); }
+    if (o.lapels) { g.line(X(-5), Y(24), X(-12), Y(60), o.lapels, 1); g.line(X(5), Y(24), X(12), Y(60), o.lapels, 1); g.poly([[X(-3), Y(24)], [X(3), Y(24)], [X(2), Y(50)], [X(-2), Y(50)]], o.tie || 9); }
+    if (o.collarUp) { g.poly([[X(-14), Y(24)], [X(-7), Y(8)], [X(-5), Y(26)]], ct); g.poly([[X(14), Y(24)], [X(7), Y(8)], [X(5), Y(26)]], ct); }
+    if (o.scarf) { g.poly([[X(-8), Y(22)], [X(8), Y(22)], [X(6), Y(28)], [X(-6), Y(28)]], o.scarf); g.poly([[X(2), Y(26)], [X(7), Y(26)], [X(9), Y(46)], [X(4), Y(46)]], o.scarf); }
+    if (o.shawl) { g.poly([[X(-36), Y(34)], [X(-16), Y(24)], [X(0), Y(40)], [X(16), Y(24)], [X(36), Y(34)], [X(30), Y(46)], [X(0), Y(56)], [X(-30), Y(46)]], o.shawl); }
+    if (o.smoke) { g.line(X(3), Y(9), X(14), Y(12), 0, 1); if (o.f % 2) { g.px(X(15), Y(12), 0); } smoke(g, X(15), Y(10), o.f, Math.round(26 * s)); }
+  }
+  OBJ.nives = plate("NIVES BRESSAN", 10, function (g) { bust(g, 60, 21, 1, { hair: 1, coat: 13, shawl: "d", tired: 1 }); });
+  OBJ.kessel = plate("KESSEL", 4, function (g) { bust(g, 60, 26, 1, { hat: "fedora", coat: 16, lapels: 0, tie: 6, glasses: 1, smoke: 1, f: 0 }); });
+  OBJ.lodi = plate("BRIGADIERE LODI", 6, function (g) { bust(g, 60, 26, 1, { hat: "kepi", coat: 16, mous: 1, tired: 1, lapels: 9, tie: 16 }); });
+  OBJ.brandi = plate("CAPITANO BRANDI", 12, function (g) { bust(g, 60, 26, 1, { hat: "fedora", hatT: 6, coat: 5, key: 16, scarf: 0, smirk: 1, lapels: 9, tie: 16 }); });
+  OBJ.uomini = plate("GLI UOMINI DI BRANDI", 13, function (g) {
+    bust(g, 36, 26, 0.8, { cap: 1, coat: 16, collarUp: 1 }); bust(g, 84, 24, 0.85, { cap: 1, coat: 15, collarUp: 1, smoke: 1, f: 1 });
+    g.ring(30, 56, 5, 3, 0); g.ring(30, 59, 5, 3, 0);
+  });
+  var OBJN = ["tesserino", "sigarette", "chiave", "gettone", "pistola", "foto", "mazzo", "quaderno", "telefono", "banco", "grappa", "giornale", "stufa", "stufaCenere",
+    "valigia", "finestraRetro", "letto", "lampione", "acqua", "manifesto", "fascicolo", "polsi", "armadietto", "sigilli", "muretto", "porta", "scrivania", "registro",
+    "leva", "levaM", "sportello", "sportelloAperto", "sportelloVuoto", "macchina", "barca", "nives", "kessel", "lodi", "brandi", "uomini"];
+
   var REG = "100000";
   var SC = {
     faro: { w: W, h: H, n: 6, draw: gulf(REG, false) },
@@ -1964,6 +2293,7 @@ var Pix = (function () {
     cala44: { w: W, h: H, n: 12, draw: cala("44") },
     ritratto: { w: 64, h: 80, n: 12, draw: ritratto }
   };
+  for (var oi = 0; oi < OBJN.length; oi++) { SC["o_" + OBJN[oi]] = { w: OW, h: OH, n: 1, draw: OBJ[OBJN[oi]] }; }
   function render(id, f) { var sc = SC[id], g = new Gfx(sc.w, sc.h); sc.draw(g, f % sc.n); g.c = null; return g; }
 
   /* ---------- dal disegno al canvas ---------- */
@@ -2077,7 +2407,7 @@ if (typeof document !== "undefined") {
           for (j = 0; j < parts.length; j++) { e.appendChild(el("p", "", parts[j])); }
           box.appendChild(e);
         } else if (b.t === "img") {
-          box.appendChild(figure(canCanvas ? Pix.make(b.id, Math.min(avail(), 480)) : null, b.cap));
+          box.appendChild(figure(canCanvas ? Pix.make(b.id, Math.min(avail(), Pix.scenes[b.id].w > 120 ? 480 : 240)) : null, b.cap));
         } else if (b.t === "map") {
           box.appendChild(figure(canCanvas ? Pix.makeMap(b, Math.min(avail(), 480)) : null, b.cap));
         } else if (b.t === "code") {
