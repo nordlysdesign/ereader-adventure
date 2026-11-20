@@ -699,33 +699,47 @@ var Pix = (function () {
   };
   function render(id, f) { var sc = SC[id], g = new Gfx(sc.w, sc.h); sc.draw(g, f % sc.n); g.c = null; return g; }
 
-  /* ---------- dal disegno al canvas: ogni fotogramma si calcola una volta ---------- */
-  var cache = {};
-  function toCanvas(g) {
-    var c = document.createElement("canvas"), ctx, img, d, i, k = 0, v;
-    c.width = g.w; c.height = g.h; ctx = c.getContext("2d"); img = ctx.createImageData(g.w, g.h); d = img.data;
-    for (i = 0; i < g.w * g.h; i++) { v = g.d[i]; d[k] = v ? 17 : 241; d[k + 1] = v ? 17 : 240; d[k + 2] = v ? 17 : 234; d[k + 3] = 255; k += 4; }
-    ctx.putImageData(img, 0, 0);
-    return c;
-  }
-  function frame(id, f) { var key = id + "/" + (f % SC[id].n); if (!cache[key]) { cache[key] = toCanvas(render(id, f)); } return cache[key]; }
-  function crisp(ctx) { ctx.imageSmoothingEnabled = false; ctx.webkitImageSmoothingEnabled = false; ctx.mozImageSmoothingEnabled = false; }
+  /* ---------- dal disegno al canvas ---------- */
   function sized(w, h, cssW) {
     var k = Math.max(1, Math.floor(cssW / w)), c = document.createElement("canvas");
     c.width = w * k; c.height = h * k;
     if (k === 1 && cssW > w * 1.2) { c.style.width = Math.floor(cssW) + "px"; }
     return c;
   }
+  /* Si ingrandisce a mano, punto per punto, e si scrive con putImageData: i browser vecchi
+     (Kindle) sbagliano drawImage da tela a tela quando c'è di mezzo un ingrandimento. */
+  var big = {}, mapN = 0;
+  function blit(c, ctx, key, g) {
+    var k = c.width / g.w, ck = key + "@" + k, img = big[ck], d, x, y, i, o, v, dx, dy, W2 = c.width;
+    if (!img) {
+      img = ctx.createImageData(c.width, c.height); d = img.data;
+      for (y = 0; y < g.h; y++) {
+        for (x = 0; x < g.w; x++) {
+          v = g.d[y * g.w + x];
+          for (dy = 0; dy < k; dy++) {
+            o = ((y * k + dy) * W2 + x * k) * 4;
+            for (dx = 0; dx < k; dx++) { i = o + dx * 4; d[i] = v ? 17 : 241; d[i + 1] = v ? 17 : 240; d[i + 2] = v ? 17 : 234; d[i + 3] = 255; }
+          }
+        }
+      }
+      big[ck] = img;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  var raw = {};
+  function grid(id, f) { var key = id + "/" + (f % SC[id].n); if (!raw[key]) { raw[key] = render(id, f); } return raw[key]; }
   function make(id, cssW) {
     var sc = SC[id], c = sized(sc.w, sc.h, cssW), ctx = c.getContext("2d");
-    c._paint = function (f) { crisp(ctx); ctx.drawImage(frame(id, f), 0, 0, c.width, c.height); };
+    c._paint = function (f) { blit(c, ctx, id + "/" + (f % sc.n), grid(id, f)); };
     c._paint(0);
     return c;
   }
   function makeMap(st, cssW) {
-    var g = new Gfx(W, H), here = drawMap(g, st), base = toCanvas(g), c = sized(W, H, cssW), ctx = c.getContext("2d"), k = c.width / W;
+    var g = new Gfx(W, H), here = drawMap(g, st), c = sized(W, H, cssW), ctx = c.getContext("2d"), k = c.width / W, key;
+    for (key in big) { if (key.indexOf("mappa") === 0) { delete big[key]; } }
+    key = "mappa" + (++mapN);
     c._paint = function (f) {
-      crisp(ctx); ctx.drawImage(base, 0, 0, c.width, c.height);
+      blit(c, ctx, key, g);
       if (PLACE[here]) { ctx.fillStyle = (f % 2) ? "#f1f0ea" : "#111111"; ctx.fillRect((PLACE[here][0] - 2) * k, (PLACE[here][1] - 2) * k, 5 * k, 5 * k); }
     };
     c._paint(0);

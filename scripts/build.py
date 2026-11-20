@@ -112,6 +112,11 @@ html = r"""<!DOCTYPE html>
 </body>
 </html>
 """
+# I browser vecchi (Kindle) non conoscono le variabili CSS: qui si sostituiscono con i valori.
+allcss = css + extra
+vars_ = dict(re.findall(r'(--[\w-]+)\s*:\s*([^;]+);', re.search(r':root\s*\{(.*?)\}', allcss, re.S).group(1)))
+flat = lambda t: re.sub(r'var\((--[\w-]+)\)', lambda m: vars_[m.group(1)].strip(), t)
+css, extra = flat(css), flat(extra)
 d = base + 'src/'
 out = html % dict(css=css, extra=extra, engine=open(d + 'engine.js', encoding='utf-8').read(), pix=open(d + 'pix.js', encoding='utf-8').read(), ui=open(d + 'ui.js', encoding='utf-8').read())
 open(base + 'index.html', 'w', encoding='utf-8').write(out)

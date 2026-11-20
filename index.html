@@ -22,23 +22,23 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { background: var(--desk); color: var(--desk-ink); font-family: var(--mono); font-size: 14.5px; line-height: 1.5; }
+body { background: #c7cbc9; color: #23282a; font-family: "IBM Plex Mono", "Courier New", Courier, monospace; font-size: 14.5px; line-height: 1.5; }
 
 .stage { min-height: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
 
 .demo-bar { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 20px; }
-.demo-bar h1 { font-family: var(--serif); font-weight: 700; font-size: 27px; line-height: 1; margin: 0; letter-spacing: 3px; text-transform: uppercase; }
+.demo-bar h1 { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-weight: 700; font-size: 27px; line-height: 1; margin: 0; letter-spacing: 3px; text-transform: uppercase; }
 .demo-bar p { margin: 4px 0 0; font-size: 12px; }
 .switch { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .seg { display: flex; }
-.seg button { font: 600 12px/1 var(--mono); color: var(--desk-ink); background: transparent; border: 2px solid var(--desk-ink); padding: 0 10px; min-height: 32px; cursor: pointer; border-radius: 0; }
+.seg button { font: 600 12px/1 "IBM Plex Mono", "Courier New", Courier, monospace; color: #23282a; background: transparent; border: 2px solid #23282a; padding: 0 10px; min-height: 32px; cursor: pointer; border-radius: 0; }
 .seg button + button { border-left: 0; }
-.seg button[aria-pressed="true"] { background: var(--desk-ink); color: var(--desk); }
+.seg button[aria-pressed="true"] { background: #23282a; color: #c7cbc9; }
 
-.device { flex: 1 1 auto; width: 100%; max-width: 600px; min-height: 600px; max-height: 900px; display: flex; background: var(--bezel); padding: 22px 22px 40px; border-radius: 18px; }
-.screen { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); }
+.device { flex: 1 1 auto; width: 100%; max-width: 600px; min-height: 600px; max-height: 900px; display: flex; background: #1d2022; padding: 22px 22px 40px; border-radius: 18px; }
+.screen { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: #f1f0ea; color: #111111; }
 
-.status { display: flex; justify-content: space-between; gap: 12px; background: var(--ink); color: var(--paper); font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; padding: 7px 16px; }
+.status { display: flex; justify-content: space-between; gap: 12px; background: #111111; color: #f1f0ea; font-weight: 600; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; padding: 7px 16px; }
 .status span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---------- pagina ---------- */
@@ -46,62 +46,62 @@ body { background: var(--desk); color: var(--desk-ink); font-family: var(--mono)
 .out p { margin: 0 0 10px; max-width: 64ch; }
 .out .room { font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 3px; }
 .out .echo { font-weight: 600; margin: 0 0 8px; }
-.out .note { color: var(--ink-soft); font-size: 13px; }
-.out .turn + .turn { border-top: 1px dashed var(--ink); padding-top: 12px; margin-top: 6px; }
-.kw { font-weight: 600; border-bottom: 2px dotted var(--ink); cursor: pointer; }
+.out .note { color: #565a5b; font-size: 13px; }
+.out .turn + .turn { border-top: 1px dashed #111111; padding-top: 12px; margin-top: 6px; }
+.kw { font-weight: 600; border-bottom: 2px dotted #111111; cursor: pointer; }
 
 .front { text-align: center; margin: 2px 0 10px; }
-.front h2 { font-family: var(--serif); font-size: 30px; letter-spacing: 5px; text-transform: uppercase; margin: 0; line-height: 1.1; text-wrap: balance; }
-.front span { display: block; font-family: var(--serif); font-style: italic; font-size: 15px; margin-top: 2px; }
-.prosa p { font-family: var(--serif); font-size: 17.5px; line-height: 1.46; max-width: 60ch; margin: 0 0 9px; }
+.front h2 { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-size: 30px; letter-spacing: 5px; text-transform: uppercase; margin: 0; line-height: 1.1; text-wrap: balance; }
+.front span { display: block; font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-style: italic; font-size: 15px; margin-top: 2px; }
+.prosa p { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-size: 17.5px; line-height: 1.46; max-width: 60ch; margin: 0 0 9px; }
 .prosa p:first-child::first-letter { float: left; font-weight: 700; font-size: 3.05em; line-height: 0.86; padding: 3px 7px 0 0; }
 
 figure { margin: 2px 0 12px; }
-figure canvas { display: block; margin: 0 auto; border: 2px solid var(--ink); max-width: 100%; }
-figcaption { font-family: var(--serif); font-style: italic; font-size: 14px; text-align: center; margin-top: 5px; }
+figure canvas { display: block; margin: 0 auto; border: 2px solid #111111; max-width: 100%; }
+figcaption { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-style: italic; font-size: 14px; text-align: center; margin-top: 5px; }
 
 .sheet { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: flex-start; margin-bottom: 8px; }
 .sheet figure { flex: 0 0 auto; margin: 0; }
 .sheet figure canvas { border: 0; }
 .sheet figcaption { max-width: 124px; font-size: 12.5px; line-height: 1.25; }
 .sheet .who { flex: 1 1 240px; min-width: 0; }
-.sheet h2 { font-family: var(--serif); font-size: 24px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px; line-height: 1.1; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+.sheet h2 { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-size: 24px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 6px; line-height: 1.1; border-bottom: 2px solid #111111; padding-bottom: 4px; }
 .sheet dl { margin: 0; font-size: 13px; line-height: 1.4; }
 .sheet dt { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin-top: 6px; }
 .sheet dd { margin: 0; }
-.facts { margin: 0 0 8px; padding: 8px 0 0 18px; border-top: 1px solid var(--ink); font-size: 13px; }
+.facts { margin: 0 0 8px; padding: 8px 0 0 18px; border-top: 1px solid #111111; font-size: 13px; }
 .facts-title { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin: 0 0 -4px; }
-.end { font-family: var(--serif); font-style: italic; font-size: 20px; text-align: center; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 8px 0; margin: 14px 0 10px; }
+.end { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-style: italic; font-size: 20px; text-align: center; border-top: 2px solid #111111; border-bottom: 2px solid #111111; padding: 8px 0; margin: 14px 0 10px; }
 .turn-next { display: block; width: 100%; margin: 6px 0 8px; }
 
 /* ---------- comandi ---------- */
-.chip { font: 600 12.5px/1 var(--mono); color: var(--ink); background: var(--paper); border: 2px solid var(--ink); border-radius: 0; padding: 0 8px; min-width: 38px; min-height: 36px; cursor: pointer; }
-.chip.on { background: var(--ink); color: var(--paper); }
-.chip:disabled { border-style: dotted; color: var(--ink-soft); cursor: default; }
+.chip { font: 600 12.5px/1 "IBM Plex Mono", "Courier New", Courier, monospace; color: #111111; background: #f1f0ea; border: 2px solid #111111; border-radius: 0; padding: 0 8px; min-width: 38px; min-height: 36px; cursor: pointer; }
+.chip.on { background: #111111; color: #f1f0ea; }
+.chip:disabled { border-style: dotted; color: #565a5b; cursor: default; }
 .chip.go { min-height: 42px; font-size: 14px; }
 
-.book { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 16px; border-top: 2px solid var(--ink); }
+.book { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 16px; border-top: 2px solid #111111; }
 .pager { display: flex; align-items: center; gap: 6px; }
 .pager span { font-size: 12px; min-width: 88px; text-align: center; }
 .refs { display: flex; gap: 6px; }
 .screen.rullo .pager { visibility: hidden; }
 
 .rows { display: grid; grid-template-columns: 58px 1fr; gap: 6px 8px; align-items: center; padding: 0 16px; }
-.rows .lab { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft); }
+.rows .lab { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #565a5b; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 36px; align-items: center; }
 .chips .spacer { flex: 1 1 auto; }
 .bag { font-size: 13.5px; line-height: 1.9; }
-.bag .sep { padding: 0 7px; color: var(--ink-soft); }
+.bag .sep { padding: 0 7px; color: #565a5b; }
 
 .cmd { display: flex; align-items: center; gap: 8px; padding: 6px 16px 14px; }
 .cmd label { font-weight: 600; font-size: 18px; }
-.cmd input { flex: 1 1 auto; min-width: 0; font: 400 16px/1.2 var(--mono); color: var(--ink); background: var(--paper); border: 0; border-bottom: 2px solid var(--ink); border-radius: 0; padding: 6px 2px; }
-.cmd input::placeholder { color: var(--ink-soft); }
+.cmd input { flex: 1 1 auto; min-width: 0; font: 400 16px/1.2 "IBM Plex Mono", "Courier New", Courier, monospace; color: #111111; background: #f1f0ea; border: 0; border-bottom: 2px solid #111111; border-radius: 0; padding: 6px 2px; }
+.cmd input::placeholder { color: #565a5b; }
 .screen.reading .rows, .screen.reading .cmd { display: none; }
 .screen.reading .book { padding-bottom: 14px; }
 
-button:focus-visible, input:focus-visible, .kw:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
-.seg button:focus-visible { outline-color: var(--desk-ink); }
+button:focus-visible, input:focus-visible, .kw:focus-visible { outline: 3px solid #111111; outline-offset: 2px; }
+.seg button:focus-visible { outline-color: #23282a; }
 
 .foot { width: 100%; max-width: 600px; margin: 0; font-size: 12px; }
 
@@ -118,12 +118,12 @@ button:focus-visible, input:focus-visible, .kw:focus-visible { outline: 3px soli
 /* ---------- terza prova ---------- */
 .switches { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
-.sheet figure canvas { border: 2px solid var(--ink); }
-.chapter { text-align: center; border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); padding: 10px 0 12px; margin: 4px 0 14px; }
+.sheet figure canvas { border: 2px solid #111111; }
+.chapter { text-align: center; border-top: 2px solid #111111; border-bottom: 2px solid #111111; padding: 10px 0 12px; margin: 4px 0 14px; }
 .chapter span { display: block; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; }
-.chapter h2 { font-family: var(--serif); font-size: 27px; font-style: italic; font-weight: 400; margin: 2px 0 0; line-height: 1.15; text-wrap: balance; }
-.out .code { font-size: 19px; font-weight: 600; letter-spacing: 2px; border: 2px solid var(--ink); padding: 10px 12px; text-align: center; word-break: break-all; max-width: none; }
-.people { margin: 0 0 8px; padding-top: 6px; border-top: 1px solid var(--ink); font-size: 13px; line-height: 1.4; }
+.chapter h2 { font-family: "Old Standard TT", "Century Schoolbook", Georgia, serif; font-size: 27px; font-style: italic; font-weight: 400; margin: 2px 0 0; line-height: 1.15; text-wrap: balance; }
+.out .code { font-size: 19px; font-weight: 600; letter-spacing: 2px; border: 2px solid #111111; padding: 10px 12px; text-align: center; word-break: break-all; max-width: none; }
+.people { margin: 0 0 8px; padding-top: 6px; border-top: 1px solid #111111; font-size: 13px; line-height: 1.4; }
 .people dt { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin-top: 6px; }
 .people dd { margin: 0; }
 .facts { list-style: square; }
@@ -131,13 +131,13 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .book { flex-wrap: wrap; }
 .screen.rullo .pager { display: none; }
 .screen.rullo .book { justify-content: flex-end; }
-.prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 8px 16px 10px; border-top: 2px solid var(--ink); }
+.prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 8px 16px 10px; border-top: 2px solid #111111; }
 .prefs.off { display: none; }
-.prefs .switch { color: var(--ink); }
-.prefs .seg button { color: var(--ink); border-color: var(--ink); background: var(--paper); }
-.prefs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
-.prefs .seg button:focus-visible { outline-color: var(--ink); }
-.prefs-note { width: 100%; margin: 0; font-size: 12px; color: var(--ink-soft); }
+.prefs .switch { color: #111111; }
+.prefs .seg button { color: #111111; border-color: #111111; background: #f1f0ea; }
+.prefs .seg button[aria-pressed="true"] { background: #111111; color: #f1f0ea; }
+.prefs .seg button:focus-visible { outline-color: #111111; }
+.prefs-note { width: 100%; margin: 0; font-size: 12px; color: #565a5b; }
 @media (max-width: 640px) { .stage { min-height: 100%; } .device { min-height: 100%; } }
 </style>
 </head>
@@ -1693,33 +1693,47 @@ var Pix = (function () {
   };
   function render(id, f) { var sc = SC[id], g = new Gfx(sc.w, sc.h); sc.draw(g, f % sc.n); g.c = null; return g; }
 
-  /* ---------- dal disegno al canvas: ogni fotogramma si calcola una volta ---------- */
-  var cache = {};
-  function toCanvas(g) {
-    var c = document.createElement("canvas"), ctx, img, d, i, k = 0, v;
-    c.width = g.w; c.height = g.h; ctx = c.getContext("2d"); img = ctx.createImageData(g.w, g.h); d = img.data;
-    for (i = 0; i < g.w * g.h; i++) { v = g.d[i]; d[k] = v ? 17 : 241; d[k + 1] = v ? 17 : 240; d[k + 2] = v ? 17 : 234; d[k + 3] = 255; k += 4; }
-    ctx.putImageData(img, 0, 0);
-    return c;
-  }
-  function frame(id, f) { var key = id + "/" + (f % SC[id].n); if (!cache[key]) { cache[key] = toCanvas(render(id, f)); } return cache[key]; }
-  function crisp(ctx) { ctx.imageSmoothingEnabled = false; ctx.webkitImageSmoothingEnabled = false; ctx.mozImageSmoothingEnabled = false; }
+  /* ---------- dal disegno al canvas ---------- */
   function sized(w, h, cssW) {
     var k = Math.max(1, Math.floor(cssW / w)), c = document.createElement("canvas");
     c.width = w * k; c.height = h * k;
     if (k === 1 && cssW > w * 1.2) { c.style.width = Math.floor(cssW) + "px"; }
     return c;
   }
+  /* Si ingrandisce a mano, punto per punto, e si scrive con putImageData: i browser vecchi
+     (Kindle) sbagliano drawImage da tela a tela quando c'è di mezzo un ingrandimento. */
+  var big = {}, mapN = 0;
+  function blit(c, ctx, key, g) {
+    var k = c.width / g.w, ck = key + "@" + k, img = big[ck], d, x, y, i, o, v, dx, dy, W2 = c.width;
+    if (!img) {
+      img = ctx.createImageData(c.width, c.height); d = img.data;
+      for (y = 0; y < g.h; y++) {
+        for (x = 0; x < g.w; x++) {
+          v = g.d[y * g.w + x];
+          for (dy = 0; dy < k; dy++) {
+            o = ((y * k + dy) * W2 + x * k) * 4;
+            for (dx = 0; dx < k; dx++) { i = o + dx * 4; d[i] = v ? 17 : 241; d[i + 1] = v ? 17 : 240; d[i + 2] = v ? 17 : 234; d[i + 3] = 255; }
+          }
+        }
+      }
+      big[ck] = img;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  var raw = {};
+  function grid(id, f) { var key = id + "/" + (f % SC[id].n); if (!raw[key]) { raw[key] = render(id, f); } return raw[key]; }
   function make(id, cssW) {
     var sc = SC[id], c = sized(sc.w, sc.h, cssW), ctx = c.getContext("2d");
-    c._paint = function (f) { crisp(ctx); ctx.drawImage(frame(id, f), 0, 0, c.width, c.height); };
+    c._paint = function (f) { blit(c, ctx, id + "/" + (f % sc.n), grid(id, f)); };
     c._paint(0);
     return c;
   }
   function makeMap(st, cssW) {
-    var g = new Gfx(W, H), here = drawMap(g, st), base = toCanvas(g), c = sized(W, H, cssW), ctx = c.getContext("2d"), k = c.width / W;
+    var g = new Gfx(W, H), here = drawMap(g, st), c = sized(W, H, cssW), ctx = c.getContext("2d"), k = c.width / W, key;
+    for (key in big) { if (key.indexOf("mappa") === 0) { delete big[key]; } }
+    key = "mappa" + (++mapN);
     c._paint = function (f) {
-      crisp(ctx); ctx.drawImage(base, 0, 0, c.width, c.height);
+      blit(c, ctx, key, g);
       if (PLACE[here]) { ctx.fillStyle = (f % 2) ? "#f1f0ea" : "#111111"; ctx.fillRect((PLACE[here][0] - 2) * k, (PLACE[here][1] - 2) * k, 5 * k, 5 * k); }
     };
     c._paint(0);
