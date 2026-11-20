@@ -19,6 +19,18 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .people dt { font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; margin-top: 6px; }
 .people dd { margin: 0; }
 .facts { list-style: square; }
+/* impostazioni: un pannello dentro lo schermo, aperto dal pulsante Aa */
+.book { flex-wrap: wrap; }
+.screen.rullo .pager { display: none; }
+.screen.rullo .book { justify-content: flex-end; }
+.prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 8px 16px 10px; border-top: 2px solid var(--ink); }
+.prefs.off { display: none; }
+.prefs .switch { color: var(--ink); }
+.prefs .seg button { color: var(--ink); border-color: var(--ink); background: var(--paper); }
+.prefs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.prefs .seg button:focus-visible { outline-color: var(--ink); }
+.prefs-note { width: 100%; margin: 0; font-size: 12px; color: var(--ink-soft); }
+@media (max-width: 640px) { .stage { min-height: 100%; } .device { min-height: 100%; } }
 """
 html = r"""<!DOCTYPE html>
 <html lang="it">
@@ -31,27 +43,6 @@ html = r"""<!DOCTYPE html>
 </head>
 <body>
 <main class="stage">
-  <header class="demo-bar">
-    <div>
-      <h1>Via Libera</h1>
-      <p>Terza prova · noir in quattro capitoli</p>
-    </div>
-    <div class="switches">
-      <div class="switch"><span id="lbl-mode">Schermo</span>
-        <div class="seg" role="group" aria-labelledby="lbl-mode">
-          <button type="button" id="mode-pagina" aria-pressed="true">Pagina</button>
-          <button type="button" id="mode-rullo" aria-pressed="false">Rullo</button>
-        </div>
-      </div>
-      <div class="switch"><span id="lbl-mot">Movimento</span>
-        <div class="seg" role="group" aria-labelledby="lbl-mot">
-          <button type="button" id="mot-on" aria-pressed="true">Sì</button>
-          <button type="button" id="mot-off" aria-pressed="false">No</button>
-        </div>
-      </div>
-    </div>
-  </header>
-
   <div class="device">
     <div class="screen" id="screen">
       <div class="status"><span id="st-room">Prologo</span><span id="st-moves">Cap. 1 · Mosse 0</span></div>
@@ -68,7 +59,24 @@ html = r"""<!DOCTYPE html>
           <button type="button" class="chip" id="ref-mappa" data-cmd="mappa">MAPPA</button>
           <button type="button" class="chip" id="ref-salva" data-cmd="salva">SALVA</button>
           <button type="button" class="chip" id="ref-aiuto" data-cmd="aiuto" aria-label="Aiuto">?</button>
+          <button type="button" class="chip" id="ref-prefs" aria-label="Impostazioni" aria-expanded="false" aria-controls="prefs">Aa</button>
         </div>
+      </div>
+
+      <div class="prefs off" id="prefs">
+        <div class="switch"><span id="lbl-mode">Schermo</span>
+          <div class="seg" role="group" aria-labelledby="lbl-mode">
+            <button type="button" id="mode-rullo" aria-pressed="true">Rullo</button>
+            <button type="button" id="mode-pagina" aria-pressed="false">Pagina</button>
+          </div>
+        </div>
+        <div class="switch"><span id="lbl-mot">Movimento</span>
+          <div class="seg" role="group" aria-labelledby="lbl-mot">
+            <button type="button" id="mot-on" aria-pressed="true">Sì</button>
+            <button type="button" id="mot-off" aria-pressed="false">No</button>
+          </div>
+        </div>
+        <p class="prefs-note">Su e-ink il movimento lascia aloni: lì conviene spegnerlo.</p>
       </div>
 
       <div class="rows" id="rows">
@@ -94,7 +102,6 @@ html = r"""<!DOCTYPE html>
     </div>
   </div>
 
-  <p class="foot">Le tavole sono 240×150 punti, solo bianco e nero, disegnate dal codice. Su uno schermo e-ink il movimento lascia aloni: lì conviene spegnerlo.</p>
 </main>
 
 <script>

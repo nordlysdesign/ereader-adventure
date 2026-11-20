@@ -7,7 +7,7 @@ if (typeof document !== "undefined") {
   (function () {
     var screen = document.getElementById("screen"), out = document.getElementById("out"), input = document.getElementById("cmd-input");
     var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var prefs = { mode: "pagina", motion: !reduce }, turns = [], pos = 0, pending = null, atTop = true;
+    var prefs = { mode: "rullo", motion: !reduce }, turns = [], pos = 0, pending = null, atTop = true;
     var canCanvas = !!document.createElement("canvas").getContext;
     var DIR_LABEL = { nord: "NORD", sud: "SUD", est: "EST", ovest: "OVEST", su: "SU", giu: "GIÙ" };
     var anim = [], tick = 0, timer = null;
@@ -226,6 +226,12 @@ if (typeof document !== "undefined") {
     document.getElementById("mode-rullo").onclick = function () { setPref("mode", "rullo"); };
     document.getElementById("mot-on").onclick = function () { setPref("motion", true); };
     document.getElementById("mot-off").onclick = function () { setPref("motion", false); };
+    document.getElementById("ref-prefs").onclick = function () {
+      var box = document.getElementById("prefs"), open = box.className.indexOf("off") >= 0;
+      box.className = open ? "prefs" : "prefs off";
+      this.className = open ? "chip on" : "chip";
+      this.setAttribute("aria-expanded", open ? "true" : "false");
+    };
 
     var resizeTimer = null, lastW = 0;
     window.onresize = function () {
