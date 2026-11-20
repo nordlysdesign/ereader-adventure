@@ -141,6 +141,15 @@ if (typeof document !== "undefined") {
       }, 480);
     }
 
+    var drawer = document.getElementById("drawer"), drawerBtn = document.getElementById("drawer-btn");
+    function setDrawer(open) {
+      drawer.className = open ? "drawer" : "drawer off";
+      drawerBtn.textContent = open ? "CHIUDI" : "COMANDI";
+      drawerBtn.className = open ? "chip on" : "chip";
+      drawerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    drawerBtn.onclick = function () { setDrawer(drawer.className.indexOf("off") >= 0); };
+
     function goPage(n) { pos = Math.max(0, Math.min(turns.length - 1, n)); render(); }
     function pushPrologue() {
       var pages = PC.prologue(), i, first = turns.length;
@@ -161,7 +170,7 @@ if (typeof document !== "undefined") {
       pending = verb;
       for (i = 0; i < chips.length; i++) { chips[i].className = chips[i].getAttribute("data-verb") === verb ? "chip on" : "chip"; }
       input.value = verb ? verb + " " : "";
-      input.placeholder = verb ? "ora tocca una parola sottolineata" : "scrivi un comando, poi Invio";
+      input.placeholder = verb ? "tocca una parola sottolineata" : "scrivi un comando";
     }
 
     function run(cmd) {
@@ -170,6 +179,7 @@ if (typeof document !== "undefined") {
       if (!cmd) { return; }
       blocks = PC.exec(cmd);
       setPending(null);
+      setDrawer(false);
       if (blocks.length && blocks[0].t === "restart") { begin(true); return; }
       atTop = false;
       if (blocks.length && blocks[0].t === "prologue") {

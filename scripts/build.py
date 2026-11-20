@@ -30,6 +30,13 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .prefs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .prefs .seg button:focus-visible { outline-color: var(--ink); }
 .prefs-note { width: 100%; margin: 0; font-size: 12px; color: var(--ink-soft); }
+/* cassetto: di base resta solo la riga di comando, il resto si apre con COMANDI */
+.drawer.off { display: none; }
+.drawer { border-top: 2px solid #111111; padding-bottom: 8px; }
+.drawer .book { border-top: 0; }
+.cmd { border-top: 2px solid #111111; padding-top: 8px; }
+.screen.reading .drawer.off { display: block; }
+.screen.reading .drawer .rows, .screen.reading .drawer .refs { display: none; }
 @media (max-width: 640px) { .stage { min-height: 100%; } .device { min-height: 100%; } }
 """
 html = r"""<!DOCTYPE html>
@@ -48,6 +55,7 @@ html = r"""<!DOCTYPE html>
       <div class="status"><span id="st-room">Prologo</span><span id="st-moves">Cap. 1 · Mosse 0</span></div>
       <div class="out" id="out" aria-live="polite"></div>
 
+      <div class="drawer off" id="drawer">
       <div class="book">
         <div class="pager">
           <button type="button" class="chip" id="pg-prev" aria-label="Pagina precedente">◀</button>
@@ -95,9 +103,12 @@ html = r"""<!DOCTYPE html>
         <div class="bag" id="bag"></div>
       </div>
 
+      </div>
+
       <form class="cmd" id="cmd-form" autocomplete="off">
         <label for="cmd-input">&gt;</label>
-        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando, poi Invio">
+        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando">
+        <button type="button" class="chip" id="drawer-btn" aria-expanded="false" aria-controls="drawer">COMANDI</button>
       </form>
     </div>
   </div>

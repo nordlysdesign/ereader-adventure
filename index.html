@@ -138,6 +138,13 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .prefs .seg button[aria-pressed="true"] { background: #111111; color: #f1f0ea; }
 .prefs .seg button:focus-visible { outline-color: #111111; }
 .prefs-note { width: 100%; margin: 0; font-size: 12px; color: #565a5b; }
+/* cassetto: di base resta solo la riga di comando, il resto si apre con COMANDI */
+.drawer.off { display: none; }
+.drawer { border-top: 2px solid #111111; padding-bottom: 8px; }
+.drawer .book { border-top: 0; }
+.cmd { border-top: 2px solid #111111; padding-top: 8px; }
+.screen.reading .drawer.off { display: block; }
+.screen.reading .drawer .rows, .screen.reading .drawer .refs { display: none; }
 @media (max-width: 640px) { .stage { min-height: 100%; } .device { min-height: 100%; } }
 </style>
 </head>
@@ -148,6 +155,7 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
       <div class="status"><span id="st-room">Prologo</span><span id="st-moves">Cap. 1 · Mosse 0</span></div>
       <div class="out" id="out" aria-live="polite"></div>
 
+      <div class="drawer off" id="drawer">
       <div class="book">
         <div class="pager">
           <button type="button" class="chip" id="pg-prev" aria-label="Pagina precedente">◀</button>
@@ -195,9 +203,12 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
         <div class="bag" id="bag"></div>
       </div>
 
+      </div>
+
       <form class="cmd" id="cmd-form" autocomplete="off">
         <label for="cmd-input">&gt;</label>
-        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando, poi Invio">
+        <input id="cmd-input" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="scrivi un comando">
+        <button type="button" class="chip" id="drawer-btn" aria-expanded="false" aria-controls="drawer">COMANDI</button>
       </form>
     </div>
   </div>
@@ -1886,6 +1897,15 @@ if (typeof document !== "undefined") {
       }, 480);
     }
 
+    var drawer = document.getElementById("drawer"), drawerBtn = document.getElementById("drawer-btn");
+    function setDrawer(open) {
+      drawer.className = open ? "drawer" : "drawer off";
+      drawerBtn.textContent = open ? "CHIUDI" : "COMANDI";
+      drawerBtn.className = open ? "chip on" : "chip";
+      drawerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+    drawerBtn.onclick = function () { setDrawer(drawer.className.indexOf("off") >= 0); };
+
     function goPage(n) { pos = Math.max(0, Math.min(turns.length - 1, n)); render(); }
     function pushPrologue() {
       var pages = PC.prologue(), i, first = turns.length;
@@ -1906,7 +1926,7 @@ if (typeof document !== "undefined") {
       pending = verb;
       for (i = 0; i < chips.length; i++) { chips[i].className = chips[i].getAttribute("data-verb") === verb ? "chip on" : "chip"; }
       input.value = verb ? verb + " " : "";
-      input.placeholder = verb ? "ora tocca una parola sottolineata" : "scrivi un comando, poi Invio";
+      input.placeholder = verb ? "tocca una parola sottolineata" : "scrivi un comando";
     }
 
     function run(cmd) {
@@ -1915,6 +1935,7 @@ if (typeof document !== "undefined") {
       if (!cmd) { return; }
       blocks = PC.exec(cmd);
       setPending(null);
+      setDrawer(false);
       if (blocks.length && blocks[0].t === "restart") { begin(true); return; }
       atTop = false;
       if (blocks.length && blocks[0].t === "prologue") {
