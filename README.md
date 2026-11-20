@@ -9,9 +9,11 @@ Porto Scuro, novembre 1953. Sei Ada Corvi, ispettrice dei fari per modo di dire.
 ## Come si gioca
 
 - Scrivendo comandi (`nord`, `esamina fascicolo`, `mostra la fotografia a nives`), oppure toccando un'azione e poi una parola sottolineata.
+- In basso c'è solo la riga di comando: il pulsante **COMANDI** apre direzioni, azioni, oggetti e i pulsanti `SCHEDA`, `MAPPA`, `SALVA`, `?` e `Aa`, e si richiude dopo ogni comando.
+- Ogni luogo ha la sua tavola animata, di notte o di giorno a seconda del capitolo: si vede entrando la prima volta e con `GUARDA`. La prima volta che esamini qualcosa (un oggetto, un indizio, una persona) compare la sua immagine, con un cartellino da reperto.
 - `SCHEDA` dice chi sei e cosa hai scoperto, `MAPPA` mostra i posti dove sei stata.
 - `SALVA` dà un codice di 21 caratteri; `CARICA` e il codice riprendono la partita, anche su un altro dispositivo. Su ogni dispositivo la partita si salva comunque da sola.
-- In alto si sceglie tra schermo a *Pagina* o a *Rullo*, e si può fermare il *Movimento* delle tavole (su e-ink lascia aloni).
+- Il pulsante `Aa` apre le impostazioni: schermo a *Rullo* (predefinito) o a *Pagina*, e *Movimento* delle tavole sì o no (su e-ink lascia aloni: lì conviene spegnerlo).
 
 ## Com'è fatto
 
@@ -21,10 +23,11 @@ Una sola pagina HTML, senza librerie e senza server. Il codice è JavaScript ES5
 | --- | --- |
 | `index.html` | Il gioco, pronto da servire. È generato: non modificarlo a mano. |
 | `src/engine.js` | Storia, parser, dialoghi, capitoli, finali, salvataggio a codice. Non tocca il DOM. |
-| `src/pix.js` | Le tavole: 240×150 punti, bianco e nero, disegnate dal codice a ogni fotogramma. |
-| `src/ui.js` | Interfaccia: pagine, pannello dei comandi, animazione delle tavole. |
+| `src/pix.js` | Le tavole dei luoghi (240×150, animate) e degli oggetti (120×75, ferme), bianco e nero, disegnate dal codice. |
+| `src/ui.js` | Interfaccia: pagine, cassetto dei comandi, impostazioni, animazione delle tavole. |
 | `scripts/build.py` | Ricompone `index.html` da `src/`. |
-| `scripts/play.js` | Gioca tutta la storia e tutti i finali senza browser, e controlla che ogni tavola si disegni. |
+| `scripts/play.js` | Gioca tutta la storia e tutti i finali senza browser, e controlla che ogni tavola si disegni e che ogni tavola chiamata dalla storia esista. |
+| `diagnosi.html` | Dice cosa sa fare il browser che la apre: serve per provare gli e-reader. |
 | `prove/` | Le due prove precedenti, tenute per confronto. |
 
 ```sh
@@ -39,4 +42,4 @@ node scripts/play.js src     # verifica storia, finali, codici e tavole
 
 ## Stato
 
-È un prototipo. Non è ancora stato provato su un e-reader vero; le illustrazioni sono generate dal codice e andrebbero sostituite con tavole disegnate a mano.
+È un prototipo. Sul Kindle di settima generazione (Browser sperimentale) il gioco gira, ma va riprovato dopo le correzioni per lo stile e le tavole; per vedere cosa supporta un e-reader si apre https://nordlysdesign.github.io/ereader-adventure/diagnosi.html. Su Kobo non è ancora stato provato. Le illustrazioni, 62 in tutto, sono generate dal codice e andrebbero sostituite con tavole disegnate a mano.
