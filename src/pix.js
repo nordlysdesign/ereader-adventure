@@ -250,7 +250,7 @@ var Pix = (function () {
   }
 
   /* ================= LA LOCANDA ================= */
-  function bar(g, f) {
+  function bar(kessel) { return function (g, f) {
     var sw = [0, 1, 0, -1][f % 4], i, x, y, t, cx = 78 + sw;
     g.rect(0, 0, 239, 149, 11);
     g.rect(0, 70, 239, 118, 13); for (x = 4; x < 240; x += 9) { g.vline(x, 71, 118, 16); } g.hline(0, 239, 69, 0); g.hline(0, 239, 70, 16);
@@ -317,6 +317,13 @@ var Pix = (function () {
     /* pavimento */
     g.rect(0, 119, 239, 149, 5); g.hline(0, 239, 118, 16);
     for (i = 0; i < 4; i++) { y = 124 + i * 7 + i * i; g.hline(0, 239, y, 16); for (x = (i * 37) % 60; x < 240; x += 60) { g.vline(x, y, y + 6 + i * 2, 16); } }
+    if (!kessel) {
+      /* tavolo vuoto, sedie capovolte */
+      g.ell(176, 140, 40, 7, 13);
+      g.maskOn(); g.ell(176, 126, 36, 6, 0); g.rect(174, 132, 178, 146, 16); g.keyline(16); g.rect(174, 132, 178, 146, 16);
+      g.maskOn(); g.rect(156, 116, 188, 120, 0); g.line(159, 115, 157, 94, 0, 1); g.line(185, 115, 187, 94, 0, 1); g.line(166, 115, 165, 98, 0, 1); g.line(178, 115, 179, 98, 0, 1); g.keyline(16);
+      return;
+    }
     /* Kessel al tavolo, in primo piano */
     g.ell(176, 133, 40, 8, 13);
     g.maskOn();
@@ -338,7 +345,7 @@ var Pix = (function () {
     if (f % 3 !== 2) { g.px(205, 124, 0); }
     smoke(g, 205, 122, f, 34);
     g.maskOn(); g.rect(148, 124, 154, 129, 0); g.keyline(16); g.arc(155, 127, 3, 2, -1.3, 1.3, 16);
-  }
+  }; }
 
   /* ================= LA CASA DEL GUARDIANO ================= */
   function casa(g, f) {
@@ -679,6 +686,244 @@ var Pix = (function () {
     return here;
   }
 
+  /* ================= LA PIAZZA ================= */
+  function piazza(night) {
+    return function (g, f) {
+      var B = night ? 13 : 0, L = night ? 0 : 16, D = night ? 16 : 11, i, k, x, y, w1, w2, WV = [0, 1, 0, -1];
+      g.rect(0, 0, 239, 149, night ? 16 : 3);
+      if (!night) { g.ell(40 + (f % 8) * 2, 12, 46, 5, 0); g.ell(196 - (f % 8) * 2, 22, 52, 5, 1); }
+      /* polizia, a ovest */
+      g.rect(0, 46, 58, 116, B); g.rect(0, 42, 62, 45, L); g.vline(58, 46, 116, L);
+      for (i = 0; i < 2; i++) { x = 8 + i * 26; g.rect(x, 56, x + 12, 74, D); g.frame(x, 56, x + 12, 74, L); g.vline(x + 6, 56, 74, L); }
+      g.rect(14, 80, 44, 86, 16); g.frame(13, 79, 45, 87, L); g.text(16, 81, "POLIZIA", 0, 1);
+      g.rect(20, 90, 38, 116, D); g.frame(20, 90, 38, 116, L);
+      /* locanda, a est */
+      g.rect(182, 52, 239, 116, B); g.rect(178, 48, 239, 51, L); g.vline(182, 52, 116, L);
+      for (i = 0; i < 2; i++) {
+        x = 190 + i * 26;
+        g.rect(x, 60, x + 14, 78, night ? ((i === 1 && f % 3 === 2) ? 5 : 0) : 11); g.frame(x, 60, x + 14, 78, L); g.vline(x + 7, 60, 78, 16); g.hline(x, x + 14, 69, 16);
+      }
+      g.rect(188, 84, 232, 92, 0); g.frame(188, 84, 232, 92, 16); g.text(191, 86, "AL FANALE", 16, 1);
+      g.rect(198, 96, 216, 116, D); g.frame(198, 96, 216, 116, L); if (night) { g.hline(199, 215, 115, 0); }
+      /* municipio */
+      g.rect(68, 36, 172, 116, B); g.poly([[64, 36], [120, 16], [176, 36]], B); g.pline([[64, 36], [120, 16], [176, 36], [64, 36]], L); g.frame(68, 36, 172, 116, L);
+      g.text(102, 27, "MUNICIPIO", L, 1);
+      for (i = 0; i < 5; i++) { x = 76 + i * 19; g.rect(x, 44, x + 12, 60, D); g.frame(x, 44, x + 12, 60, L); g.vline(x + 6, 44, 60, L); }
+      g.rect(94, 62, 146, 63, L); for (x = 95; x < 146; x += 3) { g.vline(x, 64, 68, L); } g.hline(94, 146, 69, L);
+      g.hline(68, 172, 82, L); g.hline(68, 172, 84, L);
+      /* tre bandiere fradice, nessuna che comandi */
+      for (k = 0; k < 3; k++) {
+        x = 104 + k * 16; w1 = WV[(f + k) % 4]; w2 = WV[(f + k + 1) % 4];
+        g.vline(x, 34, 62, L);
+        g.maskOn(); g.poly([[x + 1, 37], [x + 6, 38 + w1], [x + 11, 40 + w2], [x + 11, 50 + w2], [x + 6, 48 + w1], [x + 1, 47]], [16, 0, 8][k]); g.keyline(L);
+      }
+      /* portici */
+      for (i = 0; i < 5; i++) {
+        x = 74 + i * 20;
+        g.rect(x, 92, x + 14, 116, night ? 16 : 13); g.ell(x + 7, 92, 7, 6, night ? 16 : 13); g.arc(x + 7, 92, 7, 6, PI, 2 * PI, L); g.vline(x, 92, 116, L); g.vline(x + 14, 92, 116, L);
+      }
+      /* un uomo sotto il portico, che non aspetta nessuno */
+      man(g, 141, 116, 24, { coat: 16, key: 0, arms: "smoke", f: f });
+      /* il manifesto che si scolla */
+      g.rect(102, 94, 112, 108, 0); g.frame(102, 94, 112, 108, 16); for (y = 98; y < 107; y += 2) { g.hline(104, 110, y, 9); }
+      if (f % 2) { g.poly([[106, 94], [112, 94], [112, 100]], night ? 16 : 13); g.pline([[106, 94], [109, 99], [112, 100]], 16); } else { g.poly([[109, 94], [112, 94], [112, 97]], night ? 16 : 13); }
+      /* selciato */
+      g.rect(0, 117, 239, 149, night ? "wdot" : "dot"); g.hline(0, 239, 117, L);
+      for (x = -120; x <= 360; x += 40) { g.line(120 + (x - 120) * 0.3, 118, x, 149, night ? 12 : 6); }
+      if (night) {
+        for (i = 0; i < 2; i++) { x = 197 + i * 26; for (y = 120 + (f % 2); y < 148; y += 3) { g.hline(x - 2 + (y % 2), x + 2 - ((y >> 1) % 2), y, 0); } }
+        rain(g, f, 70, 0, 0, 239, 148, false);
+      }
+    };
+  }
+
+  /* ================= IL POSTO DI POLIZIA ================= */
+  function caserma(g, f) {
+    var sw = [0, 1, 0, -1][f % 4], i, x, y, a = -PI / 2 + f * PI / 6;
+    g.rect(0, 0, 239, 149, 4);
+    g.rect(0, 78, 239, 112, 9); g.hline(0, 239, 77, 16);
+    g.rect(0, 113, 239, 149, 12); g.hline(0, 239, 112, 16);
+    for (x = -120; x <= 360; x += 24) { g.line(120 + (x - 120) * 0.4, 113, x, 149, 16); }
+    /* finestra con l'inferriata */
+    g.rect(14, 20, 58, 66, 16); rain(g, f, 16, 15, 21, 57, 65, false);
+    g.frame(13, 19, 59, 67, 0); g.frame(12, 18, 60, 68, 16); for (x = 20; x < 58; x += 8) { g.vline(x, 20, 66, 0); } g.hline(14, 58, 42, 0);
+    g.rect(9, 69, 63, 71, 0); g.frame(9, 69, 63, 71, 16);
+    /* avviso */
+    g.rect(70, 22, 98, 50, 0); g.frame(70, 22, 98, 50, 16); g.text(72, 25, "AVVISO", 16, 1); for (y = 33; y < 48; y += 3) { g.hline(73, 95, y, 9); }
+    /* il segno chiaro di un ritratto tolto, e il chiodo */
+    g.rect(140, 20, 160, 46, 1); for (x = 140; x <= 160; x += 2) { g.px(x, 20, 9); g.px(x, 46, 9); } for (y = 20; y <= 46; y += 2) { g.px(140, y, 9); g.px(160, y, 9); }
+    g.px(150, 17, 16); g.px(150, 18, 16);
+    /* orologio */
+    g.ell(176, 24, 9, 9, 0); g.ring(176, 24, 9, 9, 16); g.ring(176, 24, 8, 8, 16);
+    g.line(176, 24, 176 + Math.round(7 * Math.cos(a)), 24 + Math.round(7 * Math.sin(a)), 16); g.line(176, 24, 180, 22, 16, 1);
+    /* armadietto di ferro */
+    g.maskOn(); g.rect(194, 30, 232, 124, 0); g.keyline(16); g.frame(194, 30, 232, 124, 16); g.vline(213, 30, 124, 16);
+    for (y = 38; y < 52; y += 3) { g.hline(198, 209, y, 16); g.hline(217, 228, y, 16); }
+    g.rect(209, 70, 211, 80, 16); g.rect(215, 70, 217, 80, 16); g.ell(213, 88, 3, 3, 16); g.arc(213, 85, 2, 3, PI, 2 * PI, 16);
+    g.rect(196, 125, 198, 129, 16); g.rect(228, 125, 230, 129, 16);
+    /* la scrivania vuota, con la macchina da scrivere */
+    g.maskOn(); g.rect(14, 92, 70, 96, 0); g.rect(16, 97, 20, 126, 0); g.rect(64, 97, 68, 126, 0); g.keyline(16);
+    g.rect(28, 82, 54, 91, 16); g.rect(32, 77, 50, 82, 16); for (x = 30; x < 53; x += 3) { g.px(x, 86, 0); g.px(x + 1, 89, 0); }
+    g.rect(35, 68, 47, 77, 0); g.frame(35, 68, 47, 77, 16); g.hline(37, 45, 71, 9); g.hline(37, 44, 73, 9);
+    /* Lodi */
+    man(g, 128, 120, 82, { hat: "kepi", face: true, arms: "smoke", f: f, coat: 16, key: 0 });
+    /* la lampada che dondola */
+    g.line(110, 0, 110 + sw * 2, 9, 16); g.poly([[104 + sw * 2, 14], [116 + sw * 2, 14], [113 + sw * 2, 9], [107 + sw * 2, 9]], 16); g.ell(110 + sw * 2, 15, 2, 1, 0);
+    /* scrivania di Lodi, col fascicolo */
+    g.maskOn(); g.rect(84, 91, 178, 95, 0); g.rect(86, 96, 176, 127, 6); g.keyline(16);
+    g.hline(84, 178, 96, 16); g.frame(92, 100, 128, 112, 16); g.frame(134, 100, 170, 112, 16); g.rect(108, 105, 112, 106, 16); g.rect(150, 105, 154, 106, 16);
+    g.maskOn(); g.poly([[96, 87], [122, 86], [124, 90], [98, 91]], 0); g.keyline(16); g.hline(99, 120, 88, 9);
+    g.rect(156, 82, 158, 90, 16); g.poly([[148, 82], [166, 82], [162, 76], [152, 76]], 16); g.poly([[150, 83], [164, 83], [170, 90], [144, 90]], 2);
+  }
+
+  /* ================= IL SENTIERO DEL FARO ================= */
+  function strada(night) {
+    return function (g, f) {
+      var sw = [0, 1, 0, -1][f % 4], L = night ? 0 : 16, on = night && f % 2 === 0, i, x, y, s, t;
+      g.rect(0, 0, 239, 149, night ? 16 : 3);
+      if (!night) { g.ell(70 + (f % 8) * 2, 16, 50, 5, 0); }
+      /* mare, sotto */
+      g.rect(0, 56, 239, 149, night ? 15 : 7); waves(g, f, 0, 160, 57, 120);
+      /* il promontorio lontano e il faro */
+      g.poly([[100, 57], [140, 46], [200, 40], [239, 42], [239, 60], [100, 60]], night ? 12 : 10);
+      for (y = 18; y <= 44; y++) { s = 2 + (y - 18) * 0.06; g.hline(176 - s, 176 + s, y, Math.floor((y - 18) / 5) % 2 ? 16 : (night ? 6 : 0)); }
+      g.rect(173, 11, 179, 17, on ? 0 : 16); g.poly([[172, 11], [176, 7], [180, 11]], 16); g.hline(171, 181, 18, L);
+      if (on) { g.poly([[173, 13], [0, 0], [0, 30]], 6); g.poly([[173, 14], [0, 8], [0, 22]], 2); }
+      /* la terra, con lo strapiombo */
+      g.poly([[0, 120], [40, 104], [90, 84], [130, 64], [150, 60], [239, 58], [239, 149], [0, 149]], night ? 13 : 10);
+      g.poly([[0, 120], [40, 104], [90, 84], [130, 64], [130, 72], [90, 94], [40, 116], [0, 134]], night ? 16 : 14);
+      for (i = 0; i < 10; i++) { x = 8 + i * 13; g.line(x, 118 - i * 5.5, x + 2, 128 - i * 5.5, L); }
+      g.pline([[0, 120], [40, 104], [90, 84], [130, 64], [150, 60]], L);
+      /* il sentiero */
+      g.poly([[104, 149], [176, 149], [162, 112], [152, 82], [148, 62], [143, 62], [136, 82], [122, 112]], night ? 9 : 0);
+      g.pline([[104, 149], [122, 112], [136, 82], [143, 62]], L); g.pline([[176, 149], [162, 112], [152, 82], [148, 62]], L);
+      for (i = 0; i < 14; i++) { t = h1(i + 7); y = 70 + Math.floor(h1(i) * 78); x = 140 + (y - 62) * (-0.3 + 0.6 * t) + 5; g.px(x, y, L); }
+      /* il muretto */
+      for (i = 0; i < 13; i++) {
+        if (i === 4 || i === 5) { continue; }
+        t = i / 12; x = 98 + t * 40; y = 146 - t * 82; s = 6 * (1 - t) + 2;
+        g.maskOn(); g.ell(x, y, s, s * 0.6, night ? 6 : 11); g.keyline(L);
+      }
+      /* la casa di pietra, coi sigilli */
+      g.rect(180, 74, 234, 112, night ? 12 : "stone"); g.frame(180, 74, 234, 112, L);
+      g.poly([[174, 75], [207, 56], [240, 75]], 16); g.pline([[174, 75], [207, 56], [240, 75]], L);
+      g.rect(196, 88, 212, 112, 16); g.frame(196, 88, 212, 112, L);
+      g.line(197, 90, 211, 110, 0, 1); g.line(211, 90, 197, 110, 0, 1); g.ell(204, 100, 2, 2, 0); g.px(204, 100, 16);
+      g.rect(219, 84, 228, 94, 16); g.frame(219, 84, 228, 94, L);
+      /* tamerici nel vento */
+      g.maskOn();
+      g.line(30, 149, 34, 104, 16, 1); g.line(34, 116, 56, 86 + sw, 16, 1); g.line(33, 124, 8, 92 - sw, 16, 1); g.line(34, 106, 36, 76 + sw, 16, 1);
+      for (i = 0; i < 46; i++) {
+        t = h1(i + 5); s = h1(i + 71);
+        x = i % 3 === 0 ? 34 + t * 22 : (i % 3 === 1 ? 33 - t * 25 : 34 + t * 2); y = i % 3 === 0 ? 116 - t * 30 : (i % 3 === 1 ? 124 - t * 32 : 106 - t * 30);
+        x += sw * (1 + Math.round(t * 2)); g.line(x, y, x + 3 + sw * 2, y + 8 + s * 6, 16);
+      }
+      g.keyline(night ? 0 : 3);
+      if (night) { rain(g, f, 70, 0, 0, 239, 148, false); }
+    };
+  }
+
+  /* ================= IL FARO, DA SOTTO ================= */
+  function torre(night) {
+    return function (g, f) {
+      var L = night ? 0 : 16, ph = f % 4, i, x, y, hh, band;
+      g.rect(0, 0, 239, 149, night ? 16 : 3);
+      g.ell((f * 8) % 320 - 40, 30, 50, 6, night ? 14 : 0); g.ell((f * 8 + 160) % 320 - 40, 52, 40, 4, night ? 14 : 1);
+      if (night) {
+        if (ph === 0) { g.poly([[112, 8], [0, 0], [0, 34]], 6); g.poly([[112, 8], [0, 8], [0, 24]], 2); }
+        else if (ph === 2) { g.poly([[128, 8], [239, 0], [239, 34]], 6); g.poly([[128, 8], [239, 8], [239, 24]], 2); }
+        else if (ph === 1) { g.ell(120, 8, 30, 14, 8); }
+      }
+      g.rect(170, 98, 239, 112, night ? 15 : 7); waves(g, f, 170, 239, 99, 112);
+      g.poly([[0, 112], [60, 106], [120, 110], [180, 106], [239, 112], [239, 149], [0, 149]], night ? 13 : 4);
+      for (i = 0; i < 20; i++) { x = 6 + h1(i) * 228; y = 116 + h1(i + 20) * 30; g.line(x, y, x - 2, y - 4, L); g.line(x, y, x + 1, y - 5, L); }
+      /* la torre a fasce */
+      for (y = 22; y <= 128; y++) {
+        hh = 16 + (y - 22) * 0.17; band = Math.floor((y - 22) / 14) % 2;
+        g.hline(120 - hh, 120 + hh, y, band ? 16 : (night ? 4 : 0));
+        g.hline(120 + hh - 6, 120 + hh, y, band ? 16 : (night ? 10 : 6));
+        g.px(120 - hh, y, L); g.px(120 + hh, y, L);
+      }
+      g.rect(118, 54, 122, 60, 16); g.rect(118, 82, 122, 88, 16);
+      /* ballatoio e lanterna */
+      g.rect(96, 18, 144, 21, 16); g.hline(96, 144, 21, L); g.hline(98, 142, 12, L); for (x = 98; x <= 142; x += 4) { g.vline(x, 12, 18, L); }
+      g.rect(108, 3, 132, 12, ph === 1 ? 0 : (night ? 9 : 6)); g.frame(108, 3, 132, 12, L); g.vline(116, 3, 12, L); g.vline(124, 3, 12, L);
+      g.poly([[105, 3], [120, -8], [135, 3]], 16); g.hline(105, 135, 3, L);
+      /* la porta di ferro */
+      g.rect(110, 108, 130, 128, 16); g.ell(120, 108, 10, 6, 16); g.arc(120, 108, 11, 7, PI, 2 * PI, 0); g.vline(109, 108, 128, 0); g.vline(131, 108, 128, 0);
+      for (y = 104; y < 128; y += 5) { g.px(113, y, 0); g.px(127, y, 0); } g.ell(126, 118, 1, 1, 0);
+      g.rect(104, 129, 136, 132, night ? 9 : 6); g.frame(104, 129, 136, 132, L);
+      if (night) { rain(g, f, 70, 0, 0, 239, 149, false); }
+    };
+  }
+
+  /* ================= LA CAMERA 7 ================= */
+  function camera(night) {
+    return function (g, f) {
+      var flash = night && f % 6 === 0, sw = [0, 1, 0, -1][f % 4], L = night ? 0 : 16, i, x, y;
+      g.rect(0, 0, 239, 110, night ? (flash ? 8 : 12) : 3); g.hline(0, 239, 110, 16);
+      g.rect(0, 111, 239, 149, night ? 14 : 7); for (y = 116; y < 150; y += 5 + (y - 110) / 6) { g.hline(0, 239, Math.round(y), 16); }
+      /* finestra sul golfo */
+      g.rect(70, 18, 130, 78, night ? 16 : 2); g.rect(70, 58, 130, 78, night ? 15 : 6); waves(g, f, 70, 130, 59, 78);
+      g.poly([[96, 58], [112, 52], [130, 50], [130, 58]], night ? 12 : 10);
+      for (y = 40; y <= 54; y++) { g.hline(112 - 1, 112 + 1, y, Math.floor((y - 40) / 4) % 2 ? 16 : (night ? 6 : 0)); }
+      g.rect(110, 36, 114, 39, flash ? 0 : 16);
+      if (flash) { g.poly([[112, 37], [70, 30], [70, 44]], 2); }
+      g.frame(69, 17, 131, 79, L); g.frame(68, 16, 132, 80, 16); g.vline(100, 18, 78, L); g.hline(70, 130, 48, L);
+      g.rect(64, 80, 136, 82, 0); g.frame(64, 80, 136, 82, 16);
+      if (flash) { g.poly([[132, 28], [210, 54], [236, 149], [160, 149], [132, 80]], 3); }
+      /* tenda */
+      g.maskOn(); g.poly([[58, 12], [74, 12], [76 + sw, 48], [72 + sw * 2, 86], [56, 86]], night ? 9 : 0); g.keyline(16);
+      for (i = 0; i < 3; i++) { g.line(61 + i * 4, 14, 61 + i * 4 + sw, 84, 16); }
+      g.hline(50, 140, 11, 16); g.hline(50, 140, 12, 16);
+      /* armadio che non chiude */
+      g.maskOn(); g.rect(0, 22, 38, 112, night ? 13 : 9); g.keyline(L);
+      g.maskOn(); g.poly([[20, 24], [40 + sw * 2, 20], [40 + sw * 2, 114], [20, 110]], night ? 11 : 4); g.keyline(16);
+      g.ell(26, 66, 1, 2, 16);
+      /* catino */
+      g.line(42, 130, 48, 98, 16, 1); g.line(60, 130, 54, 98, 16, 1); g.hline(44, 58, 116, 16);
+      g.maskOn(); g.ell(51, 96, 12, 4, 0); g.keyline(16); g.ell(51, 96, 9, 2, night ? 10 : 6);
+      /* letto di ferro con la valigia */
+      for (x = 152; x <= 180; x += 5) { g.vline(x, 62, 100, night ? 4 : 16); } g.rect(150, 58, 152, 128, night ? 4 : 16); g.hline(150, 182, 60, night ? 4 : 16); g.hline(150, 182, 64, night ? 4 : 16);
+      g.maskOn(); g.poly([[150, 98], [239, 94], [239, 120], [150, 124]], 0); g.keyline(16);
+      g.poly([[176, 100], [239, 97], [239, 120], [176, 122]], "h3"); g.maskOn(); g.ell(164, 98, 10, 4, 0); g.keyline(16);
+      g.maskOn(); g.rect(192, 80, 228, 99, 16); g.keyline(0);
+      g.vline(200, 80, 99, 0); g.vline(220, 80, 99, 0); g.arc(210, 80, 5, 3, PI, 2 * PI, 16); g.rect(204, 86, 214, 92, 0); g.hline(206, 212, 89, 9);
+      g.rect(152, 124, 154, 140, 16); g.rect(236, 120, 238, 140, 16);
+    };
+  }
+
+  /* ================= IL MOLO, DI GIORNO ================= */
+  function moloGiorno(g, f) {
+    var b = [0, 1, 0, -1][f % 4], i, x, y, t, gx;
+    g.rect(0, 0, 239, 62, 4); g.ell(60 + (f % 8), 16, 52, 6, 1); g.ell(190 - (f % 8), 8, 46, 4, 1);
+    g.rect(0, 62, 239, 149, 7); waves(g, f, 0, 239, 63, 149);
+    g.poly([[150, 63], [180, 52], [239, 48], [239, 64], [150, 64]], 10);
+    for (y = 30; y <= 50; y++) { g.hline(208, 212, y, Math.floor((y - 30) / 4) % 2 ? 16 : 0); } g.rect(207, 25, 213, 29, 16); g.px(210, 23, 16);
+    /* gabbiani */
+    for (i = 0; i < 3; i++) { gx = 40 + i * 50 + (f * 3 + i * 20) % 30; y = 24 + i * 7 + ((f + i) % 2); t = (f + i) % 2 ? 2 : -1; g.line(gx - 4, y + t, gx, y + 2, 16); g.line(gx, y + 2, gx + 4, y + t, 16); }
+    /* barche all'ormeggio */
+    for (i = 0; i < 2; i++) {
+      x = 150 + i * 44; y = 84 + i * 6 + (i ? -b : b);
+      g.maskOn(); g.poly([[x - 16, y], [x + 16, y], [x + 11, y + 7], [x - 12, y + 7]], 16); g.keyline(0);
+      g.hline(x - 16, x + 16, y + 2, 0); g.vline(x, y - 22, y, 16); g.line(x, y - 20, x + 10, y - 2, 9); g.rect(x - 2, y - 16, x + 1, y - 6, 12);
+    }
+    /* reti stese */
+    g.vline(26, 54, 108, 16); g.vline(27, 54, 108, 16); g.vline(92, 54, 104, 16); g.vline(93, 54, 104, 16);
+    g.poly([[28, 58], [60, 68], [91, 58], [91, 96 + b], [60, 100 - b], [28, 98 + b]], "d");
+    g.poly([[28, 58], [60, 68], [91, 58], [91, 96 + b], [60, 100 - b], [28, 98 + b]], "e");
+    g.pline([[28, 58], [60, 68], [91, 58]], 16);
+    /* il molo */
+    g.poly([[0, 104], [150, 112], [196, 149], [0, 149]], 0);
+    for (i = 0; i < 9; i++) { t = i / 8; t = t * t * 0.6 + t * 0.4; g.line(0, 106 + t * 43, 150 + t * 46, 112 + t * 37, 16); }
+    g.line(150, 112, 196, 149, 16, 1); g.hline(0, 150, 104, 16);
+    g.rect(196, 112, 239, 149, 7); waves(g, f + 2, 196, 239, 113, 149);
+    g.maskOn(); g.rect(40, 118, 48, 128, 16); g.ell(44, 117, 6, 2, 16); g.keyline(0);
+    /* uomini che smettono di parlare quando passi */
+    man(g, 112, 114, 36, { coat: 16, key: 0, arms: "smoke", f: f });
+    man(g, 132, 116, 38, { coat: 11, key: 0, f: f });
+  }
+
   var REG = "100000";
   var SC = {
     faro: { w: W, h: H, n: 6, draw: gulf(REG, false) },
@@ -688,7 +933,18 @@ var Pix = (function () {
     tx21: { w: W, h: H, n: code(2, 1).length, draw: gulf(code(2, 1), false) },
     tx22: { w: W, h: H, n: code(2, 2).length, draw: gulf(code(2, 2), false) },
     tx31: { w: W, h: H, n: code(3, 1).length, draw: gulf(code(3, 1), false) },
-    bar: { w: W, h: H, n: 12, draw: bar },
+    bar: { w: W, h: H, n: 12, draw: bar(true) },
+    barVuoto: { w: W, h: H, n: 12, draw: bar(false) },
+    piazza: { w: W, h: H, n: 8, draw: piazza(true) },
+    piazzaGiorno: { w: W, h: H, n: 8, draw: piazza(false) },
+    caserma: { w: W, h: H, n: 12, draw: caserma },
+    strada: { w: W, h: H, n: 8, draw: strada(true) },
+    stradaGiorno: { w: W, h: H, n: 8, draw: strada(false) },
+    torre: { w: W, h: H, n: 8, draw: torre(true) },
+    torreGiorno: { w: W, h: H, n: 8, draw: torre(false) },
+    camera: { w: W, h: H, n: 6, draw: camera(true) },
+    cameraGiorno: { w: W, h: H, n: 8, draw: camera(false) },
+    moloGiorno: { w: W, h: H, n: 8, draw: moloGiorno },
     casa: { w: W, h: H, n: 4, draw: casa },
     lente: { w: W, h: H, n: 8, draw: lente(false) },
     lente4: { w: W, h: H, n: 8, draw: lente(true) },

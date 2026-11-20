@@ -84,6 +84,11 @@ Object.keys(SC).forEach(function (id) {
     if (bad || !diff) fails++;
   } catch (e) { fails++; console.log('scena ' + id + ': ERRORE ' + e.message); }
 });
+// ogni tavola chiamata dalla storia deve esistere
+var eng = fs.readFileSync(dir + '/engine.js', 'utf8'), re = /IMG\(([^,]+),/g, m, ids = {};
+while ((m = re.exec(eng))) { (m[1].match(/"([^"]+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; }); }
+Object.keys(ids).forEach(function (id) { if (!SC[id] && !/^tx$/.test(id)) { fails++; console.log('tavola mancante: ' + id); } });
+console.log('tavole chiamate dalla storia: ' + Object.keys(ids).length);
 var gm = new ctx.Pix.Gfx(240, 150); ctx.Pix.drawMap(gm, { visited: { molo: 1, piazza: 1 }, room: 'piazza', cala: 0 });
 console.log('mappa ok');
 console.log(fails ? 'PROBLEMI: ' + fails : 'tutto a posto');

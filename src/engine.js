@@ -144,16 +144,18 @@ var PC = (function () {
         if (withImage) { b.push(IMG("faro", "Il faro, in automatico")); }
         d = "Vuoto. L'orario dice che il primo piroscafo parte alle sei e dieci. Mancano sei ore e una decisione.\nLa piazza è a [[nord]].";
       } else {
+        if (withImage) { b.push(IMG("moloGiorno", "Il molo, di giorno")); }
         d = "Di giorno il molo è reti stese e uomini che smettono di parlare quando passi. Sotto queste [[assi]] hanno ripescato Zanon.\nLa piazza è a [[nord]].";
       }
     } else if (r === "piazza") {
+      if (withImage) { b.push(IMG(night() ? "piazza" : "piazzaGiorno", "Piazza del Municipio: tre bandiere")); }
       d = "Tre [[bandiere]] fradice sul municipio, i portici vuoti, un [[manifesto]] che si scolla. ";
       if (c === 1) { d += "A [[est]] le finestre accese di una [[locanda]]; a [[ovest]] il posto di [[polizia]] portuale, buio. A [[nord]] parte il sentiero del faro."; }
       else if (c === 4) { d += "A [[est]] la [[locanda]] ha le imposte chiuse e una riga di luce sotto la porta. A [[ovest]] la [[polizia]] è spenta. A [[nord]] il sentiero del faro."; }
       else { d += "A [[est]] la [[locanda]]; a [[ovest]] il posto di [[polizia]] portuale; a [[nord]] il sentiero del faro."; }
       d += " Il molo è a [[sud]].";
     } else if (r === "locanda") {
-      if (withImage && c <= 2) { b.push(IMG("bar", "«Al Fanale»")); }
+      if (withImage) { b.push(c <= 2 ? IMG("bar", "«Al Fanale»") : IMG("barVuoto", c === 3 ? "«Al Fanale», a sedie capovolte" : "«Al Fanale», a imposte chiuse")); }
       if (c === 1) {
         d = "Un [[banco]] di zinco, sei tavoli, una [[stufa]] che fa più fumo che caldo. Dietro il banco una [[donna]] asciuga lo stesso bicchiere da un po'. A un tavolo d'angolo un [[uomo]] col cappotto buono legge un [[giornale]] di un altro paese. Vicino alla scala c'è un [[telefono]] a gettoni.";
       } else if (c === 2) {
@@ -165,12 +167,15 @@ var PC = (function () {
       }
       d += "\nLa piazza è a [[ovest]]" + (c < 4 ? ", le camere [[su]]." : ".");
     } else if (r === "camera") {
+      if (withImage) { b.push(IMG(night() ? "camera" : "cameraGiorno", "Camera 7")); }
       d = "Un [[letto]] di ferro, un catino, un armadio che non chiude. La tua [[valigia]] è sul letto. ";
       d += c === 1 ? "Dalla [[finestra]] si vede il golfo, e nel golfo la luce." : "Dalla [[finestra]], di giorno, il golfo è color peltro.";
       d += "\nLa scala scende: [[giù]].";
     } else if (r === "caserma") {
+      if (withImage) { b.push(IMG("caserma", "Polizia portuale, ufficio unico")); }
       d = "Una stanza, due scrivanie, una sola occupata. Il brigadiere [[Lodi]] ha la faccia di chi ha firmato troppe cose. Sul tavolo c'è un [[fascicolo]] sottile; in un angolo, un [[armadietto]] di ferro.\nLa piazza è a [[est]].";
     } else if (r === "strada") {
+      if (withImage) { b.push(IMG(night() ? "strada" : "stradaGiorno", "Il sentiero di Punta Cieca")); }
       d = "Il sentiero sale tra le tamerici, con lo strapiombo da una parte e il vento da tutte. A [[est]] una [[casa]] bassa di pietra, con i [[sigilli]] della polizia sulla porta. A [[nord]] il faro. La piazza è a [[sud]].";
       if (S.f.retro && !S.f.finestra) { d += " Sul retro della casa, una [[finestra]] accostata."; }
       if (S.f.quaderno) { d += "\nDove il [[muretto]] è crollato, una traccia scende alla cala: [[giù]]."; }
@@ -180,6 +185,7 @@ var PC = (function () {
       if (S.loc.foto === "casa") { d += " Alla parete, storta, una [[fotografia]] in cornice."; }
       d += "\nSi esce da dove sei entrata: [[ovest]].";
     } else if (r === "faro") {
+      if (withImage) { b.push(IMG(night() ? "torre" : "torreGiorno", "Trentadue metri, visti da sotto")); }
       d = "Trentadue metri di muratura a fasce, e in cima la luce che gira per conto suo. La [[porta]] è di ferro" + (S.f.porta ? ", aperta sulla scala: [[su]]." : ", chiusa.");
       d += "\nIl sentiero torna a [[sud]].";
     } else if (r === "lanterna") {
