@@ -28,10 +28,10 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 ## Vincoli tecnici
 
 - **JavaScript ES5**, niente librerie, niente passaggi di compilazione: i browser degli e-reader sono vecchi. Niente `let`, `const`, funzioni freccia, template string, `forEach` su NodeList.
-- **Una sola pagina, nessun server.** Lo stato si salva in `localStorage` (sempre dentro try/catch) e in un codice di 21 caratteri (`SALVA` / `CARICA`).
+- **Una sola pagina, nessun server.** Lo stato si salva in `localStorage` (sempre dentro try/catch) e in un codice di 22 caratteri (`SALVA` / `CARICA`).
 - **Solo bianco e nero.** Le tavole sono 240×150 punti (gli oggetti 120×75), ingrandite a multipli interi. Niente grigi, niente sfumature casuali.
 - **Un ridisegno per turno.** Niente animazioni dell'interfaccia, niente effetto macchina da scrivere: su e-ink sfarfallano. L'unico movimento è nelle tavole, pochi fotogrammi a circa due al secondo, e si può spegnere.
-- Se si aggiungono flag, oggetti o stanze, vanno aggiunti **in fondo** agli elenchi `FLAGS`, `ITEMS`, `ROOMS` in `engine.js`: l'ordine determina i codici di salvataggio. Se l'ordine cambia, va alzato il numero di versione in `encode`/`decode`.
+- Se si aggiungono oggetti o stanze, vanno aggiunti **in fondo** agli elenchi `ITEMS`, `ROOMS` in `engine.js`: l'ordine determina i codici di salvataggio. I flag nuovi vanno in fondo a `FLAGS_B`, che sta in coda al codice: così i codici vecchi restano validi (i bit mancanti valgono 0). `FLAGS` non si tocca più. Se l'ordine cambia, va alzato il numero di versione in `encode`/`decode`.
 
 ## Scelte di scrittura
 
@@ -41,6 +41,8 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 - Si gioca scrivendo oppure toccando un'azione e poi una parola sottolineata. Nel testo `[[parola]]` rende toccabile una parola, `[[ETICHETTA|comando]]` esegue un comando intero.
 - `INDIZIO` (in `hintFor()` di `engine.js`): per ogni passo della storia una chiave e tre frasi, dalla più vaga alla soluzione toccabile. Se si aggiunge un passaggio obbligato, va aggiunto anche lì; `play.js` chiede un indizio prima di ogni mossa del percorso. Il grado raggiunto sta in `S.h` e non entra nel codice di salvataggio.
 - I finali trovati stanno in `localStorage` (`vialibera.finali`), per titolo: se si aggiunge un finale va messo in `END_TITLES`.
+- Dialoghi: `PARLA` fa avanzare le battute fisse di `talkLine()` e aggiunge l'elenco degli argomenti (`topicList()`). Gli argomenti stanno in `DLG`: per personaggio, voci `[chiave, etichetta, parola, funzione(c, f, fai)]`; la funzione restituisce la battuta o `null` se ora l'argomento non c'è, e solo con `fai` cambia lo stato. Le parole che portano a un argomento sono in `TOPIC`. `play.js` prova ogni argomento proposto lungo il percorso: nessuno deve finire nella risposta di ripiego (`DLG_NO`).
+- Conseguenze (flag in `FLAGS_B`): `nivesSa` (le hai detto dei polsi), `nivesTradita` (hai mostrato la sua fotografia a Lodi o Kessel prima che a lei: dal capitolo 3 risponde a monosillabi), `lodiPolsi` (Lodi ha visto che sai), `kesselSa` (gli hai detto delle iniziali). Cambiano battute, SCHEDA e una frase nei finali; `play.js` gioca una partita per ognuna.
 - Ogni passaggio obbligato deve avere un indizio nel testo, meglio se toccabile (`[[dormire|dormi]]`, `[[APRI|apri porta]]`): DORMI, LEGGI, SEGNALA, ACCETTA e RIFIUTA non sono tra i pulsanti delle azioni.
 - Due modi di schermo, tutti e due da mantenere: Pagina (una pagina per turno, con sfogliatore) e Rullo.
 
@@ -48,6 +50,5 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 
 - Provato una volta su un Kindle di settima generazione (Browser sperimentale): il gioco gira, ma stile e tavole non si vedevano bene. Corretti variabili CSS e ingrandimento delle tavole; manca la prova dopo la correzione e la foto di `diagnosi.html`. Mai provato su Kobo.
 - Le figure umane nelle tavole sono rigide, i ritratti degli oggetti sono quasi da figurina; la sala della lanterna è la tavola meno riuscita, seguita dalla tamerice del sentiero. Le illustrazioni andrebbero sostituite con tavole disegnate a mano a 240×150, 1 bit.
-- I dialoghi sono a battute fisse: `PARLA` fa avanzare la conversazione, non si sceglie l'argomento.
 - `index.html` pesa circa 185 KB: da tenere d'occhio sul Kindle.
 - In modo Pagina, ◀ ▶ fuori dal prologo stanno dentro il cassetto COMANDI.

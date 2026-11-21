@@ -12,7 +12,8 @@ Porto Scuro, novembre 1953. Sei Ada Corvi, ispettrice dei fari per modo di dire.
 - In basso c'è solo la riga di comando: il pulsante **COMANDI** apre direzioni, azioni, oggetti e i pulsanti `SCHEDA`, `MAPPA`, `SALVA`, `INDIZIO`, `?` e `Aa`, e si richiude dopo ogni comando.
 - Ogni luogo ha la sua tavola animata, di notte o di giorno a seconda del capitolo: si vede entrando la prima volta e con `GUARDA`. Quando esamini qualcosa (un oggetto, un indizio, una persona) compare la sua immagine, con un cartellino da reperto.
 - `SCHEDA` dice chi sei e cosa hai scoperto, `MAPPA` mostra i posti dove sei stata.
-- `SALVA` dà un codice di 21 caratteri; `CARICA` e il codice riprendono la partita, anche su un altro dispositivo. Su ogni dispositivo la partita si salva comunque da sola.
+- `PARLA` fa dire al personaggio la sua battuta e propone gli argomenti («Puoi chiederle di: Zanon · Kessel · la luce»): si toccano, oppure si scrive `CHIEDI A NIVES DI KESSEL`. Alcuni argomenti compaiono solo dopo aver scoperto qualcosa, e certe risposte cambiano il seguito: quello che Nives, Lodi e Kessel sanno di te si sente nei capitoli dopo e nei finali.
+- `SALVA` dà un codice di 22 caratteri; `CARICA` e il codice riprendono la partita, anche su un altro dispositivo. Su ogni dispositivo la partita si salva comunque da sola.
 - Il pulsante `Aa` apre le impostazioni: schermo a *Rullo* (predefinito) o a *Pagina*, *Movimento* delle tavole sì o no (su e-ink lascia aloni: lì conviene spegnerlo) e dimensione del *Testo* (A, A+, A++).
 - `INDIZIO` aiuta chi è bloccato in tre gradi: il primo è vago, il secondo più preciso, il terzo dice cosa fare. Il grado riparte quando si supera il passaggio.
 - A fine partita il gioco dice quanti dei cinque finali hai trovato (anche con `FINALI`). Il conto resta nel browser anche dopo `RICOMINCIA`.

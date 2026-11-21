@@ -41,7 +41,7 @@ var path = [
   'parla nives', 'scheda', 'o', 'n', 'n', 'su', 'apri porta', 'su', 'usa leva', 'apri sportello', 'prendi quaderno', 'mappa', 'giu', 'su', 'parla kessel'
 ];
 // prima di ogni mossa del percorso chiede un indizio: deve esserci sempre, e i tre gradi devono essere diversi
-var hintSteps = {}, fails = 0;
+var hintSteps = {}, fails = 0, asked = {};
 path.forEach(function (c) {
   var h1 = show(PC.exec('indizio')), h2, h3;
   if (h1.indexOf('Indizio 1 di 3') >= 0) {
@@ -49,8 +49,21 @@ path.forEach(function (c) {
     if (h3.indexOf('Indizio 3 di 3') < 0 || h1 === h2 || h2 === h3) { fails++; console.log('indizio sbagliato prima di «' + c + '»:\n' + h1 + '\n' + h3); }
     hintSteps[h3.split('\n')[1]] = 1;
   } else if (h1.indexOf('Indizio 3 di 3') < 0) { fails++; console.log('indizio senza grado prima di «' + c + '»: ' + h1); }
+  // a ogni passo: ogni argomento proposto da PARLA deve avere una risposta vera, poi si torna indietro
+  var snap = PC.exec('salva').filter(function (b) { return b.t === 'code'; })[0].s;
+  ['parla nives', 'parla kessel', 'parla lodi', 'parla brandi'].forEach(function (pc) {
+    var r = show(PC.exec(pc)), m2, re2 = /\[\[[^|\]]+\|(chiedi a \w+ di \w+)\]\]/g;
+    while ((m2 = re2.exec(r))) {
+      var ans = show(PC.exec(m2[1]));
+      asked[m2[1]] = 1;
+      if (!ans || /undefined|null/.test(ans) || /Di questo non so|Non è merce|Non è di mia|Non sei qui per fare/.test(ans)) { fails++; console.log('argomento senza risposta: ' + m2[1] + ' -> ' + ans); }
+      if (verbose) { console.log('  > ' + m2[1] + '\n  ' + ans.split('\n')[0]); }
+    }
+    PC.exec('carica ' + snap);
+  });
   run([c], !verbose);
 });
+console.log('domande provate lungo il percorso: ' + Object.keys(asked).length);
 console.log('indizi diversi lungo il percorso: ' + Object.keys(hintSteps).length);
 var before = PC.exec('salva');
 var code = before.filter(function (b) { return b.t === 'code'; })[0].s;
@@ -75,6 +88,22 @@ ending('accetta + 3-1', 'dai quaderno a kessel', [], '3-1', 'La guardiana');
 var fin = show(PC.exec('finali'));
 console.log(fin);
 if (fin.indexOf('5 su 5') < 0) { fails++; }
+// conseguenze: le stesse partite, con scelte diverse nei dialoghi, devono cambiare i finali
+function variant(label, edits, tail, expect) {
+  PC.start(true);
+  var p2 = [];
+  path.forEach(function (c) { if (edits[c]) { p2 = p2.concat(edits[c]); } p2.push(c); });
+  var txt = p2.concat(tail).map(function (c) { return show(PC.exec(c)); }).join('\n'), ok = expect.every(function (e) { return txt.indexOf(e) >= 0; });
+  if (!ok) { fails++; console.log(txt.slice(-3000)); }
+  console.log((ok ? 'OK  ' : 'FAIL') + ' conseguenze: ' + label);
+}
+variant('Lodi vede i polsi, Nives sa', { 'e': ['chiedi a lodi di polsi'], 'mostra la fotografia a nives': ['chiedi a nives di polsi'] },
+  ['rifiuta', 'n', 'su', 'usa leva', 'segnala 1-3'], ['Le altre due, dice, sono saltate giù', 'Adesso sa anche chi ha acceso la luce']);
+variant('Nives tradita', { 'mostra la fotografia a nives': ['o', 'o', 'mostra fotografia a lodi', 'e', 'e'] },
+  ['rifiuta', 's', 's', 'e', 'chiedi a nives di zanon', 'o', 'n', 'n', 'su', 'usa leva', 'segnala 3-1'], ['Chieda ai suoi amici', 'Nives non ti saluta. La fotografia']);
+variant('Kessel sa della K.', { 'mostra la fotografia a nives': ['chiedi a kessel di iniziali'] }, ['accetta', 'n', 'su', 'usa leva', 'segnala 1-3'], ['Ormai siamo colleghi']);
+variant('la fotografia chiesta a Nives fa avanzare', { 'mostra la fotografia a nives': ['chiedi a nives di fotografia'] }, ['scheda'], ['Capitolo terzo']);
+
 // codice sbagliato, codice alterato
 console.log('\ncodice vuoto:', show(PC.exec('carica')));
 console.log('codice alterato:', show(PC.exec('carica ' + code.replace(/.$/, code.slice(-1) === 'A' ? 'B' : 'A'))));

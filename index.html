@@ -254,6 +254,8 @@ var PC = (function () {
   var ITEMS = ["tesserino", "sigarette", "chiave", "gettone", "pistola", "foto", "mazzo", "quaderno"];
   var FLAGS = ["nivesKey", "grappa", "telefonato", "valigia", "retro", "finestra", "fascicolo", "polsi", "registro", "stufa", "tabellina", "nives",
     "porta", "sportello", "quaderno", "offerta", "patto", "datoBrandi", "manuale", "k1", "lodi1", "foglio", "nives4", "notte", "lodiCala"];
+  /* flag aggiunti dopo: stanno in fondo al codice di salvataggio, così i codici vecchi restano validi */
+  var FLAGS_B = ["nivesSa", "nivesTradita", "lodiPolsi", "kesselSa"];
   var CH_NAME = ["", "Capitolo primo", "Capitolo secondo", "Capitolo terzo", "Capitolo quarto"];
   var CH_TITLE = ["", "L'ultima corsa", "Il morto di Punta Cieca", "Il codice della luce", "Mezzanotte"];
   var CODES = { "13": 1, "21": 1, "22": 1, "31": 1 };
@@ -277,7 +279,7 @@ var PC = (function () {
     apri: "apri", forza: "apri", scavalca: "apri", chiudi: "chiudi",
     usa: "usa", utilizza: "usa", infila: "usa", gira: "usa", sposta: "usa", tira: "usa", premi: "usa", accendi: "usa", fuma: "usa", telefona: "usa", chiama: "usa",
     dai: "dai", mostra: "dai", offri: "dai", porgi: "dai", consegna: "dai",
-    parla: "parla", saluta: "parla", chiedi: "parla", interroga: "parla", rispondi: "parla",
+    parla: "parla", saluta: "parla", interroga: "parla", rispondi: "parla", chiedi: "chiedi", domanda: "chiedi", chiedile: "chiedi", chiedigli: "chiedi",
     dormi: "dormi", riposa: "dormi",
     segnala: "segnala", trasmetti: "segnala", batti: "segnala", lampeggia: "segnala",
     accetta: "accetta", si: "accetta", rifiuta: "rifiuta", no: "rifiuta",
@@ -474,6 +476,10 @@ var PC = (function () {
     if (f.stufa) { facts.push("Nella stufa, cifre bruciate e due iniziali: «B.» e «K.»."); }
     if (f.quaderno) { facts.push("Stanotte a mezzanotte arriva una barca: sei persone. Una è l'archivista, con le ricevute di Brandi."); }
     if (f.foglio) { facts.push("Marzo '44: hai trasmesso «via libera» con una pistola alla nuca. Nove persone. Brandi ha il foglio."); }
+    if (f.lodiPolsi) { facts.push("Lodi ha visto i polsi. Alle cime del molo non ci crede più nemmeno lui."); }
+    if (f.nivesSa) { facts.push("Nives sa dei polsi. Adesso sa che Elia non è caduto."); }
+    if (f.nivesTradita) { facts.push("Hai mostrato la fotografia di Nives ad altri, prima che a lei. Lei lo sa."); }
+    if (f.kesselSa) { facts.push("Kessel sa che hai letto le iniziali nella stufa."); }
     if (f.nives4) { facts.push("Allo scalo vecchio non c'è nessuno. Nives ha un furgone."); }
     if (f.patto) { facts.push("Kessel sarà alla cala con più uomini di Brandi. Dice."); }
 
@@ -506,7 +512,7 @@ var PC = (function () {
 
   function confess() {
     S.f.nives = 1; S.loc.mazzo = "inv"; S.moves++; setChapter(3);
-    return [P("Posi la fotografia sul banco, dalla parte della matita. Nives smette di asciugare.\n«Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»"),
+    return [P(S.f.nivesTradita ? "Posi la fotografia sul banco. Nives non la tocca.\n«L'ha già fatta vedere in giro, mi dicono. Qui le voci arrivano prima dei piroscafi.» Poi, perché non ha scelta: «Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»" : "Posi la fotografia sul banco, dalla parte della matita. Nives smette di asciugare.\n«Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»"),
       P("Elia portava gente di qua, di notte, con la luce. Chi poteva pagare e chi no. Da un anno qualcuno, a Roma, decideva quali barche arrivavano davvero. Elia l'ha capito leggendo un nome su un giornale dell'altra parte, nell'elenco dei fucilati. Era un uomo che aveva fatto sbarcare lui."),
       P("«Ha scritto tutto. Nomi, somme, notti. Il quaderno è nel faro, sotto la lente, dove la luce non guarda.» Ti mette in mano un [[mazzo]] di chiavi ancora tiepido di tasca. «La barca viene stanotte. Sopra c'è mio fratello.»"),
       CHAP(3),
@@ -516,7 +522,7 @@ var PC = (function () {
   function kesselScene() {
     S.room = "faro"; S.f.offerta = 1; S.f.k1 = 1; S.moves++;
     return [{ t: "room", s: ROOM_NAME.faro }, IMG("kessel", "In fondo alla scala"),
-      P("La porta è aperta sulla notte, e nella porta c'è [[Kessel]]. Non ha l'ombrello. Ha una sigaretta.\n«L'ha trovato. Si vede da come tiene la borsa.» Non si avvicina. «Io lavoro per la terza bandiera, signora. Zanon mi vendeva dei nomi. Il suo capitano Brandi vendeva le persone. Stanotte sarà alla cala, con due uomini e il brigadiere.»"),
+      P("La porta è aperta sulla notte, e nella porta c'è [[Kessel]]. Non ha l'ombrello. Ha una sigaretta.\n«L'ha trovato. Si vede da come tiene la borsa.»" + (S.f.kesselSa ? " Sorride. «E sa già della K. Bene: posso smettere di vendere spugne.»" : "") + " Non si avvicina. «Io lavoro per la terza bandiera, signora. Zanon mi vendeva dei nomi. Il suo capitano Brandi vendeva le persone. Stanotte sarà alla cala, con due uomini e il brigadiere.»"),
       P("Tira fuori una busta. «Mi dia il quaderno e faccia il segnale che vuole lui. Alla cala ci sarò anch'io, con più uomini dei suoi. Lei avrà un passaporto con un altro nome.»\nAspetta. [[ACCETTA|accetta]], oppure [[RIFIUTA|rifiuta]].")];
   }
 
@@ -537,21 +543,24 @@ var PC = (function () {
   var ENDINGS = {
     "13": function () {
       if (S.f.patto) {
-        return ["Il passaporto", "Uno. Buio. Tre. In mare una lanterna risponde, e la barca viene avanti.\nAlla cala si accendono i fari di Brandi, e subito dopo altri, più in alto, sulla strada. Quattro colpi. Poi un megafono, in una lingua da vincitori. Brandi sale su una jeep col cappotto di cammello sporco di ghiaia.\nKessel mantiene: un passaporto, un nome nuovo, un biglietto per Marsiglia. Dei sei della barca dice: «In un campo, per accertamenti. Qualche mese.» Dice mese come Brandi diceva promessa.\nNives non ti saluta."];
+        return ["Il passaporto", "Uno. Buio. Tre. In mare una lanterna risponde, e la barca viene avanti.\nAlla cala si accendono i fari di Brandi, e subito dopo altri, più in alto, sulla strada. Quattro colpi. Poi un megafono, in una lingua da vincitori. Brandi sale su una jeep col cappotto di cammello sporco di ghiaia.\n" + (S.f.kesselSa ? "Sul molo Kessel ti stringe la mano. «Lei sapeva della K. e ha trattato lo stesso. Ormai siamo colleghi.»\n" : "") + "Kessel mantiene: un passaporto, un nome nuovo, un biglietto per Marsiglia. Dei sei della barca dice: «In un campo, per accertamenti. Qualche mese.» Dice mese come Brandi diceva promessa.\nNives non ti saluta."];
       }
-      return ["Il lavoro", "Uno. Buio. Tre. In mare una lanterna risponde, e la barca viene avanti, fiduciosa.\nDalla lanterna vedi tutto piccolo: i fari della macchina che si accendono, sei figure con le mani alzate, una che viene fatta salire davanti. Le altre cinque, sul camion del brigadiere.\nAll'alba Brandi ti dà il foglio del '44. Lo bruci sul molo, aspettando il piroscafo. Brucia in fretta, come le cose che in fondo non pesavano.\nL'hai rifatto. Stavolta senza la pistola alla nuca."];
+      return ["Il lavoro", "Uno. Buio. Tre. In mare una lanterna risponde, e la barca viene avanti, fiduciosa.\nDalla lanterna vedi tutto piccolo: i fari della macchina che si accendono, sei figure con le mani alzate, una che viene fatta salire davanti. Le altre cinque, sul camion del brigadiere." + (S.f.lodiPolsi ? " Lodi guida piano. Al bivio sbaglia strada, e quando arriva in caserma sul camion ne restano tre. Le altre due, dice, sono saltate giù. Nessuno gli chiede come abbia fatto a non vederle." : "") + (S.f.nivesSa ? "\nNives sapeva chi aveva legato i polsi a Elia. Adesso sa anche chi ha acceso la luce." : "") + "\nAll'alba Brandi ti dà il foglio del '44. Lo bruci sul molo, aspettando il piroscafo. Brucia in fretta, come le cose che in fondo non pesavano.\nL'hai rifatto. Stavolta senza la pistola alla nuca."];
     },
     "22": function () {
-      return ["Mare vuoto", "Due. Buio. Due. La lanterna in mare resta ferma un momento, come chi non vuole capire. Poi vira.\nNessuno sbarca, nessuno viene preso. Sei persone tornano verso la costa da cui scappavano, con le ricevute di Brandi in tasca e una motovedetta che dall'altra parte esce alle quattro.\nBrandi sale al faro di persona. Non alza la voce. Dice soltanto che il foglio del '44 parte domani per tre giornali." + (S.f.patto ? "\nKessel se ne va col quaderno e senza un grazie." : "") + "\nNives sta sulla porta della locanda e guarda il mare vuoto. Non sai se ti stia ringraziando."];
+      return ["Mare vuoto", "Due. Buio. Due. La lanterna in mare resta ferma un momento, come chi non vuole capire. Poi vira.\nNessuno sbarca, nessuno viene preso. Sei persone tornano verso la costa da cui scappavano, con le ricevute di Brandi in tasca e una motovedetta che dall'altra parte esce alle quattro.\nBrandi sale al faro di persona. Non alza la voce. Dice soltanto che il foglio del '44 parte domani per tre giornali." + (S.f.patto ? "\nKessel se ne va col quaderno e senza un grazie." : (S.f.kesselSa ? "\nKessel, al tavolo d'angolo, alza il bicchiere verso di te. Sa della K., e sa che lo sai: per stavolta basta a tutti e due." : "")) + "\nNives sta sulla porta della locanda e guarda il mare vuoto. Non sai se ti stia ringraziando."];
     },
     "21": function () {
-      return ["Nessuna decisione", "Due. Buio. Uno. Aspettate. È il segnale di chi non sa decidere, e lo sai mentre lo batti.\nLa barca aspetta. Aspetta Brandi alla cala, aspetta Nives col furgone, aspetta Kessel dovunque sia. Alle cinque e quaranta arriva la motovedetta dell'Amministrazione, che non aspettava nessuno, e li prende tutti e sei alla luce del giorno.\nSul verbale ci sarà scritto «sbarco clandestino sventato». Non ci sarà scritto da chi.\nRiparti col primo piroscafo. Nessuno ti ferma. È questo il peggio."];
+      return ["Nessuna decisione", "Due. Buio. Uno. Aspettate. È il segnale di chi non sa decidere, e lo sai mentre lo batti.\nLa barca aspetta. Aspetta Brandi alla cala, aspetta Nives col furgone, aspetta Kessel dovunque sia. Alle cinque e quaranta arriva la motovedetta dell'Amministrazione, che non aspettava nessuno, e li prende tutti e sei alla luce del giorno.\nSul verbale ci sarà scritto «sbarco clandestino sventato». Non ci sarà scritto da chi." + (S.f.lodiPolsi ? "\nIn fondo al verbale, Lodi aggiunge una riga sui polsi di Zanon. Non la leggerà nessuno. Ma c'è." : "") + "\nRiparti col primo piroscafo. Nessuno ti ferma. È questo il peggio."];
     },
     "31": function () {
       var s = "Tre. Buio. Uno. La lanterna in mare risponde due volte, sorpresa, e la barca piega a ponente, verso lo scalo vecchio.\nBrandi lo capisce tardi. Quando la macchina arriva dietro il macello ci sono solo impronte di gomme e una cima tagliata. L'archivista e le sue ricevute sono da qualche parte nell'entroterra, con un ragazzo di ventidue anni e una donna che guida a fari spenti.";
       if (S.f.patto) { s += "\nKessel riparte la mattina, col quaderno e senza l'archivista. Mezza verità: gli basterà per fare carriera."; }
       else if (S.f.datoBrandi) { s += "\nIl quaderno l'ha bruciato Brandi. Le ricevute no."; }
-      s += "\nIl tuo foglio del '44 uscirà sui giornali, prima o poi. Non a Porto Scuro: qui i giornali arrivano tardi e nessuno li legge.\nA Punta Cieca serve un guardiano. Hai le chiavi, conosci il mestiere, e la luce, di notte, bisogna pure che qualcuno la tenga.";
+      if (S.f.lodiPolsi) { s += "\nLodi arriva allo scalo vecchio con mezz'ora di ritardo. Non aveva fretta, stanotte."; }
+    if (S.f.nivesTradita) { s += "\nNives non ti saluta. La fotografia l'hai mostrata prima agli altri: ti ha usata, come tu hai usato lei, ed è pari."; }
+    else if (S.f.nivesSa) { s += "\nPrima di salire sul furgone, Nives ti stringe la mano, forte, come si fa con chi ha portato una brutta notizia ed era vera."; }
+    s += "\nIl tuo foglio del '44 uscirà sui giornali, prima o poi. Non a Porto Scuro: qui i giornali arrivano tardi e nessuno li legge.\nA Punta Cieca serve un guardiano. Hai le chiavi, conosci il mestiere, e la luce, di notte, bisogna pure che qualcuno la tenga.";
       return ["La guardiana", s];
     }
   };
@@ -621,7 +630,8 @@ var PC = (function () {
   /* ---------- dialoghi ---------- */
   function line(arr, key) { var i = Math.min(S.t[key], arr.length - 1); if (S.t[key] < 3) { S.t[key]++; } return [P(arr[i])]; }
 
-  function talk(who) {
+  function talk(who) { return talkLine(who).concat(who ? topicList(who) : []); }
+  function talkLine(who) {
     var c = S.ch, f = S.f;
     S.moves++;
     if (who === "nives") {
@@ -665,6 +675,157 @@ var PC = (function () {
     return [P("Parli da sola. Ti capita, ultimamente.")];
   }
 
+  /* ---------- argomenti: CHIEDI A <chi> DI <cosa> ----------
+     Ogni voce: [chiave, etichetta, parola da comando, funzione(c, f, fai)].
+     La funzione restituisce la battuta, oppure null se l'argomento ora non c'è.
+     Con fai = false si limita a dire se c'è; con fai = true può anche cambiare lo stato. */
+  var TOPIC = { zanon: "zanon", elia: "zanon", guardiano: "zanon", kessel: "kessel", straniero: "kessel", commerciante: "kessel",
+    brandi: "brandi", capitano: "brandi", roma: "brandi", lodi: "lodi", brigadiere: "lodi", nives: "nives", ostessa: "nives",
+    luce: "luce", lampi: "luce", lampo: "luce", notte: "luce", stanotte: "luce", faro: "luce",
+    polsi: "polsi", fotografie: "polsi", corpo: "polsi", cadavere: "polsi", morto: "polsi",
+    fotografia: "foto", foto: "foto", chiavi: "chiavi", mazzo: "chiavi", quaderno: "quaderno",
+    iniziali: "bk", stufa: "bk", cifre: "bk", fratello: "fratello", barca: "barca", passaporto: "passaporto",
+    foglio: "foglio", marzo: "foglio", altri: "altri", cinque: "altri", persone: "altri", nome: "nome", segnali: "segnali", segnale: "segnali" };
+  var DLG = {
+    nives: [
+      ["zanon", "Zanon", "zanon", function (c, f) {
+        if (c === 1) { return "«Elia? Veniva alle nove, beveva un bicchiere, pagava. Da tre sere no.» Gira il bicchiere. «Anche questo l'ho già detto. A quello della polizia.»"; }
+        if (c === 2) { return "«Gli ho cucinato per sei anni. Mai una volta che lasciasse qualcosa nel piatto.» Lo straccio si ferma. «Uno così non scivola da un molo.»"; }
+        if (c === 3) { return "«Diceva che la luce non ha padroni. Aveva torto, ma era bello sentirglielo dire.»"; }
+        return f.nivesSa ? "«L'hanno messo in acqua coi polsi legati. Me l'ha detto lei.» Ti guarda. «Adesso tocca a lei dire il resto. Con la luce.»" : "«Elia avrebbe saputo cosa fare. Per questo è morto.»";
+      }],
+      ["kessel", "Kessel", "kessel", function (c) {
+        if (c === 1) { return "Abbassa la voce, non gli occhi. «Paga in valuta e non chiede il conto. Qui si chiama un buon cliente.»"; }
+        if (c === 2) { return "«Stamattina ha chiesto di lei. Se dormiva bene. Gli ho detto di sì.» Una pausa. «Ho mentito per lei, signora. Non si abitui.»"; }
+        if (c === 3) { return "«Ha pagato ed è uscito. Senza aspettare il resto. Quando uno non aspetta il resto, vuol dire che torna.»"; }
+        return null;
+      }],
+      ["luce", "la luce", "luce", function (c, f) {
+        if (c === 1) { return "«Va da sola, dicono. Da tre giorni.» Guarda la finestra come si guarda un orologio fermo."; }
+        if (c === 2 && f.notte) { return "«Lampi? Sarà stato il vento sui vetri.»\nStanotte il vento non c'era. Lo sapete tutte e due."; }
+        return null;
+      }],
+      ["polsi", "i polsi", "polsi", function (c, f, fai) {
+        if (!f.polsi || c > 2) { return null; }
+        if (fai) { f.nivesSa = 1; }
+        return "Le dici dei polsi. Nives posa il bicchiere piano, come se fosse pieno.\n«Lo sapevo», dice. «Non sapevo di saperlo.»\nPer un momento ti guarda come si guarda una persona, non una cliente.";
+      }],
+      ["lodi", "Lodi", "lodi", function (c) { return c === 2 || c === 3 ? "«Lodi è un uomo per bene che ha paura. Qui è quasi la stessa cosa.»" : null; }],
+      ["foto", "la fotografia", "fotografia", function (c) { return c === 2 && has("foto") ? "FOTO" : null; }],
+      ["quaderno", "il quaderno", "quaderno", function (c) { return c === 3 ? "«Non l'ho mai letto. Elia diceva che era meglio, per me. Aveva ragione su tutto, tranne che su sé stesso.»" : null; }],
+      ["fratello", "suo fratello", "fratello", function (c) {
+        if (c === 3) { return "«Ventidue anni. Faceva il tornitore, di là. Adesso fa il passeggero.»"; }
+        if (c === 4) { return "«Lo vedrà da lassù. Una lanterna, più piccola delle altre.»"; }
+        return null;
+      }],
+      ["segnali", "i segnali", "segnali", function (c) { return c === 4 ? "«Tre e uno. Lo scalo vecchio.» Lo ripete, come si ripete un indirizzo a un tassista. «Tre e uno.»" : null; }],
+      ["brandi", "Brandi", "brandi", function (c) { return c === 4 ? "«Quello della cala? Elia diceva che aveva le mani pulite perché le faceva lavare agli altri.»" : null; }]
+    ],
+    kessel: [
+      ["nome", "il tuo nome", "nome", function (c) { return c === 1 ? "«Ho letto la lista dei passeggeri. Lei era l'unica che non vendeva niente.» Sorride appena. «Mi ha incuriosito.»" : null; }],
+      ["zanon", "Zanon", "zanon", function (c) {
+        if (c === 1) { return "«Il guardiano? Lo conoscevo di vista. Qui tutti si conoscono di vista: è il modo locale di non conoscersi.»"; }
+        if (c === 2) { return "«Mi vendeva il meteo, diciamo. Bel tempo, brutto tempo, chi arriva.» Gira una pagina. «Era un buon fornitore.»"; }
+        return null;
+      }],
+      ["luce", "la luce", "luce", function (c, f) { return c === 2 && f.notte ? "«Due e uno», dice senza alzare gli occhi. «Anch'io soffro d'insonnia.»" : null; }],
+      ["bk", "le iniziali", "iniziali", function (c, f, fai) {
+        if (c !== 2 || !f.stufa) { return null; }
+        if (fai) { f.kesselSa = 1; }
+        return "Gli dici delle iniziali nella stufa. Kessel piega il giornale, per la prima volta.\n«K. è una lettera molto comune, nella mia lingua.» Poi, più piano: «Lei sa più di quanto le convenga, signora Corvi. Me lo ricorderò.»";
+      }],
+      ["nives", "Nives", "nives", function (c) { return c <= 2 ? "«Una donna che asciuga lo stesso bicchiere per un'ora sta aspettando qualcuno. Il guardiano, immagino. Anche lei, adesso, sta aspettando lui.»" : null; }],
+      ["brandi", "Brandi", "brandi", function (c) {
+        if (c === 2) { return "«Il suo capitano? Lo conosco dalle ricevute. Ha una bella firma. Firma molto.»"; }
+        if (c === 3) { return "«Stanotte sarà alla cala. Crede di avere più uomini di me. È il suo unico difetto: sa contare solo i suoi.»"; }
+        return null;
+      }],
+      ["quaderno", "il quaderno", "quaderno", function (c) { return c === 3 ? "«Per lei è un peso. Per me è un capitale. Per Brandi è una condanna.» Fa cadere la cenere. «Scelga lei a chi farlo pesare.»" : null; }],
+      ["passaporto", "il passaporto", "passaporto", function (c) { return c === 3 ? "«Nome nuovo, città nuova. Marsiglia, le consiglio. Ci si perde bene.»" : null; }]
+    ],
+    lodi: [
+      ["zanon", "Zanon", "zanon", function (c) {
+        if (c === 2) { return "«Anni cinquantadue, celibe, nessun precedente. Beveva.» Batte il dito sul fascicolo. «Scritto così, è un uomo che cade da un molo.»"; }
+        if (c === 3) { return "«Caso chiuso. Lo dica alla lampada.»"; }
+        return null;
+      }],
+      ["polsi", "i polsi", "polsi", function (c, f, fai) {
+        if (!f.polsi) { return null; }
+        if (c === 4) { return f.lodiPolsi ? "«Diciannove anni di servizio», dice piano, «e stanotte me li gioco tutti.» Non ti dice come." : "«Non è il momento, signora.» Non lo è mai stato."; }
+        if (f.lodiPolsi) { return "«Ci ho pensato tutta la mattina», dice senza alzare gli occhi. «Non mi è servito.»"; }
+        if (fai) { f.lodiPolsi = 1; }
+        return "Gli metti davanti la seconda fotografia. Lodi la guarda a lungo, poi la gira a faccia in giù.\n«Le cime del molo», dice.\nNon ci crede nemmeno lui, e adesso sa che lo sai.";
+      }],
+      ["chiavi", "le chiavi", "chiavi", function (c, f) { return c === 2 && f.fascicolo ? "«Agli atti.»\nQuali atti?\n«Quelli che non ci sono.» Si pente di averlo detto prima ancora di finire la frase." : null; }],
+      ["kessel", "Kessel", "kessel", function (c) { return c <= 3 ? "«Il commerciante? Ha i documenti in regola. Troppo, in regola.»" : null; }],
+      ["brandi", "Brandi", "brandi", function (c) {
+        if (c === 4) { return "«Il capitano dà gli ordini. Io guido il camion.» Guarda il camion come si guarda una cosa che non si è scelta."; }
+        return "«Roma telefona, io rispondo. Non chiedo chi c'è dall'altra parte.»";
+      }],
+      ["altri", "le persone", "persone", function (c, f) {
+        if (c !== 4) { return null; }
+        return f.lodiPolsi ? "«Cinque posti sul camion.» Una pausa. «La strada per la caserma è lunga, e piena di curve.»" : "«Il camion ha cinque posti. Non mi chieda a cosa servono.»";
+      }]
+    ],
+    brandi: [
+      ["quaderno", "il quaderno", "quaderno", function (c, f) { return f.patto ? "«Ce l'ha Kessel. Lo so, Ada. Le cose le so sempre un'ora dopo, ma le so.»" : "«Mi basta sapere dov'è. Le cose che so dove sono, sono già mie.»"; }],
+      ["foglio", "il foglio", "foglio", function () { return "«È in tasca. Dopo mezzanotte sarà tuo.» Si batte il petto, piano. «È l'unica promessa che mantengo: costa poco.»"; }],
+      ["zanon", "Zanon", "zanon", function () { return "«Un brav'uomo che sapeva leggere. Nel nostro mestiere sono due difetti.»"; }],
+      ["altri", "gli altri", "altri", function () { return "«Ci sono sempre altri, Ada. Il trucco è non contarli.»"; }],
+      ["kessel", "Kessel", "kessel", function () { return "«La terza bandiera. Si crede furbo. Domani avrà un foglio di via e tre giorni per usarlo.»"; }],
+      ["lodi", "Lodi", "lodi", function (c, f) { return f.lodiPolsi ? "Brandi guarda il brigadiere un momento più del solito. «Lodi fa quello che gli si dice», dice. Lo dice a Lodi." : "«Lodi fa quello che gli si dice. È la sua dote migliore.»"; }]
+    ]
+  };
+  var DLG_NO = { nives: "«Di questo non so niente.» E non lo dice per cortesia.", kessel: "«Non è merce che tratto.»", lodi: "«Non è di mia competenza.»", brandi: "«Non sei qui per fare domande, Ada.»" };
+  var DLG_ALIAS = { nives: { barca: "fratello" }, lodi: { barca: "altri" }, brandi: { barca: "altri", polsi: "zanon" }, kessel: { barca: "quaderno" } };
+
+  function topicList(who) {
+    var L = DLG[who], out = [], i;
+    if (!L || (who === "nives" && S.ch === 1 && !S.f.nivesKey)) { return []; }
+    for (i = 0; i < L.length; i++) {
+      if (L[i][3](S.ch, S.f, false) !== null) { out.push("[[" + L[i][1] + "|chiedi a " + who + " di " + L[i][2] + "]]"); }
+    }
+    if (!out.length) { return []; }
+    return [NOTE("Puoi " + (who === "nives" ? "chiederle" : "chiedergli") + " di: " + out.join(" · "))];
+  }
+  function ask(who, key) {
+    var L = DLG[who], i, s, f = S.f;
+    S.moves++;
+    if (!L) { return [P("Non parlano. Li pagano per questo.")]; }
+    if (who === "nives" && S.ch === 1 && !f.nivesKey) { return [P("«Prima i [[documenti|mostra tesserino]].»")]; }
+    if (who === "kessel" && f.offerta && key !== "quaderno" && key !== "passaporto" && key !== "brandi") { return [P("«Non ho fretta», dice Kessel. «Ne ha lei.» [[ACCETTA|accetta]] o [[RIFIUTA|rifiuta]].")]; }
+    if (DLG_ALIAS[who] && DLG_ALIAS[who][key]) { key = DLG_ALIAS[who][key]; }
+    if (who === "nives" && f.nivesTradita && S.ch >= 3 && key !== "fratello" && key !== "segnali") { return [P("«Chieda ai suoi amici in caserma.» Non alza gli occhi dal banco.")].concat(topicList(who)); }
+    for (i = 0; i < L.length; i++) {
+      if (L[i][0] !== key) { continue; }
+      s = L[i][3](S.ch, f, true);
+      if (s === "FOTO") { S.moves--; return give("foto", "nives"); }
+      if (s !== null) { return [P(s)].concat(topicList(who)); }
+    }
+    return [P(DLG_NO[who])].concat(topicList(who));
+  }
+  function askParse(t) {
+    var who = null, key = null, odd = false, i, n, list;
+    n = NOUNS[t[1]];
+    /* «chiedi a lodi di …» quando Lodi non c'è */
+    if (t.length > 2 && n && isNpc(n) && !npcHere(n) && !(n === "kessel" && S.room === "cala" && t[1] !== "kessel")) { return { absent: true }; }
+    for (i = 1; i < t.length; i++) {
+      n = NOUNS[t[i]];
+      /* una parola vale come persona se nomina lei, non un argomento («foglio» è un argomento) */
+      if (!who && n && isNpc(n) && npcHere(n) && (!TOPIC[t[i]] || TOPIC[t[i]] === n)) { who = n; continue; }
+      if (!key && TOPIC[t[i]]) { key = TOPIC[t[i]]; continue; }
+      if (!TOPIC[t[i]] && !(n && isNpc(n))) { odd = true; }
+    }
+    if (!key && odd) { key = "?"; }
+    if (who === "kessel" && S.room === "cala") { who = "uomini"; }
+    if (!who) {
+      list = ["nives", "kessel", "lodi", "brandi"];
+      for (i = 0; i < list.length; i++) { if (npcHere(list[i]) && !(list[i] === "lodi" && npcHere("brandi"))) { who = list[i]; break; } }
+      if (S.f.offerta) { who = "kessel"; }
+    }
+    return { who: who, key: key };
+  }
+
   function give(item, who) {
     var c = S.ch;
     if (!has(item)) { return [P("Non ce l'hai.")]; }
@@ -681,6 +842,7 @@ var PC = (function () {
     }
     if (item === "foto") {
       if (who === "nives" && c === 2) { return confess(); }
+      if ((who === "lodi" || who === "kessel") && c === 2) { S.f.nivesTradita = 1; }
       if (who === "lodi") { return [P("«Quella è roba sotto sigillo.» Poi capisce cosa ha appena ammesso che hai fatto, e decide di non aver visto.")]; }
       if (who === "kessel") { return [P("«La vedova senza anello. Lo sanno tutti. Lei lo scopre adesso?»")]; }
       return [P("Non la guarda nemmeno.")];
@@ -893,6 +1055,7 @@ var PC = (function () {
         if (id === "letto") { return sleep(); }
         return [P("Non sai bene come.")];
       case "dai":
+        if ((id === "polsi" && id2 === "lodi") || (id === "lodi" && id2 === "polsi")) { return ask("lodi", "polsi"); }
         if (isNpc(id) && id2 && isItem(id2)) { return give(id2, id); }
         if (isItem(id)) {
           if (id2 && isNpc(id2)) { return give(id, id2); }
@@ -947,7 +1110,7 @@ var PC = (function () {
     return [NOTE("Indizio " + (n + 1) + " di 3"), P(h[n + 1])].concat(n < 2 ? [NOTE("Se non basta: [[ANCORA|indizio]].")] : []);
   }
 
-  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA";
+  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi. CHIEDI A chi DI cosa\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA";
 
   function exec(input) {
     var m = /^\s*carica\b\s*(.*)$/i.exec(String(input));
@@ -1000,6 +1163,15 @@ var PC = (function () {
       }
       return [P("In che direzione? NORD, SUD, EST, OVEST, SU o GIÙ.")];
     }
+    if (verb === "chiedi" || verb === "parla") {
+      var q = askParse(t);
+      if (verb === "chiedi" || (q.who && q.key)) {
+        if (q.absent) { return [P("Non è qui.")]; }
+        if (!q.who) { return [P("Non c'è nessuno a cui chiederlo.")]; }
+        if (!q.key || q.who === "uomini") { return done(talk(q.who)); }
+        return done(ask(q.who, q.key));
+      }
+    }
     if (verb === "guarda" && t.length === 1) { S.moves++; return done(describe(true)); }
     if (verb === "guarda") { verb = "esamina"; }
 
@@ -1043,6 +1215,7 @@ var PC = (function () {
     for (i = 0; i < FLAGS.length; i++) { put(S.f[FLAGS[i]] ? 1 : 0, 1); }
     for (i = 0; i < ITEMS.length; i++) { put(idx(LOCS, S.loc[ITEMS[i]]), 4); }
     put(S.t.n, 2); put(S.t.k, 2); put(S.t.l, 2); put(S.t.b, 2);
+    for (i = 0; i < FLAGS_B.length; i++) { put(S.f[FLAGS_B[i]] ? 1 : 0, 1); }
     while (bits.length % 5) { bits.push(0); }
     for (i = 0; i < bits.length; i += 5) {
       v = bits[i] * 16 + bits[i + 1] * 8 + bits[i + 2] * 4 + bits[i + 3] * 2 + bits[i + 4];
@@ -1069,6 +1242,7 @@ var PC = (function () {
     for (i = 0; i < FLAGS.length; i++) { if (get(1)) { o.f[FLAGS[i]] = 1; } }
     for (i = 0; i < ITEMS.length; i++) { v = LOCS[get(4)]; if (!v) { return null; } o.loc[ITEMS[i]] = v; }
     o.t.n = get(2); o.t.k = get(2); o.t.l = get(2); o.t.b = get(2);
+    for (i = 0; i < FLAGS_B.length; i++) { if (get(1)) { o.f[FLAGS_B[i]] = 1; } }
     o.visited[o.room] = 1;
     return o;
   }
