@@ -239,8 +239,23 @@ if (typeof document !== "undefined") {
     document.getElementById("size-1").onclick = function () { setPref("size", 1); };
     document.getElementById("size-2").onclick = function () { setPref("size", 2); };
     document.getElementById("size-3").onclick = function () { setPref("size", 3); };
+    /* ricominciare: due tocchi, perché si perde la partita */
+    var RE = [["re-cap", "Capitolo", "ricomincia capitolo"], ["re-all", "Da capo", "ricomincia"]];
+    function disarm() {
+      for (var i = 0; i < RE.length; i++) { var b = document.getElementById(RE[i][0]); b.removeAttribute("data-armed"); b.textContent = RE[i][1]; b.className = "chip"; }
+    }
+    function closePrefs() { var p = document.getElementById("ref-prefs"); document.getElementById("prefs").className = "prefs off"; p.className = "chip"; p.setAttribute("aria-expanded", "false"); }
+    function armButton(r) {
+      var b = document.getElementById(r[0]);
+      b.onclick = function () {
+        if (b.getAttribute("data-armed")) { disarm(); closePrefs(); run(r[2]); return; }
+        disarm(); b.setAttribute("data-armed", "1"); b.textContent = "Sicuro? Tocca ancora"; b.className = "chip on";
+      };
+    }
+    armButton(RE[0]); armButton(RE[1]);
     document.getElementById("ref-prefs").onclick = function () {
       var box = document.getElementById("prefs"), open = box.className.indexOf("off") >= 0;
+      disarm();
       box.className = open ? "prefs" : "prefs off";
       this.className = open ? "chip on" : "chip";
       this.setAttribute("aria-expanded", open ? "true" : "false");

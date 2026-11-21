@@ -105,6 +105,17 @@ variant('Nives tradita', { 'mostra la fotografia a nives': ['o', 'o', 'mostra fo
 variant('Kessel sa della K.', { 'mostra la fotografia a nives': ['chiedi a kessel di iniziali'] }, ['accetta', 'n', 'su', 'usa leva', 'segnala 1-3'], ['Ormai siamo colleghi']);
 variant('la fotografia chiesta a Nives fa avanzare', { 'mostra la fotografia a nives': ['chiedi a nives di fotografia'] }, ['scheda'], ['Capitolo terzo']);
 
+// ricomincia capitolo: dopo un finale si torna all'inizio del capitolo 4, con le stesse scelte
+(function () {
+  PC.exec('carica ' + code); run(['rifiuta', 'n', 'su', 'usa leva', 'segnala 2-2'], true);
+  var r = show(PC.exec('ricomincia capitolo')), st = PC.status();
+  var ok = st.ch === 4 && !st.end && st.room === 'Ai piedi del faro' && r.indexOf('Mezzanotte') >= 0;
+  var r2 = show(PC.exec('su')) + show(PC.exec('usa leva'));
+  ok = ok && r2.indexOf('MANUALE') >= 0;
+  PC.start(true); run(['n', 'e'], true); PC.exec('ricomincia capitolo'); ok = ok && PC.status().room === 'Molo dei piroscafi' && PC.status().moves === 0;
+  if (!ok) { fails++; console.log(r); }
+  console.log((ok ? 'OK  ' : 'FAIL') + ' ricomincia capitolo');
+})();
 // codice sbagliato, codice alterato
 console.log('\ncodice vuoto:', show(PC.exec('carica')));
 console.log('codice alterato:', show(PC.exec('carica ' + code.replace(/.$/, code.slice(-1) === 'A' ? 'B' : 'A'))));

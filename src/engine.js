@@ -136,7 +136,18 @@ var PC = (function () {
   function IMG(id, cap) { return { t: "img", id: id, cap: cap }; }
   function CHAP(n) { return { t: "chapter", n: CH_NAME[n], s: CH_TITLE[n] }; }
 
-  function setChapter(n) { S.ch = n; S.t = { n: 0, k: 0, l: 0, b: 0 }; }
+  function setChapter(n) { S.ch = n; S.t = { n: 0, k: 0, l: 0, b: 0 }; markChapter(); }
+  /* inizio del capitolo: un codice tenuto da parte, per RICOMINCIA CAPITOLO */
+  var CHAP_KEY = "vialibera.capitolo", chapMem = "";
+  function markChapter() { chapMem = encode(); try { localStorage.setItem(CHAP_KEY, chapMem); } catch (e) { /* resta in memoria */ } }
+  function chapterStart() { var c = chapMem; try { c = localStorage.getItem(CHAP_KEY) || chapMem; } catch (e) { c = chapMem; } return decode(c || ""); }
+  function restartChapter() {
+    var o = chapterStart();
+    if (!o || o.ch !== S.ch) { o = S.ch === 1 ? fresh() : null; }
+    if (!o) { return [P("Non so dove comincia questo capitolo: la partita è stata ripresa da un codice. Puoi ricominciare da capo, oppure CARICA un codice salvato prima.")]; }
+    S = o; save();
+    return [NOTE("Si ricomincia dall'inizio del capitolo."), CHAP(S.ch)].concat(describe(true));
+  }
 
   function describe(withImage) {
     var b = [{ t: "room", s: ROOM_NAME[S.room] }], r = S.room, c = S.ch, d = "";
@@ -366,7 +377,7 @@ var PC = (function () {
     var fin = END_PIC[e[0]];
     return [IMG("tx" + code, "Mezzanotte: " + code.charAt(0) + "-" + code.charAt(1)), P(e[1]), IMG(fin[0], fin[1]),
       { t: "end", s: "Fine — " + e[0] },
-      NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA|ricomincia]] per ripartire, oppure CARICA un codice salvato prima della mezzanotte.")];
+      NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA CAPITOLO|ricomincia capitolo]] per rifare la notte e cercare un altro finale, [[RICOMINCIA|ricomincia]] per ripartire da capo.")];
   }
 
   /* ---------- movimento ---------- */
@@ -885,7 +896,7 @@ var PC = (function () {
     return [NOTE("Indizio " + (n + 1) + " di 3"), P(h[n + 1])].concat(n < 2 ? [NOTE("Se non basta: [[ANCORA|indizio]].")] : []);
   }
 
-  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi. CHIEDI A chi DI cosa\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA";
+  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi. CHIEDI A chi DI cosa\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA CAPITOLO, RICOMINCIA";
 
   function exec(input) {
     var m = /^\s*carica\b\s*(.*)$/i.exec(String(input));
@@ -911,7 +922,8 @@ var PC = (function () {
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }
     if (verb === "salva") { save(); return [P("Il codice di questa partita:"), { t: "code", s: encode() }, NOTE("Scrivilo da qualche parte. Per riprendere, anche su un altro dispositivo: CARICA e il codice. Su questo dispositivo la partita si salva comunque da sola a ogni mossa.")]; }
-    if (verb === "ricomincia") { S = fresh(); save(); return [{ t: "restart" }]; }
+    if (verb === "ricomincia" && t[1] === "capitolo") { return restartChapter(); }
+    if (verb === "ricomincia") { S = fresh(); save(); markChapter(); return [{ t: "restart" }]; }
     if (verb === "aspetta") { S.moves++; return done([P(night() ? "Aspetti. La luce passa, e ripassa. Non è lei che deve decidere." : "Aspetti. Il porto fa finta di non guardarti.")]); }
     if (verb === "inventario") {
       var inv = inventory(), names = [];
@@ -1026,6 +1038,7 @@ var PC = (function () {
     var o = decode(code);
     if (!o) { return [P("Quel codice non torna. Controlla le lettere: non ci sono O, I, 0 né 1.")]; }
     S = o; save();
+    if (!chapterStart() || chapterStart().ch !== S.ch) { markChapter(); }
     return [NOTE("Partita ripresa dal codice. " + CH_NAME[S.ch] + ": «" + CH_TITLE[S.ch] + "».")].concat(S.end ? [P("Questa storia è già finita. RICOMINCIA per ripartire.")] : describe(true));
   }
 
@@ -1038,7 +1051,7 @@ var PC = (function () {
       S = saved;
       return { resumed: true, blocks: [NOTE("Partita ripresa: " + CH_NAME[S.ch] + ", «" + CH_TITLE[S.ch] + "». PROLOGO per rileggere l'inizio, RICOMINCIA per ripartire da capo.")].concat(S.end ? [P("Questa storia è già finita. RICOMINCIA per ripartire.")] : describe(true)) };
     }
-    S = fresh();
+    S = fresh(); markChapter();
     return { resumed: false, blocks: [CHAP(1)].concat(describe(true)).concat([NOTE("Scrivi un comando, oppure tocca un'azione e poi una parola sottolineata. SCHEDA ti dice chi sei e cosa sai; SALVA ti dà un codice.")]) };
   }
 

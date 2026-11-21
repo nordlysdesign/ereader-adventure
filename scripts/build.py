@@ -29,6 +29,7 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .prefs .seg button { color: var(--ink); border-color: var(--ink); background: var(--paper); }
 .prefs .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
 .prefs .seg button:focus-visible { outline-color: var(--ink); }
+.prefs .restart .chip { margin-left: 6px; }
 .prefs-note { width: 100%; margin: 0; font-size: 12px; color: var(--ink-soft); }
 /* cassetto: di base resta solo la riga di comando, il resto si apre con COMANDI */
 .drawer.off { display: none; }
@@ -94,6 +95,10 @@ html = r"""<!DOCTYPE html>
             <button type="button" id="size-2" aria-pressed="false" aria-label="Testo grande">A+</button>
             <button type="button" id="size-3" aria-pressed="false" aria-label="Testo molto grande">A++</button>
           </div>
+        </div>
+        <div class="switch restart"><span>Ricomincia</span>
+          <button type="button" class="chip" id="re-cap">Capitolo</button>
+          <button type="button" class="chip" id="re-all">Da capo</button>
         </div>
         <p class="prefs-note">Su e-ink il movimento lascia aloni: lì conviene spegnerlo.</p>
       </div>
