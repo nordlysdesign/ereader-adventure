@@ -157,7 +157,7 @@ var PC = (function () {
     } else if (r === "locanda") {
       if (withImage) { b.push(c <= 2 ? IMG("bar", "«Al Fanale»") : IMG("barVuoto", c === 3 ? "«Al Fanale», a sedie capovolte" : "«Al Fanale», a imposte chiuse")); }
       if (c === 1) {
-        d = "Un [[banco]] di zinco, sei tavoli, una [[stufa]] che fa più fumo che caldo. Dietro il banco una [[donna]] asciuga lo stesso bicchiere da un po'. A un tavolo d'angolo un [[uomo]] col cappotto buono legge un [[giornale]] di un altro paese. Vicino alla scala c'è un [[telefono]] a gettoni.";
+        d = "Un [[banco]] di zinco, sei tavoli, una [[stufa]] che fa più fumo che caldo. Dietro il banco una [[donna]] asciuga lo stesso bicchiere da un po'. A un tavolo d'angolo un [[uomo]] col cappotto buono legge un [[giornale]] di un altro paese. Vicino alla scala c'è un [[telefono]] a gettoni. Sul banco, una bottiglia di [[grappa]] senza etichetta.";
       } else if (c === 2) {
         d = "Di mattina sa di cicoria e di cenere. [[Nives]] è dietro il [[banco]], come se non si fosse mai mossa. [[Kessel]] ha lo stesso tavolo e lo stesso [[giornale]].";
       } else if (c === 3) {
@@ -220,7 +220,7 @@ var PC = (function () {
     time = ["", "Notte, pioggia", "Mattina, cielo basso", "Sera, ha smesso di piovere", "Verso mezzanotte"][c];
     if (S.end) { job = "Nessuno."; }
     else if (c === 1) { job = f.telefonato ? "Dormire. Domani cercare il quaderno di Zanon." : "Prendere una camera e telefonare a Roma."; }
-    else if (c === 2) { job = "Capire com'è morto Zanon e dove teneva il quaderno."; }
+    else if (c === 2) { job = has("foto") ? "Chiedere a Nives della fotografia." : "Capire com'è morto Zanon e dove teneva il quaderno."; }
     else if (c === 3) { job = f.quaderno ? "Uscire dal faro con il quaderno." : "Salire al faro. Il quaderno è sotto la lente."; }
     else { job = "A mezzanotte, dalla lanterna, fare un segnale. Uno solo."; }
 
@@ -377,8 +377,8 @@ var PC = (function () {
     S.moves++;
     if (who === "nives") {
       if (c === 1) {
-        if (!f.nivesKey) { return [P("«Camera?» chiede, senza smettere di asciugare. «Documenti.»")]; }
-        return line(["«La cucina è chiusa. C'è grappa.»", "«Elia Zanon veniva qui tutte le sere alle nove. Da tre sere no.» Posa il bicchiere. «Altro non so.» È una frase che ha già detto, a qualcun altro.", "«Buonanotte, signora dei fari.»"], "n");
+        if (!f.nivesKey) { return [P("«Camera?» chiede, senza smettere di asciugare. «[[Documenti|mostra tesserino]].»")]; }
+        return line(["«La cucina è chiusa. C'è [[grappa]].»", "«Elia Zanon veniva qui tutte le sere alle nove. Da tre sere no.» Posa il bicchiere. «Altro non so.» È una frase che ha già detto, a qualcun altro.", "«Buonanotte, signora dei fari.»"], "n");
       }
       if (c === 2) {
         return line(["«Caffè di cicoria. Altro non c'è.» Te lo versa lo stesso.", "«Stanotte la luce…» cominci. «Di notte io dormo», dice Nives. Ha le mani screpolate di chi ha tirato una leva fredda.", "«Elia beveva poco, parlava meno e sapeva nuotare. Lo scriva, nel suo rapporto.»"], "n");
@@ -492,7 +492,7 @@ var PC = (function () {
       case "chiave": return [P("Ottone, con un 7 punzonato male.")];
       case "gettone": return [P("Un gettone telefonico. Tre scanalature, una chiamata.")];
       case "pistola": return [P("Una Beretta 34. Sette colpi nel caricatore. Ne hai sparato uno solo in vita tua, nel '44, e non a chi lo meritava.")];
-      case "foto": return [P("Un uomo magro e una donna davanti al faro, d'estate. Lui è Zanon. Lei ha dieci anni di meno e sorride: è la donna della locanda. Sul retro, a matita: «N. — se succede, la luce è tua.»")];
+      case "foto": return [P("Un uomo magro e una donna davanti al faro, d'estate. Lui è Zanon. Lei ha dieci anni di meno e sorride: è la donna della locanda. Sul retro, a matita: «N. — se succede, la luce è tua.»" + (S.ch === 2 && has("foto") ? "\nN. come Nives. Potresti [[mostrargliela|mostra fotografia a nives]]." : ""))];
       case "mazzo": return [P("Quattro chiavi: una grossa, di ferro, per la porta della torre. Una chiavetta d'ottone. Due che non sai.")];
       case "quaderno": return readBook();
       case "nives": return [P("Quarant'anni scarsi, mani screpolate, occhi che hanno già fatto il tuo inventario. Ha pianto di recente e non lo rifarà davanti a te.")];
@@ -500,7 +500,7 @@ var PC = (function () {
       case "lodi": return [P("Baffi ingialliti, colletto liso, una fede troppo stretta. Non è cattivo. È peggio: è stanco.")];
       case "brandi": return [P("Cappotto di cammello, guanti, la stessa acqua di colonia del '45. Ha l'aria di chi non si è mai bagnato i piedi e non comincerà stanotte.")];
       case "uomini": return [P("Due. Giovani, larghi, annoiati. Uno ha una corda arrotolata alla cintura.")];
-      case "telefono": return [P("Bachelite nera, un elenco senza copertina. Vuole un gettone.")];
+      case "telefono": return [P("Bachelite nera, un elenco senza copertina. Vuole un gettone." + (has("gettone") && !f.telefonato ? " Ce l'hai: [[CHIAMA ROMA|usa telefono]]." : ""))];
       case "banco": return [P("Zinco ammaccato. Sopra, la licenza: «Bressan Nives, mescita e alloggio».")];
       case "grappa": return [P(c <= 2 ? "Una bottiglia senza etichetta. Di solito è buon segno." : "Non è il momento.")];
       case "giornale": return [P("Lo tiene aperto sempre alla stessa pagina. Listini di borsa, in una lingua con troppe consonanti.")];
@@ -513,7 +513,7 @@ var PC = (function () {
         return [P("Qualcuno l'ha aperta mentre eri di sotto, ieri sera, e l'ha richiusa meglio di come la chiudi tu. Non manca niente. Era quello, il messaggio." + (S.loc.pistola === "camera" ? " La [[pistola]] è ancora sotto la fodera." : ""))];
       case "finestra":
         if (r === "camera") { return c === 1 ? [IMG("finestra", "Il golfo dalla camera 7"), P("Un lampo ogni cinque secondi, puntuale come un debito.")] : [P("Il faro, di giorno, è solo una torre. Sembra innocente.")]; }
-        if (r === "strada") { return [P(f.retro ? "Accostata, col fermo saltato da fuori. Lavoro pulito, di mestiere." : "Dalla strada si vedono solo imposte chiuse.")]; }
+        if (r === "strada") { return [P(f.retro ? "Accostata, col fermo saltato da fuori. Lavoro pulito, di mestiere. Basta [[scavalcare|apri finestra]]." : "Dalla strada si vedono solo imposte chiuse.")]; }
         return [P("Quella da cui sei entrata. La tenda si muove ancora.")];
       case "letto": return [P(r === "casa" ? "Aperto col coltello, da cima a fondo. Chi ha cercato qui sapeva cercare. Se non ha trovato, è perché non c'era." : "Il materasso ha conosciuto viaggiatori di commercio migliori di te.")];
       case "lampione": return [P("Illumina un metro di pioggia. Il resto del molo se lo deve immaginare.")];
@@ -540,13 +540,13 @@ var PC = (function () {
       case "muretto": return [P(f.quaderno ? "Dove è crollato, la terra è battuta da molti piedi. Scende alla cala." : "Un muretto a secco, e oltre il muretto il vuoto.")];
       case "porta":
         if (r === "strada") { return examine("sigilli"); }
-        return [P(f.porta ? "Aperta. Dentro, la scala a chiocciola." : "Ferro, ruggine e una serratura grande come una moneta.")];
+        return [P(f.porta ? "Aperta. Dentro, la scala a chiocciola." : "Ferro, ruggine e una serratura grande come una moneta." + (has("mazzo") ? " Nel mazzo di Zanon c'è una chiave grossa, di ferro: [[APRI|apri porta]]." : ""))];
       case "scrivania": f.tabellina = 1; return [P("Cassetti vuoti. Sotto il piano, incisa col temperino, una tabellina: 1-3, 2-1, 2-2, 3-1. Nessuna spiegazione.")];
       case "registro": f.registro = 1; return [P("Il registro ufficiale: accensione, spegnimento, vento. Calligrafia da maestro elementare. Mancano tre pagine, tagliate col rasoio: le notti del 3 ottobre, del 17 ottobre, del 2 novembre. Tutte senza luna.")];
       case "lente": return [IMG(c === 4 ? "lente4" : "lente", "La lente di Punta Cieca"), P("Anelli di vetro uno dentro l'altro, alti quanto te. Fa di una lampadina un lampo che si vede a diciotto miglia. Chi comanda questa luce comanda chi arriva.")];
-      case "leva": return [P("AUTOMATICO: la lente gira e fa il suo lampo ogni cinque secondi. MANUALE: la lente si ferma, e la luce obbedisce al tasto. " + (f.manuale ? "Adesso è su MANUALE." : "Adesso è su AUTOMATICO."))];
+      case "leva": return [P("AUTOMATICO: la lente gira e fa il suo lampo ogni cinque secondi. MANUALE: la lente si ferma, e la luce obbedisce al tasto. " + (f.manuale ? "Adesso è su MANUALE." : "Adesso è su AUTOMATICO." + (c === 4 ? " Per fare un segnale va spostata: [[MANUALE|usa leva]]." : "")))];
       case "sportello":
-        if (!f.sportello) { return [P("Lamiera verniciata, una serratura piccola, da chiavetta.")]; }
+        if (!f.sportello) { return [P("Lamiera verniciata, una serratura piccola, da chiavetta." + (has("mazzo") ? " Come la chiavetta d'ottone del mazzo: [[APRI|apri sportello]]." : ""))]; }
         return [P(S.loc.quaderno === "sportello" ? "Dentro, avvolto in tela cerata, un [[quaderno]] nero." : "Vuoto.")];
       case "macchina": return [P("Una Aprilia nera, targa di Roma. Sul sedile dietro, una coperta. Non per il freddo.")];
       case "barca": return [P("Una lanterna, al largo, ferma. Aspetta mezzanotte come te.")];
@@ -617,7 +617,7 @@ var PC = (function () {
           if (r !== "locanda") { return [P("Qui non c'è nessun telefono.")]; }
           if (c !== 1) { return [P(c === 4 ? "A quest'ora Roma dorme. Quello che decide è qui." : "Brandi ha detto di non richiamare. Chiama lui.")]; }
           if (f.telefonato) { return [P("Hai già chiamato. Brandi non è uomo da due telefonate.")]; }
-          if (!has("gettone")) { return [P("Il telefono vuole un gettone. Tu hai biglietti di banca e nessuna moneta: forse al banco.")]; }
+          if (!has("gettone")) { return [P("Il telefono vuole un gettone. Tu hai biglietti di banca e nessuna moneta. Al banco, con una [[grappa]], qualche moneta salta fuori.")]; }
           f.telefonato = 1; S.loc.gettone = "none"; S.moves++;
           return [P("Il gettone scende. Tre squilli a Roma, poi la voce di Brandi, sveglia come sempre.\n«Sei arrivata. Bene. Zanon segnalava a qualcuno, di notte, cambiando il ritmo della lampada. Teneva i conti in un quaderno. Lo voglio io. Non una copia.»\n«E chi l'ha ammazzato?»\n«È annegato, Ada. Leggi i rapporti.» Una pausa. «Fai la brava. Ho riletto il tuo foglio del '44, ieri. Scrivevi bene.»\nRiattacca lui."),
             NOTE("Kessel non ha girato pagina per tutta la telefonata.")];

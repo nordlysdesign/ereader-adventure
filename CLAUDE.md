@@ -39,6 +39,7 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 - Storia adulta nei temi (ricatto, complicità, un omicidio archiviato, persone rivendute), non nell'esplicito.
 - Nessun finale pulito: ognuno costa qualcosa a qualcuno.
 - Si gioca scrivendo oppure toccando un'azione e poi una parola sottolineata. Nel testo `[[parola]]` rende toccabile una parola, `[[ETICHETTA|comando]]` esegue un comando intero.
+- Ogni passaggio obbligato deve avere un indizio nel testo, meglio se toccabile (`[[dormire|dormi]]`, `[[APRI|apri porta]]`): DORMI, LEGGI, SEGNALA, ACCETTA e RIFIUTA non sono tra i pulsanti delle azioni.
 - Due modi di schermo, tutti e due da mantenere: Pagina (una pagina per turno, con sfogliatore) e Rullo.
 
 ## Cose aperte
