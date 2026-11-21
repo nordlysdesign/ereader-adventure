@@ -388,6 +388,7 @@ var PC = (function () {
       if (withImage) { b.push(IMG(night() ? "camera" : "cameraGiorno", "Camera 7")); }
       d = "Un [[letto]] di ferro, un catino, un armadio che non chiude. La tua [[valigia]] è sul letto. ";
       d += c === 1 ? "Dalla [[finestra]] si vede il golfo, e nel golfo la luce." : "Dalla [[finestra]], di giorno, il golfo è color peltro.";
+      if (c === 1) { d += S.f.telefonato ? " Roma è avvisata. Non resta che [[dormire|dormi]]." : " Prima di [[dormire|dormi]], Roma vuole una telefonata."; }
       d += "\nLa scala scende: [[giù]].";
     } else if (r === "caserma") {
       if (withImage) { b.push(IMG("caserma", "Polizia portuale, ufficio unico")); }
@@ -672,8 +673,7 @@ var PC = (function () {
     return [P("Non gli interessa.")];
   }
 
-  /* ---------- immagini degli oggetti: si vedono la prima volta che li esamini ---------- */
-  var seenPic = {};
+  /* ---------- immagini degli oggetti: si vedono ogni volta che li esamini ---------- */
   var PIC = { tesserino: "Tesserino", sigarette: "Nazionali e accendino", chiave: "La chiave della 7", gettone: "Un gettone", pistola: "Beretta 34",
     foto: "Fotografia in cornice", mazzo: "Le chiavi di Zanon", quaderno: "Il quaderno nero", telefono: "Il telefono a gettoni", banco: "La licenza",
     grappa: "Senza etichetta", giornale: "Listini di borsa", stufa: "Ghisa e lignite", stufaCenere: "Quello che non è bruciato", valigia: "La tua valigia",
@@ -697,8 +697,7 @@ var PC = (function () {
   }
   function withPic(id, blocks) {
     var k = picFor(id);
-    if (!k || seenPic[k] || (blocks.length && blocks[0].t === "img")) { return blocks; }
-    seenPic[k] = 1;
+    if (!k || (blocks.length && blocks[0].t === "img")) { return blocks; }
     return [IMG("o_" + k, PIC[k])].concat(blocks);
   }
 
@@ -899,7 +898,7 @@ var PC = (function () {
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }
     if (verb === "salva") { save(); return [P("Il codice di questa partita:"), { t: "code", s: encode() }, NOTE("Scrivilo da qualche parte. Per riprendere, anche su un altro dispositivo: CARICA e il codice. Su questo dispositivo la partita si salva comunque da sola a ogni mossa.")]; }
-    if (verb === "ricomincia") { S = fresh(); seenPic = {}; save(); return [{ t: "restart" }]; }
+    if (verb === "ricomincia") { S = fresh(); save(); return [{ t: "restart" }]; }
     if (verb === "aspetta") { S.moves++; return done([P(night() ? "Aspetti. La luce passa, e ripassa. Non è lei che deve decidere." : "Aspetti. Il porto fa finta di non guardarti.")]); }
     if (verb === "inventario") {
       var inv = inventory(), names = [];
