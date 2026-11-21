@@ -7,12 +7,12 @@ if (typeof document !== "undefined") {
   (function () {
     var screen = document.getElementById("screen"), out = document.getElementById("out"), input = document.getElementById("cmd-input");
     var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var prefs = { mode: "rullo", motion: !reduce }, turns = [], pos = 0, pending = null, atTop = true;
+    var prefs = { mode: "rullo", motion: !reduce, size: 1 }, turns = [], pos = 0, pending = null, atTop = true;
     var canCanvas = !!document.createElement("canvas").getContext;
     var DIR_LABEL = { nord: "NORD", sud: "SUD", est: "EST", ovest: "OVEST", su: "SU", giu: "GIÙ" };
     var anim = [], tick = 0, timer = null;
 
-    try { var p = JSON.parse(localStorage.getItem("vialibera.prefs") || "null"); if (p && p.mode) { prefs.mode = p.mode; prefs.motion = !!p.motion; } } catch (e) { /* preferenze predefinite */ }
+    try { var p = JSON.parse(localStorage.getItem("vialibera.prefs") || "null"); if (p && p.mode) { prefs.mode = p.mode; prefs.motion = !!p.motion; prefs.size = p.size === 2 || p.size === 3 ? p.size : 1; } } catch (e) { /* preferenze predefinite */ }
 
     function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.appendChild(document.createTextNode(text)); } return e; }
     function kw(label, word, cmd) {
@@ -95,7 +95,7 @@ if (typeof document !== "undefined") {
       var reading = prefs.mode === "pagina" && turns[pos].kind === "tavola";
       document.getElementById("st-room").textContent = reading ? "Prologo" : st.room;
       document.getElementById("st-moves").textContent = "Cap. " + st.ch + " · Mosse " + st.moves;
-      screen.className = "screen " + prefs.mode + (reading ? " reading" : "");
+      screen.className = "screen " + prefs.mode + " t" + prefs.size + (reading ? " reading" : "");
       document.getElementById("pg-label").textContent = "Pag. " + (pos + 1) + " di " + turns.length;
       document.getElementById("pg-prev").disabled = pos === 0;
       document.getElementById("pg-next").disabled = pos === turns.length - 1;
@@ -229,13 +229,16 @@ if (typeof document !== "undefined") {
       syncSwitch(); render();
     }
     function syncSwitch() {
-      var pairs = [["mode-pagina", prefs.mode === "pagina"], ["mode-rullo", prefs.mode === "rullo"], ["mot-on", prefs.motion], ["mot-off", !prefs.motion]], i;
+      var pairs = [["mode-pagina", prefs.mode === "pagina"], ["mode-rullo", prefs.mode === "rullo"], ["mot-on", prefs.motion], ["mot-off", !prefs.motion], ["size-1", prefs.size === 1], ["size-2", prefs.size === 2], ["size-3", prefs.size === 3]], i;
       for (i = 0; i < pairs.length; i++) { document.getElementById(pairs[i][0]).setAttribute("aria-pressed", pairs[i][1] ? "true" : "false"); }
     }
     document.getElementById("mode-pagina").onclick = function () { setPref("mode", "pagina"); };
     document.getElementById("mode-rullo").onclick = function () { setPref("mode", "rullo"); };
     document.getElementById("mot-on").onclick = function () { setPref("motion", true); };
     document.getElementById("mot-off").onclick = function () { setPref("motion", false); };
+    document.getElementById("size-1").onclick = function () { setPref("size", 1); };
+    document.getElementById("size-2").onclick = function () { setPref("size", 2); };
+    document.getElementById("size-3").onclick = function () { setPref("size", 3); };
     document.getElementById("ref-prefs").onclick = function () {
       var box = document.getElementById("prefs"), open = box.className.indexOf("off") >= 0;
       box.className = open ? "prefs" : "prefs off";

@@ -9,11 +9,13 @@ Porto Scuro, novembre 1953. Sei Ada Corvi, ispettrice dei fari per modo di dire.
 ## Come si gioca
 
 - Scrivendo comandi (`nord`, `esamina fascicolo`, `mostra la fotografia a nives`), oppure toccando un'azione e poi una parola sottolineata.
-- In basso c'è solo la riga di comando: il pulsante **COMANDI** apre direzioni, azioni, oggetti e i pulsanti `SCHEDA`, `MAPPA`, `SALVA`, `?` e `Aa`, e si richiude dopo ogni comando.
+- In basso c'è solo la riga di comando: il pulsante **COMANDI** apre direzioni, azioni, oggetti e i pulsanti `SCHEDA`, `MAPPA`, `SALVA`, `INDIZIO`, `?` e `Aa`, e si richiude dopo ogni comando.
 - Ogni luogo ha la sua tavola animata, di notte o di giorno a seconda del capitolo: si vede entrando la prima volta e con `GUARDA`. Quando esamini qualcosa (un oggetto, un indizio, una persona) compare la sua immagine, con un cartellino da reperto.
 - `SCHEDA` dice chi sei e cosa hai scoperto, `MAPPA` mostra i posti dove sei stata.
 - `SALVA` dà un codice di 21 caratteri; `CARICA` e il codice riprendono la partita, anche su un altro dispositivo. Su ogni dispositivo la partita si salva comunque da sola.
-- Il pulsante `Aa` apre le impostazioni: schermo a *Rullo* (predefinito) o a *Pagina*, e *Movimento* delle tavole sì o no (su e-ink lascia aloni: lì conviene spegnerlo).
+- Il pulsante `Aa` apre le impostazioni: schermo a *Rullo* (predefinito) o a *Pagina*, *Movimento* delle tavole sì o no (su e-ink lascia aloni: lì conviene spegnerlo) e dimensione del *Testo* (A, A+, A++).
+- `INDIZIO` aiuta chi è bloccato in tre gradi: il primo è vago, il secondo più preciso, il terzo dice cosa fare. Il grado riparte quando si supera il passaggio.
+- A fine partita il gioco dice quanti dei cinque finali hai trovato (anche con `FINALI`). Il conto resta nel browser anche dopo `RICOMINCIA`.
 
 ## Com'è fatto
 
@@ -26,7 +28,7 @@ Una sola pagina HTML, senza librerie e senza server. Il codice è JavaScript ES5
 | `src/pix.js` | Le tavole dei luoghi (240×150, animate) e degli oggetti (120×75, ferme), bianco e nero, disegnate dal codice. |
 | `src/ui.js` | Interfaccia: pagine, cassetto dei comandi, impostazioni, animazione delle tavole. |
 | `scripts/build.py` | Ricompone `index.html` da `src/`. |
-| `scripts/play.js` | Gioca tutta la storia e tutti i finali senza browser, e controlla che ogni tavola si disegni e che ogni tavola chiamata dalla storia esista. |
+| `scripts/play.js` | Gioca tutta la storia e tutti i finali senza browser, e controlla che ci sia un indizio a ogni passo, che ogni tavola si disegni e che ogni tavola chiamata dalla storia esista. |
 | `diagnosi.html` | Dice cosa sa fare il browser che la apre: serve per provare gli e-reader. |
 | `prove/` | Le due prove precedenti, tenute per confronto. |
 

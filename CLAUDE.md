@@ -20,7 +20,7 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
   - Tavole dei luoghi, 240×150, animate: ogni luogo ne ha una (molte in versione notte e giorno: notte nei capitoli 1 e 4). Le mostra `describe(true)`: alla prima visita e con `GUARDA`.
   - Tavolette degli oggetti, 120×75, ferme, con cartellino da reperto («N.04 GETTONE TELEFONICO»): 40 in tutto, tra oggetti, indizi e ritratti. Si chiamano `o_<nome>`, si definiscono in `OBJ` con `plate()` e vanno elencate in `OBJN`. Il motore le aggancia in `withPic()`: la didascalia sta in `PIC`, le varianti per stato (quadro, sportello, stufa) in `picFor()`. Si vedono ogni volta che si esamina una cosa.
   - La tela si scrive punto per punto con `putImageData`, già ingrandita: niente `drawImage` scalato, che il browser del Kindle sbaglia.
-- `src/ui.js`: pagine, pannello dei comandi, animazione delle tavole. In basso resta solo la riga di comando col pulsante COMANDI, che apre il cassetto (rotta, azioni, oggetti, SCHEDA/MAPPA/SALVA/?/Aa) e si richiude dopo ogni comando. `Aa` apre le impostazioni: Rullo o Pagina (predefinito Rullo), movimento sì o no (predefinito sì).
+- `src/ui.js`: pagine, pannello dei comandi, animazione delle tavole. In basso resta solo la riga di comando col pulsante COMANDI, che apre il cassetto (rotta, azioni, oggetti, SCHEDA/MAPPA/SALVA/?/Aa) e si richiude dopo ogni comando. `Aa` apre le impostazioni: Rullo o Pagina (predefinito Rullo), movimento sì o no (predefinito sì), dimensione del testo (A, A+, A++; classi `t1`–`t3` su `.screen`).
 - Lo stile CSS di base viene estratto da `prove/nero-di-seppia/index.html`; le aggiunte sono in `scripts/build.py`, che sostituisce anche ogni `var(--x)` col suo valore, perché il browser del Kindle non conosce le variabili CSS. Portarlo in un file suo dentro `src/` è un lavoro ancora da fare.
 - `prove/`: le due prove precedenti, tenute per confronto. Non si toccano.
 - `diagnosi.html`: pagina a sé che dice cosa sa fare il browser che la apre (variabili CSS, flex, canvas, localStorage, misure). Serve per gli e-reader.
@@ -39,6 +39,8 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 - Storia adulta nei temi (ricatto, complicità, un omicidio archiviato, persone rivendute), non nell'esplicito.
 - Nessun finale pulito: ognuno costa qualcosa a qualcuno.
 - Si gioca scrivendo oppure toccando un'azione e poi una parola sottolineata. Nel testo `[[parola]]` rende toccabile una parola, `[[ETICHETTA|comando]]` esegue un comando intero.
+- `INDIZIO` (in `hintFor()` di `engine.js`): per ogni passo della storia una chiave e tre frasi, dalla più vaga alla soluzione toccabile. Se si aggiunge un passaggio obbligato, va aggiunto anche lì; `play.js` chiede un indizio prima di ogni mossa del percorso. Il grado raggiunto sta in `S.h` e non entra nel codice di salvataggio.
+- I finali trovati stanno in `localStorage` (`vialibera.finali`), per titolo: se si aggiunge un finale va messo in `END_TITLES`.
 - Ogni passaggio obbligato deve avere un indizio nel testo, meglio se toccabile (`[[dormire|dormi]]`, `[[APRI|apri porta]]`): DORMI, LEGGI, SEGNALA, ACCETTA e RIFIUTA non sono tra i pulsanti delle azioni.
 - Due modi di schermo, tutti e due da mantenere: Pagina (una pagina per turno, con sfogliatore) e Rullo.
 

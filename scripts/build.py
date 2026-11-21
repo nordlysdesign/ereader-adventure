@@ -37,6 +37,9 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .cmd { border-top: 2px solid #111111; padding-top: 8px; }
 .screen.reading .drawer.off { display: block; }
 .screen.reading .drawer .rows, .screen.reading .drawer .refs { display: none; }
+/* dimensione del testo, scelta in Aa */
+.screen.t2 .out { font-size: 17px; } .screen.t2 .out .note { font-size: 15px; } .screen.t2 .prosa p { font-size: 20px; }
+.screen.t3 .out { font-size: 20px; } .screen.t3 .out .note { font-size: 17px; } .screen.t3 .prosa p { font-size: 23px; }
 @media (max-width: 640px) { .stage { min-height: 100%; } .device { min-height: 100%; } }
 """
 html = r"""<!DOCTYPE html>
@@ -66,6 +69,7 @@ html = r"""<!DOCTYPE html>
           <button type="button" class="chip" id="ref-scheda" data-cmd="scheda">SCHEDA</button>
           <button type="button" class="chip" id="ref-mappa" data-cmd="mappa">MAPPA</button>
           <button type="button" class="chip" id="ref-salva" data-cmd="salva">SALVA</button>
+          <button type="button" class="chip" id="ref-indizio" data-cmd="indizio">INDIZIO</button>
           <button type="button" class="chip" id="ref-aiuto" data-cmd="aiuto" aria-label="Aiuto">?</button>
           <button type="button" class="chip" id="ref-prefs" aria-label="Impostazioni" aria-expanded="false" aria-controls="prefs">Aa</button>
         </div>
@@ -82,6 +86,13 @@ html = r"""<!DOCTYPE html>
           <div class="seg" role="group" aria-labelledby="lbl-mot">
             <button type="button" id="mot-on" aria-pressed="true">Sì</button>
             <button type="button" id="mot-off" aria-pressed="false">No</button>
+          </div>
+        </div>
+        <div class="switch"><span id="lbl-size">Testo</span>
+          <div class="seg" role="group" aria-labelledby="lbl-size">
+            <button type="button" id="size-1" aria-pressed="true" aria-label="Testo normale">A</button>
+            <button type="button" id="size-2" aria-pressed="false" aria-label="Testo grande">A+</button>
+            <button type="button" id="size-3" aria-pressed="false" aria-label="Testo molto grande">A++</button>
           </div>
         </div>
         <p class="prefs-note">Su e-ink il movimento lascia aloni: lì conviene spegnerlo.</p>

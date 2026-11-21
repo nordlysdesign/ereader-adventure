@@ -30,7 +30,7 @@ var PC = (function () {
   var CODES = { "13": 1, "21": 1, "22": 1, "31": 1 };
 
   function fresh() {
-    return { ch: 1, room: "molo", moves: 0, visited: { molo: 1 }, end: 0, f: {}, t: { n: 0, k: 0, l: 0, b: 0 },
+    return { ch: 1, room: "molo", moves: 0, visited: { molo: 1 }, end: 0, f: {}, t: { n: 0, k: 0, l: 0, b: 0 }, h: { k: "", n: 0 },
       loc: { tesserino: "inv", sigarette: "inv", chiave: "none", gettone: "none", pistola: "camera", foto: "casa", mazzo: "none", quaderno: "none" } };
   }
 
@@ -56,6 +56,8 @@ var PC = (function () {
     mappa: "mappa", m: "mappa", cartina: "mappa",
     scheda: "scheda", dossier: "scheda", personaggio: "scheda", io: "scheda",
     aiuto: "aiuto", help: "aiuto", comandi: "aiuto",
+    indizio: "indizio", indizi: "indizio", suggerimento: "indizio", suggerisci: "indizio", aiutami: "indizio", hint: "indizio", bloccata: "indizio", bloccato: "indizio",
+    finali: "finali",
     prologo: "prologo", ricomincia: "ricomincia", restart: "ricomincia", salva: "salva", carica: "carica", aspetta: "aspetta", z: "aspetta"
   };
   var NOUNS = {
@@ -325,16 +327,34 @@ var PC = (function () {
     }
   };
 
+  /* ---------- finali trovati: restano anche dopo RICOMINCIA ---------- */
+  var END_TITLES = ["Il lavoro", "Il passaporto", "Mare vuoto", "Nessuna decisione", "La guardiana"], foundMem = {};
+  function foundEnds() {
+    var o = foundMem;
+    try { o = JSON.parse(localStorage.getItem("vialibera.finali") || "null") || foundMem; } catch (e) { o = foundMem; }
+    return o;
+  }
+  function markEnd(title) {
+    var o = foundEnds(); o[title] = 1; foundMem = o;
+    try { localStorage.setItem("vialibera.finali", JSON.stringify(o)); } catch (e) { /* resta in memoria */ }
+  }
+  function endsNote() {
+    var o = foundEnds(), got = [], i;
+    for (i = 0; i < END_TITLES.length; i++) { if (o[END_TITLES[i]]) { got.push(END_TITLES[i]); } }
+    if (!got.length) { return "Finali trovati: nessuno su " + END_TITLES.length + "."; }
+    return "Finali trovati: " + got.length + " su " + END_TITLES.length + " (" + got.join(", ") + ")." + (got.length < END_TITLES.length ? " Gli altri restano da scoprire." : " Li hai visti tutti.");
+  }
+
   function signal(code) {
     if (S.room !== "lanterna") { return [P("Da qui puoi segnalare solo con le braccia.")]; }
     if (S.ch !== 4) { return [P("Non ancora. Se tocchi quella luce, qualcuno in mare capisce qualcosa. Prima devi sapere cosa.")]; }
     if (!S.f.manuale) { return [P("La lampada è in AUTOMATICO: il tasto è morto. C'è una leva.")]; }
     if (!CODES[code]) { return [P("Quale segnale? [[1-3|segnala 1-3]], [[2-1|segnala 2-1]], [[2-2|segnala 2-2]] oppure [[3-1|segnala 3-1]].")]; }
     var e = ENDINGS[code]();
-    S.moves++; S.end = { "13": 1, "21": 2, "22": 3, "31": 4 }[code];
+    S.moves++; S.end = { "13": 1, "21": 2, "22": 3, "31": 4 }[code]; markEnd(e[0]);
     return [IMG("tx" + code, "Mezzanotte: " + code.charAt(0) + "-" + code.charAt(1)), P(e[1]),
       { t: "end", s: "Fine — " + e[0] },
-      NOTE("Hai chiuso la storia in " + S.moves + " mosse. I finali sono cinque. RICOMINCIA per ripartire, oppure CARICA un codice salvato prima della mezzanotte.")];
+      NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA|ricomincia]] per ripartire, oppure CARICA un codice salvato prima della mezzanotte.")];
   }
 
   /* ---------- movimento ---------- */
@@ -656,7 +676,49 @@ var PC = (function () {
     return [P("Non succede niente.")];
   }
 
-  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA";
+  /* ---------- indizi: tre gradi, dal vago alla soluzione ---------- */
+  function hintFor() {
+    var c = S.ch, f = S.f, r = S.room;
+    if (S.end) { return ["fine", "La storia è finita. Ce ne sono altre quattro, almeno.", "Prima della mezzanotte, alla lanterna, i segnali erano quattro. E Kessel si poteva ascoltare oppure no.", "[[RICOMINCIA|ricomincia]], oppure CARICA un codice salvato prima della scelta."]; }
+    if (c === 1) {
+      if (!f.nivesKey) {
+        if (!S.visited.locanda) { return ["c1a", "Piove, è notte, e ti serve un letto.", "In piazza, a est, c'è una locanda con le finestre accese.", r === "piazza" ? "Dalla piazza: [[EST|est]]." : "Dal molo vai a [[NORD|nord]], poi a [[EST|est]]."]; }
+        return ["c1b", "Una camera non si ottiene con un sorriso.", "La donna al banco vuole sapere chi sei. Hai un tesserino.", "Alla locanda: [[MOSTRA TESSERINO|mostra tesserino a nives]]."];
+      }
+      if (!f.telefonato && !has("gettone")) { return ["c1c", "Roma aspetta tue notizie, stasera.", "Il telefono della locanda vuole un gettone, e i gettoni stanno nel resto.", "Al banco: [[PRENDI GRAPPA|prendi grappa]]. Nel resto c'è un gettone."]; }
+      if (!f.telefonato) { return ["c1d", "Hai un gettone, e Brandi non ama aspettare.", "Il telefono è alla locanda, vicino alla scala.", "Alla locanda: [[USA TELEFONO|usa telefono]]."]; }
+      return ["c1e", "Per stasera hai fatto abbastanza.", "La camera 7 è di sopra, e hai la chiave.", "Alla locanda vai [[SU|su]], poi [[DORMI|dormi]]."];
+    }
+    if (c === 2) {
+      if (has("foto")) { return ["c2c", "Quella fotografia ha una dedica. «N.»", "In paese c'è una sola donna che comincia per N.", "Alla locanda: [[MOSTRA FOTOGRAFIA A NIVES|mostra fotografia a nives]]."]; }
+      if (!S.visited.casa) {
+        if (f.retro) { return ["c2b", "Chi è entrato prima di te non è passato dalla porta.", "Sul retro della casa c'è una finestra col fermo saltato.", "Sul sentiero: [[APRI FINESTRA|apri finestra]], oppure [[EST|est]]."]; }
+        return ["c2a", "Zanon abitava da qualche parte. Le case dei morti parlano.", "La casa del guardiano è sul sentiero del faro, a nord della piazza. La porta ha i sigilli.", r === "strada" ? "Dal sentiero: [[EST|est]]. Giri intorno alla casa." : "Dalla piazza [[NORD|nord]], poi [[EST|est]]: giri intorno alla casa."];
+      }
+      return ["c2d", "Nella casa di Zanon hanno cercato, ma non hanno preso tutto.", "Alla parete, storta, c'è una fotografia in cornice.", "Nella casa: [[PRENDI FOTOGRAFIA|prendi fotografia]]."];
+    }
+    if (c === 3) {
+      if (f.offerta) { return ["c3e", "Kessel aspetta una risposta.", "Puoi dargli il quaderno in cambio di un passaporto, oppure tenerlo.", "[[ACCETTA|accetta]] oppure [[RIFIUTA|rifiuta]]. Tutte e due le strade vanno avanti."]; }
+      if (!f.porta) { return ["c3a", "Nives ti ha dato le chiavi di Zanon.", "La chiave grossa, di ferro, è per la porta della torre.", "Dal sentiero [[NORD|nord]], poi [[APRI PORTA|apri porta]]."]; }
+      if (!f.sportello) { return ["c3b", "Il quaderno è sotto la lente, «dove la luce non guarda».", "Nel basamento della lente, in cima al faro, c'è uno sportello. Hai una chiavetta d'ottone.", "Alla lanterna: [[APRI SPORTELLO|apri sportello]]."]; }
+      if (!has("quaderno")) { return ["c3c", "Lo sportello è aperto.", "Dentro c'è il quaderno, avvolto nella tela cerata.", "[[PRENDI QUADERNO|prendi quaderno]]."]; }
+      return ["c3d", "Hai quello che cercavano tutti. Adesso bisogna uscire.", "Si esce da dove si è entrati: giù per la scala.", "Dalla lanterna: [[GIÙ|giu]]."];
+    }
+    if (!f.manuale) {
+      if (r !== "lanterna") { return ["c4a", "A mezzanotte si decide con la luce.", "Il segnale si fa dalla sala della lanterna, in cima al faro. Prima, se vuoi, alla cala c'è Brandi e alla locanda c'è Nives.", "Sentiero, [[NORD|nord]] fino al faro, poi [[SU|su]]."]; }
+      return ["c4b", "La lente gira da sola, e da sola non dice niente.", "Sul quadro c'è una leva: AUTOMATICO o MANUALE.", "[[USA LEVA|usa leva]]."];
+    }
+    return ["c4c", "Adesso la luce sei tu. Ma cosa vuoi dire?", "Il quaderno di Zanon dà il significato dei quattro segnali: lo trovi anche nella SCHEDA.", "[[1-3|segnala 1-3]], [[2-1|segnala 2-1]], [[2-2|segnala 2-2]] o [[3-1|segnala 3-1]]. Ognuno è un finale diverso."];
+  }
+  function hint() {
+    var h = hintFor();
+    if (S.h.k !== h[0]) { S.h.k = h[0]; S.h.n = 0; }
+    var n = S.h.n;
+    if (S.h.n < 2) { S.h.n++; }
+    return [NOTE("Indizio " + (n + 1) + " di 3"), P(h[n + 1])].concat(n < 2 ? [NOTE("Se non basta: [[ANCORA|indizio]].")] : []);
+  }
+
+  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA";
 
   function exec(input) {
     var m = /^\s*carica\b\s*(.*)$/i.exec(String(input));
@@ -666,7 +728,7 @@ var PC = (function () {
     var t = tokens(s), w = t[0], verb, ids = [], id, i, n, digits = "";
 
     verb = VERBS[w];
-    if (S.end && !(verb === "aiuto" || verb === "mappa" || verb === "scheda" || verb === "prologo" || verb === "ricomincia" || verb === "salva")) {
+    if (S.end && !(verb === "aiuto" || verb === "indizio" || verb === "finali" || verb === "mappa" || verb === "scheda" || verb === "prologo" || verb === "ricomincia" || verb === "salva")) {
       return [P("La storia è finita. RICOMINCIA, oppure CARICA un codice.")];
     }
     if (DIRS[w] && t.length === 1) { return done(go(DIRS[w])); }
@@ -676,6 +738,8 @@ var PC = (function () {
     }
 
     if (verb === "aiuto") { return [P(HELP)]; }
+    if (verb === "indizio") { return hint(); }
+    if (verb === "finali") { return [P(endsNote())]; }
     if (verb === "mappa") { return mapBlock(); }
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }

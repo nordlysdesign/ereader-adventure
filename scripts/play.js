@@ -40,12 +40,22 @@ var path = [
   // capitolo 3
   'parla nives', 'scheda', 'o', 'n', 'n', 'su', 'apri porta', 'su', 'usa leva', 'apri sportello', 'prendi quaderno', 'mappa', 'giu', 'su', 'parla kessel'
 ];
-run(path, !verbose);
+// prima di ogni mossa del percorso chiede un indizio: deve esserci sempre, e i tre gradi devono essere diversi
+var hintSteps = {}, fails = 0;
+path.forEach(function (c) {
+  var h1 = show(PC.exec('indizio')), h2, h3;
+  if (h1.indexOf('Indizio 1 di 3') >= 0) {
+    h2 = show(PC.exec('indizio')); h3 = show(PC.exec('indizio'));
+    if (h3.indexOf('Indizio 3 di 3') < 0 || h1 === h2 || h2 === h3) { fails++; console.log('indizio sbagliato prima di «' + c + '»:\n' + h1 + '\n' + h3); }
+    hintSteps[h3.split('\n')[1]] = 1;
+  } else if (h1.indexOf('Indizio 3 di 3') < 0) { fails++; console.log('indizio senza grado prima di «' + c + '»: ' + h1); }
+  run([c], !verbose);
+});
+console.log('indizi diversi lungo il percorso: ' + Object.keys(hintSteps).length);
 var before = PC.exec('salva');
 var code = before.filter(function (b) { return b.t === 'code'; })[0].s;
 console.log('\nCODICE prima della scelta di Kessel:', code, '| stato', JSON.stringify(PC.status()));
 
-var fails = 0;
 function ending(label, kesselCmd, extra, sig, expect) {
   var r = PC.exec('carica ' + code.toLowerCase());
   var pre = [kesselCmd].concat(extra).concat(['n', 'su', 'segnala ' + sig, 'usa leva', 'segnala 9-9', 'segnala ' + sig]);
@@ -62,6 +72,9 @@ ending('rifiuta + 2-1', 'rifiuta', [], '2-1', 'Nessuna decisione');
 ending('rifiuta + 3-1', 'rifiuta', ['s', 's', 'e', 'parla nives', 'parla nives', 'parla nives', 'su', 'o', 'o', 'n'], '3-1', 'La guardiana');
 ending('accetta + 3-1', 'dai quaderno a kessel', [], '3-1', 'La guardiana');
 
+var fin = show(PC.exec('finali'));
+console.log(fin);
+if (fin.indexOf('5 su 5') < 0) { fails++; }
 // codice sbagliato, codice alterato
 console.log('\ncodice vuoto:', show(PC.exec('carica')));
 console.log('codice alterato:', show(PC.exec('carica ' + code.replace(/.$/, code.slice(-1) === 'A' ? 'B' : 'A'))));
