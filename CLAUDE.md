@@ -18,6 +18,7 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 - `src/engine.js`: storia, parser, dialoghi, capitoli, finali, salvataggio a codice. Non tocca il DOM e gira anche in Node: è così che viene provato.
 - `src/pix.js`: le tavole. Una piccola libreria di disegno (`Gfx`: rettangoli, poligoni, ellissi, linee, sagome con filo, testo a pixel) e una funzione per scena. Ogni scena riceve la tela e il numero di fotogramma.
   - Tavole dei luoghi, 240×150, animate: ogni luogo ne ha una (molte in versione notte e giorno: notte nei capitoli 1 e 4). Le mostra `describe(true)`: alla prima visita e con `GUARDA`.
+  - Momenti, 240×150, animati: quattro passaggi chiave (`m_telefono` la telefonata, `m_confessione` le chiavi di Nives, `m_quaderno` lo sportello aperto, `m_foglio` Brandi e il foglio del '44) e una tavola di chiusura per ogni finale (`f_lavoro`, `f_passaporto`, `f_mare`, `f_attesa`, `f_guardiana`), che compare dopo il testo del finale. Le tavole dei finali sono abbinate ai titoli in `END_PIC` di `engine.js`; `play.js` controlla che ogni finale ne mostri una.
   - Tavolette degli oggetti, 120×75, ferme, con cartellino da reperto («N.04 GETTONE TELEFONICO»): 40 in tutto, tra oggetti, indizi e ritratti. Si chiamano `o_<nome>`, si definiscono in `OBJ` con `plate()` e vanno elencate in `OBJN`. Il motore le aggancia in `withPic()`: la didascalia sta in `PIC`, le varianti per stato (quadro, sportello, stufa) in `picFor()`. Si vedono ogni volta che si esamina una cosa.
   - La tela si scrive punto per punto con `putImageData`, già ingrandita: niente `drawImage` scalato, che il browser del Kindle sbaglia.
 - `src/ui.js`: pagine, pannello dei comandi, animazione delle tavole. In basso resta solo la riga di comando col pulsante COMANDI, che apre il cassetto (rotta, azioni, oggetti, SCHEDA/MAPPA/SALVA/?/Aa) e si richiude dopo ogni comando. `Aa` apre le impostazioni: Rullo o Pagina (predefinito Rullo), movimento sì o no (predefinito sì), dimensione del testo (A, A+, A++; classi `t1`–`t3` su `.screen`).
@@ -50,5 +51,5 @@ Dopo ogni modifica a `src/`: build, poi play. L'ultima riga di play deve essere 
 
 - Provato una volta su un Kindle di settima generazione (Browser sperimentale): il gioco gira, ma stile e tavole non si vedevano bene. Corretti variabili CSS e ingrandimento delle tavole; manca la prova dopo la correzione e la foto di `diagnosi.html`. Mai provato su Kobo.
 - Le figure umane nelle tavole sono rigide, i ritratti degli oggetti sono quasi da figurina; la sala della lanterna è la tavola meno riuscita, seguita dalla tamerice del sentiero. Le illustrazioni andrebbero sostituite con tavole disegnate a mano a 240×150, 1 bit.
-- `index.html` pesa circa 185 KB: da tenere d'occhio sul Kindle.
+- `index.html` pesa circa 225 KB: da tenere d'occhio sul Kindle.
 - In modo Pagina, ◀ ▶ fuori dal prologo stanno dentro il cassetto COMANDI.

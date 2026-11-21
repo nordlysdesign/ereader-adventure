@@ -283,7 +283,7 @@ var PC = (function () {
 
   function confess() {
     S.f.nives = 1; S.loc.mazzo = "inv"; S.moves++; setChapter(3);
-    return [P(S.f.nivesTradita ? "Posi la fotografia sul banco. Nives non la tocca.\n«L'ha già fatta vedere in giro, mi dicono. Qui le voci arrivano prima dei piroscafi.» Poi, perché non ha scelta: «Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»" : "Posi la fotografia sul banco, dalla parte della matita. Nives smette di asciugare.\n«Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»"),
+    return [IMG("m_confessione", "Le chiavi di Elia"), P(S.f.nivesTradita ? "Posi la fotografia sul banco. Nives non la tocca.\n«L'ha già fatta vedere in giro, mi dicono. Qui le voci arrivano prima dei piroscafi.» Poi, perché non ha scelta: «Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»" : "Posi la fotografia sul banco, dalla parte della matita. Nives smette di asciugare.\n«Stanotte sono salita io. Due e uno: aspettate. Non sapevo che altro dire, a quelli in mare.»"),
       P("Elia portava gente di qua, di notte, con la luce. Chi poteva pagare e chi no. Da un anno qualcuno, a Roma, decideva quali barche arrivavano davvero. Elia l'ha capito leggendo un nome su un giornale dell'altra parte, nell'elenco dei fucilati. Era un uomo che aveva fatto sbarcare lui."),
       P("«Ha scritto tutto. Nomi, somme, notti. Il quaderno è nel faro, sotto la lente, dove la luce non guarda.» Ti mette in mano un [[mazzo]] di chiavi ancora tiepido di tasca. «La barca viene stanotte. Sopra c'è mio fratello.»"),
       CHAP(3),
@@ -354,6 +354,8 @@ var PC = (function () {
     return "Finali trovati: " + got.length + " su " + END_TITLES.length + " (" + got.join(", ") + ")." + (got.length < END_TITLES.length ? " Gli altri restano da scoprire." : " Li hai visti tutti.");
   }
 
+  var END_PIC = { "Il lavoro": ["f_lavoro", "All'alba, sul molo"], "Il passaporto": ["f_passaporto", "Verso Marsiglia"], "Mare vuoto": ["f_mare", "Il mare, vuoto"],
+    "Nessuna decisione": ["f_attesa", "Le cinque e quaranta"], "La guardiana": ["f_guardiana", "Punta Cieca, la notte dopo"] };
   function signal(code) {
     if (S.room !== "lanterna") { return [P("Da qui puoi segnalare solo con le braccia.")]; }
     if (S.ch !== 4) { return [P("Non ancora. Se tocchi quella luce, qualcuno in mare capisce qualcosa. Prima devi sapere cosa.")]; }
@@ -361,7 +363,8 @@ var PC = (function () {
     if (!CODES[code]) { return [P("Quale segnale? [[1-3|segnala 1-3]], [[2-1|segnala 2-1]], [[2-2|segnala 2-2]] oppure [[3-1|segnala 3-1]].")]; }
     var e = ENDINGS[code]();
     S.moves++; S.end = { "13": 1, "21": 2, "22": 3, "31": 4 }[code]; markEnd(e[0]);
-    return [IMG("tx" + code, "Mezzanotte: " + code.charAt(0) + "-" + code.charAt(1)), P(e[1]),
+    var fin = END_PIC[e[0]];
+    return [IMG("tx" + code, "Mezzanotte: " + code.charAt(0) + "-" + code.charAt(1)), P(e[1]), IMG(fin[0], fin[1]),
       { t: "end", s: "Fine — " + e[0] },
       NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA|ricomincia]] per ripartire, oppure CARICA un codice salvato prima della mezzanotte.")];
   }
@@ -437,10 +440,11 @@ var PC = (function () {
         "«Signora. Io ho moglie, due figli e diciannove anni di servizio. Legga il fascicolo, firmi che la lampada funziona, e riparta.»"], "l");
     }
     if (who === "brandi") {
+      var shown = S.t.b === 1 ? [IMG("m_foglio", "Marzo 1944")] : [];
       if (S.t.b === 1) { f.foglio = 1; }
-      return line(["«Ada.» Come si chiama un cane che è tornato. «Il quaderno.»" + (has("quaderno") ? " Te lo guarda in mano e non lo prende: gli basta sapere dov'è." : (f.patto ? "\n«Non ce l'ho.»\n«Allora ce l'ha Kessel. Peccato. Per te.»" : "")),
+      return shown.concat(line(["«Ada.» Come si chiama un cane che è tornato. «Il quaderno.»" + (has("quaderno") ? " Te lo guarda in mano e non lo prende: gli basta sapere dov'è." : (f.patto ? "\n«Non ce l'ho.»\n«Allora ce l'ha Kessel. Peccato. Per te.»" : "")),
         "Tira fuori un foglio piegato in quattro. Lo riconosci dalla piega. «Marzo del '44. Via libera, hai trasmesso. Nove persone su una spiaggia come questa. Io lo so, che avevi una pistola alla nuca. I giornali no.» Lo rimette in tasca. «Uno-tre, a mezzanotte. Poi il foglio è tuo.»",
-        "«E gli altri cinque?» chiedi.\n«Quali altri?» dice Brandi."], "b");
+        "«E gli altri cinque?» chiedi.\n«Quali altri?» dice Brandi."], "b"));
     }
     if (who === "uomini") { return [P("Non parlano. Li pagano per questo.")]; }
     return [P("Parli da sola. Ti capita, ultimamente.")];
@@ -784,7 +788,7 @@ var PC = (function () {
           if (f.sportello) { return [P("È già aperto.")]; }
           if (!has("mazzo")) { return [P("Chiuso. Vuole una chiavetta.")]; }
           f.sportello = 1; S.loc.quaderno = "sportello"; S.moves++;
-          return [P("La chiavetta d'ottone entra al primo colpo. Dentro, avvolto in tela cerata, un [[quaderno]] nero.")];
+          return [IMG("m_quaderno", "Dove la luce non guarda"), P("La chiavetta d'ottone entra al primo colpo. Dentro, avvolto in tela cerata, un [[quaderno]] nero.")];
         }
         if (id === "finestra" && r === "strada" && f.retro && !f.finestra) { return go("est"); }
         if (id === "valigia") { S.moves++; return examine("valigia"); }
@@ -801,7 +805,7 @@ var PC = (function () {
           if (f.telefonato) { return [P("Hai già chiamato. Brandi non è uomo da due telefonate.")]; }
           if (!has("gettone")) { return [P("Il telefono vuole un gettone. Tu hai biglietti di banca e nessuna moneta. Al banco, con una [[grappa]], qualche moneta salta fuori.")]; }
           f.telefonato = 1; S.loc.gettone = "none"; S.moves++;
-          return [P("Il gettone scende. Tre squilli a Roma, poi la voce di Brandi, sveglia come sempre.\n«Sei arrivata. Bene. Zanon segnalava a qualcuno, di notte, cambiando il ritmo della lampada. Teneva i conti in un quaderno. Lo voglio io. Non una copia.»\n«E chi l'ha ammazzato?»\n«È annegato, Ada. Leggi i rapporti.» Una pausa. «Fai la brava. Ho riletto il tuo foglio del '44, ieri. Scrivevi bene.»\nRiattacca lui."),
+          return [IMG("m_telefono", "Tre squilli a Roma"), P("Il gettone scende. Tre squilli a Roma, poi la voce di Brandi, sveglia come sempre.\n«Sei arrivata. Bene. Zanon segnalava a qualcuno, di notte, cambiando il ritmo della lampada. Teneva i conti in un quaderno. Lo voglio io. Non una copia.»\n«E chi l'ha ammazzato?»\n«È annegato, Ada. Leggi i rapporti.» Una pausa. «Fai la brava. Ho riletto il tuo foglio del '44, ieri. Scrivevi bene.»\nRiattacca lui."),
             NOTE("Kessel non ha girato pagina per tutta la telefonata.")];
         }
         if (id === "mazzo") { return r === "faro" ? act("apri", "porta") : (r === "lanterna" ? act("apri", "sportello") : [P("Qui non c'è niente che queste chiavi aprano.")]); }

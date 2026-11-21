@@ -10,7 +10,7 @@ Porto Scuro, novembre 1953. Sei Ada Corvi, ispettrice dei fari per modo di dire.
 
 - Scrivendo comandi (`nord`, `esamina fascicolo`, `mostra la fotografia a nives`), oppure toccando un'azione e poi una parola sottolineata.
 - In basso c'è solo la riga di comando: il pulsante **COMANDI** apre direzioni, azioni, oggetti e i pulsanti `SCHEDA`, `MAPPA`, `SALVA`, `INDIZIO`, `?` e `Aa`, e si richiude dopo ogni comando.
-- Ogni luogo ha la sua tavola animata, di notte o di giorno a seconda del capitolo: si vede entrando la prima volta e con `GUARDA`. Quando esamini qualcosa (un oggetto, un indizio, una persona) compare la sua immagine, con un cartellino da reperto.
+- Ogni luogo ha la sua tavola animata, di notte o di giorno a seconda del capitolo: si vede entrando la prima volta e con `GUARDA`. Quando esamini qualcosa (un oggetto, un indizio, una persona) compare la sua immagine, con un cartellino da reperto. I passaggi chiave (la telefonata, la confessione, il quaderno, il foglio del '44) hanno una tavola animata loro, e ogni finale si chiude con la sua.
 - `SCHEDA` dice chi sei e cosa hai scoperto, `MAPPA` mostra i posti dove sei stata.
 - `PARLA` fa dire al personaggio la sua battuta e propone gli argomenti («Puoi chiederle di: Zanon · Kessel · la luce»): si toccano, oppure si scrive `CHIEDI A NIVES DI KESSEL`. Alcuni argomenti compaiono solo dopo aver scoperto qualcosa, e certe risposte cambiano il seguito: quello che Nives, Lodi e Kessel sanno di te si sente nei capitoli dopo e nei finali.
 - `SALVA` dà un codice di 22 caratteri; `CARICA` e il codice riprendono la partita, anche su un altro dispositivo. Su ogni dispositivo la partita si salva comunque da sola.
@@ -45,4 +45,4 @@ node scripts/play.js src     # verifica storia, finali, codici e tavole
 
 ## Stato
 
-È un prototipo. Sul Kindle di settima generazione (Browser sperimentale) il gioco gira, ma va riprovato dopo le correzioni per lo stile e le tavole; per vedere cosa supporta un e-reader si apre https://nordlysdesign.github.io/ereader-adventure/diagnosi.html. Su Kobo non è ancora stato provato. Le illustrazioni, 62 in tutto, sono generate dal codice e andrebbero sostituite con tavole disegnate a mano.
+È un prototipo. Sul Kindle di settima generazione (Browser sperimentale) il gioco gira, ma va riprovato dopo le correzioni per lo stile e le tavole; per vedere cosa supporta un e-reader si apre https://nordlysdesign.github.io/ereader-adventure/diagnosi.html. Su Kobo non è ancora stato provato. Le illustrazioni, 71 in tutto, sono generate dal codice e andrebbero sostituite con tavole disegnate a mano.

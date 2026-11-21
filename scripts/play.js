@@ -74,7 +74,8 @@ function ending(label, kesselCmd, extra, sig, expect) {
   var pre = [kesselCmd].concat(extra).concat(['n', 'su', 'segnala ' + sig, 'usa leva', 'segnala 9-9', 'segnala ' + sig]);
   var last = run(pre, !verbose);
   var end = last.filter(function (b) { return b.t === 'end'; })[0];
-  var ok = end && end.s.indexOf(expect) >= 0;
+  var pic = last.filter(function (b) { return b.t === 'img' && /^f_/.test(b.id) && ctx.Pix.scenes[b.id]; }).length;
+  var ok = end && end.s.indexOf(expect) >= 0 && pic === 1;
   if (!ok) fails++;
   console.log((ok ? 'OK  ' : 'FAIL') + ' ' + label + ' -> ' + (end ? end.s : show(last)) + ' | uscite dopo: [' + PC.exits().join(',') + '] | ' + show(PC.exec('nord')));
 }
@@ -129,6 +130,7 @@ Object.keys(SC).forEach(function (id) {
 // ogni tavola chiamata dalla storia deve esistere
 var eng = fs.readFileSync(dir + '/engine.js', 'utf8'), re = /IMG\(([^,]+),/g, m, ids = {};
 while ((m = re.exec(eng))) { (m[1].match(/"([^"]+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; }); }
+var pk0 = /var END_PIC = \{([\s\S]*?)\};/.exec(eng)[1]; (pk0.match(/"(f_\w+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; });
 var pic = /var PIC = \{([\s\S]*?)\};/.exec(eng)[1], pk = /(\w+):/g;
 while ((m = pk.exec(pic))) { ids['o_' + m[1]] = 1; }
 delete ids['o_'];
