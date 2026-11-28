@@ -167,6 +167,10 @@ STORIES = [
          blurb='Il guardiano di Punta Cieca è stato ripescato sotto il molo, e qualcuno vuole il quaderno che teneva. Un faro, quattro segnali, una mezzanotte.'),
     dict(slug='acqua-cheta', title='Acqua Cheta', key='acquacheta', code=2, cover='lagoGiorno', where='Val Sorda, febbraio 1957',
          blurb='Il geologo della diga è caduto dal coronamento, e la Compagnia vuole che sia un suicidio. Un lago che sale, una montagna che si muove, una telefonata sola.'),
+    # Una prova di stile, non una storia: il capitolo 1 di Acqua Cheta per telefono, a caratteri colorati. Ha il suo modello di pagina (più sotto).
+    dict(slug='acqua-cheta-ascii', src='acqua-cheta', title='Acqua Cheta, in caratteri', key='acquacheta-ascii', code=2, cover='fermata', ascii=True,
+         where='Prova per telefono · solo il capitolo 1',
+         blurb='La stessa storia in un altro stile: scene fatte di caratteri, a colori, con filmati e suono. Si gioca solo a tocchi. Non è per l\'e-reader.'),
 ]
 
 def png(story, scene, k=2):
@@ -187,9 +191,129 @@ def png(story, scene, k=2):
 ui = read(d + 'ui.js')
 gfx = read(d + 'gfx.js')
 for st in STORIES:
+    if st.get('ascii'): continue
     sd = d + st['slug'] + '/'
     pix = '\n'.join(read(p) for p in sorted(glob.glob(sd + 'pix*.js')))
     out = html % dict(css=css, extra=extra, title=st['title'], gfx=gfx, engine=read(sd + 'engine.js'), pix=pix, ui=ui)
+    open(base + st['slug'] + '.html', 'w', encoding='utf-8').write(out)
+    print(st['slug'] + '.html', len(out) // 1024, 'KiB')
+
+
+# ---------- la prova per telefono ----------
+# Stesso motore di Acqua Cheta, ma con una partita sua: le chiavi in localStorage cambiano prefisso, così la partita vera non viene toccata.
+ASCII_CSS = r"""
+html, body { margin: 0; height: 100%; background: #0a0c11; color: #c9d3de; font-family: 'IBM Plex Mono', Menlo, Consolas, monospace; font-size: 15px; line-height: 1.5; -webkit-text-size-adjust: 100%; overscroll-behavior: none; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; }
+.app { position: relative; display: flex; flex-direction: column; height: 100vh; height: 100dvh; max-width: 560px; margin: 0 auto; overflow: hidden; background: #0a0c11; }
+#stage { position: relative; flex: 0 0 auto; height: 44vh; overflow: hidden; border-bottom: 1px solid #232b37; }
+#cv { position: absolute; left: 0; top: 50%; width: 100%; height: auto; transform: translateY(-50%); display: block; }
+#room { position: absolute; left: 12px; top: 10px; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #f5a742; text-shadow: 0 0 6px #000, 0 0 12px #000; }
+#caption, #skip { display: none; }
+.film #stage { flex: 1 1 auto; height: auto; border-bottom: 0; }
+.film #cv { top: 0; transform: none; }
+.film #room, .film #log, .film #bar { display: none; }
+.film #skip { display: block; position: absolute; right: 10px; top: 10px; background: rgba(10, 12, 17, 0.7); }
+.film #caption { display: block; position: absolute; left: 0; right: 0; bottom: 0; min-height: 36%; padding: 34px 20px calc(20px + env(safe-area-inset-bottom)); background: linear-gradient(rgba(10, 12, 17, 0), #0a0c11 26%); }
+#caption p { margin: 0; font-family: 'Old Standard TT', Georgia, serif; font-size: 19px; line-height: 1.42; color: #efe8d6; }
+#caption .more { display: block; margin-top: 12px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: #5f6b7a; }
+#log { flex: 1 1 0; min-height: 0; overflow-y: auto; padding: 4px 16px 34vh; -webkit-overflow-scrolling: touch; }
+.turn { padding: 12px 0 2px; border-top: 1px dashed #232b37; }
+.turn:first-child { border-top: 0; }
+.turn.old { opacity: 0.4; }
+.turn p { margin: 0 0 10px; }
+.turn ul { margin: 0 0 10px; padding-left: 18px; }
+.echo { color: #6388bd; font-weight: 600; }
+.note { color: #7f8c9b; font-size: 13px; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #f5a742; }
+.code { font-size: 17px; font-weight: 600; letter-spacing: 2px; color: #fff3dc; }
+.kw { color: #f5a742; border-bottom: 1px solid rgba(245, 167, 66, 0.55); cursor: pointer; text-shadow: 0 0 10px rgba(245, 167, 66, 0.4); }
+.chapter { text-align: center; margin: 4px 0 14px; padding: 10px 0 12px; border-top: 1px solid #f5a742; border-bottom: 1px solid #f5a742; }
+.chapter span { display: block; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #f5a742; }
+.chapter h2 { font: italic 400 27px/1.15 'Old Standard TT', Georgia, serif; margin: 2px 0 0; color: #fff3dc; }
+dl.rows { margin: 0 0 10px; font-size: 13.5px; }
+dl.rows dt { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #7f8c9b; margin-top: 6px; }
+dl.rows dd { margin: 0; }
+#bar { flex: 0 0 auto; border-top: 1px solid #232b37; background: #0d1016; padding: 6px 10px calc(8px + env(safe-area-inset-bottom)); }
+.row { display: flex; gap: 6px; overflow-x: auto; align-items: center; padding: 3px 0; scrollbar-width: none; }
+.row::-webkit-scrollbar { display: none; }
+#bag { flex: 1 1 auto; min-width: 0; }
+.chip { flex: 0 0 auto; font: 600 12.5px/1 'IBM Plex Mono', Menlo, monospace; color: #c9d3de; background: transparent; border: 1px solid #3a4656; border-radius: 3px; padding: 0 11px; min-height: 40px; white-space: nowrap; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.chip.dir { border-color: #6388bd; color: #b9c9db; }
+.chip.item { border-style: dashed; font-weight: 400; }
+.chip.big { min-height: 52px; font-size: 13.5px; border-color: #f5a742; color: #f5a742; white-space: normal; text-align: center; }
+.chip.main { background: #f5a742; border-color: #f5a742; color: #0a0c11; min-height: 52px; font-size: 14px; padding: 0 22px; }
+.sheet { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 5; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(5, 6, 9, 0.62); }
+.sheet.off, .veil.off { display: none; }
+.pane { background: #10141b; border-top: 1px solid #f5a742; padding: 14px 14px calc(16px + env(safe-area-inset-bottom)); }
+.pane h3 { margin: 0 0 10px; font: italic 400 23px 'Old Standard TT', Georgia, serif; color: #fff3dc; }
+.grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.veil { position: absolute; left: 0; right: 0; top: 0; bottom: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 26px calc(9vh + env(safe-area-inset-bottom)); text-align: center; background: linear-gradient(rgba(10, 12, 17, 0.05), rgba(10, 12, 17, 0.96) 52%); }
+.veil.full { background: rgba(10, 12, 17, 0.94); justify-content: center; padding-bottom: 0; }
+.veil h1 { font: 400 34px/1.1 'Old Standard TT', Georgia, serif; letter-spacing: 6px; text-transform: uppercase; color: #fff3dc; margin: 0; }
+.veil .sub { font: italic 400 16px 'Old Standard TT', Georgia, serif; color: #f5a742; margin: 6px 0 16px; }
+.veil p { margin: 0 0 16px; max-width: 34ch; color: #a3b6ca; font-size: 13.5px; }
+.veil .chip { margin: 5px 0; min-width: 240px; }
+"""
+ASCII_HTML = r"""<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c11">
+<title>Acqua Cheta, in caratteri</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+<style>%(css)s</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div id="stage"><canvas id="cv" role="img" aria-label="La scena, disegnata a caratteri"></canvas><div id="room"></div><button type="button" class="chip" id="skip">SALTA ›</button><div id="caption" aria-live="polite"></div></div>
+  <div id="log" aria-live="polite"></div>
+  <div id="bar">
+    <div class="row" id="dirs"></div>
+    <div class="row"><div class="row" id="bag"></div><button type="button" class="chip" id="menu-btn" aria-label="Menu">≡ MENU</button></div>
+  </div>
+  <div class="sheet off" id="sheet"><div class="pane"><h3 id="sheet-word"></h3><div class="grid" id="sheet-grid"></div></div></div>
+  <div class="sheet off" id="menu"><div class="pane"><div class="grid">
+    <button type="button" class="chip big" data-cmd="scheda">SCHEDA</button>
+    <button type="button" class="chip big" data-cmd="mappa">MAPPA</button>
+    <button type="button" class="chip big" data-cmd="indizio">INDIZIO</button>
+    <button type="button" class="chip big" data-cmd="prologo">PROLOGO</button>
+    <button type="button" class="chip big" id="m-suono">SUONO: SÌ</button>
+    <button type="button" class="chip big" data-cmd="storie">STORIE</button>
+    <button type="button" class="chip big" id="m-capo" style="grid-column: 1 / 4">RICOMINCIA</button>
+  </div></div></div>
+  <div class="veil" id="title">
+    <h1>Acqua Cheta</h1>
+    <div class="sub">in caratteri · prova per telefono</div>
+    <p>Il capitolo primo, in un altro stile. Si gioca a tocchi; con il suono è meglio.</p>
+    <button type="button" class="chip main" id="start-btn">COMINCIA</button>
+    <a class="chip" href="index.html">TORNA ALLE STORIE</a>
+  </div>
+  <div class="veil full off" id="end">
+    <h1>Fine della prova</h1>
+    <div class="sub">Capitolo primo: «Neve vecchia»</div>
+    <p>La storia continua per altri tre capitoli, fino a una telefonata. Per ora, in questo stile, c'è solo il primo.</p>
+    <button type="button" class="chip main" id="end-again">RIGIOCA LA PROVA</button>
+    <a class="chip" href="acqua-cheta.html">LA STORIA COMPLETA, PER E-READER</a>
+    <a class="chip" href="index.html">TORNA ALLE STORIE</a>
+  </div>
+</div>
+<script>
+%(js)s
+</script>
+</body>
+</html>
+"""
+for st in STORIES:
+    if not st.get('ascii'): continue
+    sd = d + st['src'] + '/'
+    eng = read(sd + 'engine.js')
+    old, new = '"' + st['src'].replace('-', '') + '.', '"' + st['key'] + '.'
+    assert eng.count(old) >= 3, 'le chiavi di salvataggio del motore non sono dove me le aspetto'
+    eng = eng.replace(old, new)
+    js = '\n'.join([gfx, eng, read(sd + 'pix-oggetti.js'), read(sd + 'pix-momenti.js')] + [read(d + 'ascii/' + f) for f in ('render.js', 'scene-acqua.js', 'filmati.js', 'suono.js', 'ui-touch.js')])
+    out = ASCII_HTML % dict(css=ASCII_CSS, js=js)
     open(base + st['slug'] + '.html', 'w', encoding='utf-8').write(out)
     print(st['slug'] + '.html', len(out) // 1024, 'KiB')
 
@@ -203,7 +327,7 @@ for st in STORIES:
         <p>%(blurb)s</p>
         <p class="state"></p>
         <p class="go"><a class="chip main" href="%(slug)s.html">Comincia</a></p>
-      </div>""" % dict(st, img=png(st['slug'], st['cover']))
+      </div>""" % dict(st, img=png(st.get('src', st['slug']), st['cover']))
 home = r"""<!DOCTYPE html>
 <html lang="it">
 <head>

@@ -8,11 +8,12 @@ Avventure testuali noir in italiano, da giocare nel browser di un e-reader (Kind
 python3 scripts/build.py      # ricompone index.html, via-libera.html e acqua-cheta.html da src/ (serve anche node, per le copertine)
 node scripts/play.js src      # Via Libera: gioca tutta la storia e i cinque finali, prova i codici, disegna ogni tavola
 node scripts/play-acqua.js    # Acqua Cheta: lo stesso, più 300 partite a caso guidate dagli indizi (nessuna deve bloccarsi)
+node scripts/prova-ascii.js   # la prova per telefono: scene, filmati, capitolo 1, chiavi di salvataggio
 node scripts/play.js src -v   # come sopra, stampando tutto il testo (anche play-acqua.js -v)
 node scripts/tavola.js acqua-cheta /tmp/foglio.png lagoGiorno o_occhiali m_colpo:3   # esporta tavole in PNG, per guardarle
 ```
 
-Dopo ogni modifica a `src/`: build, poi i due play. L'ultima riga di ognuno deve essere `tutto a posto`.
+Dopo ogni modifica a `src/`: build, poi i due play e la prova. L'ultima riga di ognuno deve essere `tutto a posto`.
 
 ## Struttura
 
@@ -42,6 +43,19 @@ Due storie con la stessa protagonista, Ada Corvi. Ogni storia è una pagina a s�
 - Il finale si sceglie con `CHIAMA MILANO | GIORNALE | DIGA | CANONICA`. Cinque titoli: «La pratica» e «Il posto» (Milano, senza o con il patto), «Notizie false», «Acqua bassa», «Al lupo». Il patto con Morandin e l'aver parlato degli scarichi con Bepi cambiano il testo anche negli altri.
 - Conseguenze: `morandinSa` (gli hai detto delle mani, o mostrato gli occhiali), `olgaSa` (le hai detto che ascolta le telefonate: serve aver letto il biglietto), `vescoviSa` (gli hai dato la notizia: la detta al giornale), `scarichi` (Bepi ti ha detto che li aprirebbe). `play-acqua.js` gioca una partita per ognuna.
 - Il terzo grado di `INDIZIO` vale da qualunque stanza: ogni voce di `hintFor()` dice in che stanza si fa la mossa, e da un'altra stanza `hint()` aggiunge la direzione da prendere (`toward()`). È questo che permette alle partite a caso di `play-acqua.js` di arrivare sempre in fondo. Via Libera non ce l'ha ancora.
+
+## La prova per telefono (`acqua-cheta-ascii.html`)
+
+Una prova di stile, non una terza storia: il capitolo 1 di Acqua Cheta rifatto per il telefono, con scene fatte di caratteri colorati su fondo nero, filmati e suono. Serve a decidere se lo stile convince. **Qui i vincoli da e-reader non valgono** (ES6, colore, `requestAnimationFrame`, WebAudio); resta: nessuna libreria, una pagina sola, nessun server.
+
+- Il motore è quello di Acqua Cheta, intatto. `build.py` gli cambia solo il prefisso delle chiavi (`acquacheta.` → `acquacheta-ascii.`): la prova ha una partita sua e non tocca quella vera. Quando il motore passa al capitolo 2 l'interfaccia mostra il filmato del colpo e chiude («Fine della prova»).
+- `src/ascii/render.js`: la griglia (`Ascii.Field`, 84×56 celle: luce, tinta, tratto, lettera) e il disegno su canvas con un atlante di glifi e un alone sotto le luci. La luce sceglie il carattere su una rampa (`" .·:;-=+ox0O8B$Q@"`), con una curva che tira su i mezzi toni. Operazioni: `shade` (una funzione per cella: è la più cara, e con una chiave si ricorda il risultato per qualche fotogramma), `rect`, `poly`, `ell`, `line`/`path` (il tratto segue la pendenza), `glow` e `cone` (luci che si sommano), `text`, `snow`, `bits` (traduce una tavola a un bit dell'e-reader). La griglia non tocca il DOM: si prova in Node.
+- `src/ascii/scene-acqua.js`: le scene, una funzione `(F, t, st)` per id del motore (`fermata`, `pieve`, `osteria`, `camera3`, `digaMorto`, `m_chiamata`) più `mappa`, disegnata a caratteri. Tinte: grigio-azzurro per tutto, ambra per le luci accese, rosso una volta sola (i fanalini della corriera). Le tavolette degli oggetti non sono ridisegnate: si convertono da `pix-oggetti.js` con `bits`, e il cartellino si riscrive a lettere vere.
+- `src/ascii/filmati.js`: prologo, telefonata, colpo. Un filmato è una fila di inquadrature (scena, stato e camera nel tempo, didascalia); va avanti da solo o con un tocco, e si salta.
+- `src/ascii/ui-touch.js`: si gioca solo a tocchi. Una parola accesa apre il foglio delle azioni, che compone lo stesso comando testuale di sempre per `PC.exec`. Il testo si scrive da solo. `SALVA`/`CARICA` a codice non ci sono (manca la tastiera): c'è il salvataggio automatico.
+- `src/ascii/suono.js`: WebAudio, tutto sintetizzato. Parte al primo tocco, si spegne dal menu.
+- `node scripts/prova-ascii.js` controlla scene, filmati, percorso del capitolo 1 e chiavi di salvataggio; con il nome di una scena la stampa nel terminale (`node scripts/prova-ascii.js pieve`).
+- Limiti noti: i reperti convertiti sono un'impressione, non si leggono come le tavolette; la sala dell'albergo è la scena meno riuscita; mai provata su un telefono vero (resa, fluidità, suono).
 
 ## Vincoli tecnici
 
