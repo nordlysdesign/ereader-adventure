@@ -7,7 +7,7 @@ Due avventure testuali noir in italiano, pensate per essere giocate nel browser 
 
 Ognuna ha quattro capitoli e cinque finali. Nessuno è pulito.
 
-C'è anche una **prova per telefono**: il primo capitolo di Acqua Cheta in un altro stile, con scene fatte di caratteri colorati, filmati e suono, da giocare solo a tocchi (`acqua-cheta-ascii.html`). Non è per l'e-reader, e ha una partita separata.
+Ogni storia si gioca in due modi, scelti dall'elenco: **per e-reader** (bianco e nero, fermo, si scrive o si tocca) oppure **per telefono**, con scene fatte di caratteri colorati, filmati e suono, solo a tocchi (`via-libera-ascii.html`, `acqua-cheta-ascii.html`). Via Libera per telefono è completa; di Acqua Cheta, per ora, c'è il primo capitolo. Ogni modo tiene la sua partita.
 
 **Si gioca qui:** https://nordlysdesign.github.io/ereader-adventure/ (l'elenco delle storie; ogni storia ha la sua pagina, `via-libera.html` e `acqua-cheta.html`).
 
@@ -35,7 +35,7 @@ Pagine HTML complete, senza librerie e senza server: una per storia, più l'elen
 | `src/ui.js` | L'interfaccia comune: pagine, cassetto dei comandi, impostazioni, animazione delle tavole. |
 | `src/via-libera/` | Motore (`engine.js`) e tavole (`pix.js`) della prima storia. |
 | `src/acqua-cheta/` | Motore e tavole (`pix-luoghi.js`, `pix-momenti.js`, `pix-oggetti.js`) della seconda. |
-| `src/ascii/` | La prova per telefono: griglia a caratteri, scene, filmati, interfaccia a tocchi, suono. |
+| `src/ascii/` | Il modo per telefono: griglia a caratteri, scene delle due storie, filmati, interfaccia a tocchi, suono. |
 | `scripts/build.py` | Ricompone le pagine da `src/`. |
 | `scripts/play.js`, `scripts/play-acqua.js` | Giocano ogni storia e tutti i finali senza browser, e controllano indizi, argomenti dei dialoghi, codici e tavole. Il secondo gioca anche trecento partite a caso: nessuna deve bloccarsi. |
 | `scripts/tavola.js` | Esporta una o più tavole in PNG, per guardarle. |
@@ -46,7 +46,7 @@ Pagine HTML complete, senza librerie e senza server: una per storia, più l'elen
 python3 scripts/build.py      # rigenera le pagine
 node scripts/play.js src      # verifica Via Libera
 node scripts/play-acqua.js    # verifica Acqua Cheta
-node scripts/prova-ascii.js   # verifica la prova per telefono
+node scripts/prova-ascii.js   # verifica le pagine per telefono
 ```
 
 ## Prove precedenti

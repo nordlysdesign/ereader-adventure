@@ -1,30 +1,33 @@
 /* ==================================================================
-   PROVA PER TELEFONO: l'interfaccia. Si gioca solo a tocchi.
+   PER TELEFONO: l'interfaccia. Si gioca solo a tocchi.
    La scena sta in alto e non si ferma mai; il testo si scrive sotto;
    una parola accesa, toccata, apre il foglio delle azioni. I comandi
    che partono sono gli stessi di sempre: il motore non sa di essere
-   su un telefono.
+   su un telefono. Quello che cambia da una storia all'altra (scene,
+   filmati, suoni) sta in AsciiStory.
    ================================================================== */
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
   var app = $("app"), cv = $("cv"), log = $("log"), cap = $("caption"), roomEl = $("room"), sheet = $("sheet"), menu = $("menu");
-  var R = new Ascii.Renderer(cv), F = new Ascii.Field(), ov = new Ascii.Field();
+  var R = new Ascii.Renderer(cv), F = new Ascii.Field(), ov = new Ascii.Field(), S = AsciiStory, SC = Ascii.scenes;
   var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  var ROOM_SCENE = { "Fermata della corriera": "fermata", "Piazza della Pieve": "pieve", "Albergo «Alla Posta»": "osteria", "Camera 3": "camera3" };
   var DIR_LABEL = { nord: "NORD", sud: "SUD", est: "EST", ovest: "OVEST", su: "SU", giu: "GIÙ" };
-  var scene = "fermata", sceneAt = 0, overlay = null, film = null, typing = null, over = false;
+  var scene = "", sceneAt = 0, overlay = null, film = null, typing = null, over = false;
 
   function now() { return performance.now() / 1000; }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (text) { e.appendChild(document.createTextNode(text)); } return e; }
 
   /* ---------- la scena ---------- */
-  function setScene(id) { if (id !== scene && AsciiScenes[id]) { scene = id; sceneAt = now(); } }
-  /* un reperto: la tavoletta dell'e-reader tradotta in caratteri, sopra la scena spenta */
-  function plain(str) { return String(str).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[«»]/g, '"').replace(/[^\x20-\x7e]/g, "").toUpperCase(); }
+  function roomScene() { var s = PC.status(); return S.scene(s.room, s.ch); }
+  function setScene(id) { if (id !== scene && SC[id]) { scene = id; sceneAt = now(); } }
+  function plain(str) { return String(str).normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[«»]/g, '"').replace(/[^\x20-\x7e]/g, "").toUpperCase(); }
+  /* sopra la scena: la mappa, un momento (un'altra scena, per un turno), oppure un reperto,
+     cioè la tavoletta dell'e-reader tradotta in caratteri */
   function setOverlay(id, map, capText) {
     var g, lab;
     if (map) { overlay = { at: now(), map: map }; return; }
+    if (SC[id]) { overlay = { at: now(), scene: id }; return; }
     try {
       g = Pix.render(id, 0);
       /* della tavoletta si prende il disegno; il cartellino si riscrive a lettere vere */
@@ -42,6 +45,7 @@
     var i, n = F.lum.length, f = Math.floor(t * 20);
     for (i = 0; i < n; i++) { if (Ascii.hash(i * 1.37) < k) { F.lum[i] = 0.12 + 0.4 * Ascii.hash(i + f * 3.1) * k; F.tint[i] = 0; F.st[i] = 0; F.ch[i] = 33 + Math.floor(Ascii.hash(i * 2.1 + f) * 90); } }
   }
+  function paint(id, t, st) { if (SC[id]) { SC[id](F, t, st || {}); } }
   /* trenta fotogrammi al secondo; se il telefono non ce la fa si scende a venti, poi a quindici */
   var lastDraw = 0, cost = 0, step = 1 / 31;
   function frame() {
@@ -53,17 +57,20 @@
     if (film) {
       s = film.def.steps[film.i]; u = t - film.stepAt;
       c = s.cam ? s.cam(u) : [42, 28, 1]; F.cam(c[0], c[1], c[2]);
-      AsciiScenes[s.scene](F, t, s.st ? s.st(u, t - film.at) : {});
+      paint(s.scene, t, s.st ? s.st(u, t - film.at) : {});
       k = 1 - (t - film.sceneAt) / 0.6; if (k > 0) { scramble(k, t); }
       for (i = 0; i < film.def.cues.length; i++) { if (!film.cued[i] && t - film.at >= film.def.cues[i].t) { film.cued[i] = 1; Suono.play(film.def.cues[i].snd); } }
-      if (film.typed && !film.hold && t - film.typedAt > Math.max(s.min || 0, 2.6 + s.text.length * 0.035) && !reduce) { nextStep(); }
+      if (film.typed && !reduce && t - film.typedAt > 2.6 + s.text.length * 0.035 && t - film.stepAt > (s.min || 0)) { nextStep(); }
+    } else if (overlay && overlay.map) {
+      paint(S.map, t, overlay.map);
+      k = 1 - (t - overlay.at) / 0.5; if (k > 0) { scramble(k, t); }
+    } else if (overlay && overlay.scene) {
+      paint(overlay.scene, reduce ? 3 : t, {});
+      k = 1 - (t - overlay.at) / 0.5; if (k > 0) { scramble(k, t); }
     } else {
-      AsciiScenes[scene](F, reduce ? 3 : t, {});
+      paint(scene, reduce ? 3 : t, {});
       k = 1 - (t - sceneAt) / 0.5; if (k > 0) { scramble(k, t); }
-      if (overlay && overlay.map) {
-        F.clear(); AsciiScenes.mappa(F, t, overlay.map);
-        k = 1 - (t - overlay.at) / 0.5; if (k > 0) { scramble(k, t); }
-      } else if (overlay) {
+      if (overlay) {
         F.dim(0, 0, 84, 56, 0.35);
         k = Math.min(1, (t - overlay.at) / 0.35);
         for (i = 10 * 84; i < 47 * 84; i++) { if (Ascii.hash(i * 0.77) < k) { F.lum[i] = ov.lum[i]; F.tint[i] = ov.tint[i]; F.st[i] = ov.st[i]; F.ch[i] = ov.ch[i]; } }
@@ -95,12 +102,12 @@
   }
   function finishTyping() {
     if (!typing) { return; }
-    var i;
-    for (i = 0; i < typing.nodes.length; i++) { typing.nodes[i].n.nodeValue = typing.nodes[i].s; }
-    for (i = 0; i < typing.hidden.length; i++) { typing.hidden[i].style.visibility = ""; }
-    clearInterval(typing.timer);
-    if (typing.done) { typing.done(); }
+    var i, T = typing;
     typing = null;
+    for (i = 0; i < T.nodes.length; i++) { T.nodes[i].n.nodeValue = T.nodes[i].s; }
+    for (i = 0; i < T.hidden.length; i++) { T.hidden[i].style.visibility = ""; }
+    clearInterval(T.timer);
+    if (T.done) { T.done(); }
   }
   /* scrive un elemento un po' alla volta: i nodi di testo si riempiono in ordine */
   function type(root, done, speed) {
@@ -108,7 +115,7 @@
     var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n, nodes = [], hidden = [], total = 0, i, kids;
     while ((n = w.nextNode())) { nodes.push({ n: n, s: n.nodeValue }); total += n.nodeValue.length; }
     if (reduce || !total) { if (done) { done(); } return; }
-    kids = root.querySelectorAll(".kw, .tag");
+    kids = root.querySelectorAll(".kw, .tag, .end");
     for (i = 0; i < kids.length; i++) { kids[i].style.visibility = "hidden"; hidden.push(kids[i]); }
     for (i = 0; i < nodes.length; i++) { nodes[i].n.nodeValue = ""; }
     typing = { nodes: nodes, hidden: hidden, pos: 0, done: done, timer: null };
@@ -132,7 +139,7 @@
   /* ---------- i filmati ---------- */
   function playFilm(def, done) {
     finishTyping(); closeSheet();
-    film = { def: def, i: -1, at: now(), stepAt: now(), sceneAt: now(), cued: [], done: done, typed: false, hold: false };
+    film = { def: def, i: -1, at: now(), stepAt: now(), sceneAt: now(), cued: [], done: done, typed: false };
     app.className = "app film";
     if (def.loop) { Suono.loop(def.loop, true); }
     nextStep();
@@ -142,7 +149,7 @@
     film.i++;
     if (film.i >= film.def.steps.length) { endFilm(); return; }
     s = film.def.steps[film.i];
-    film.stepAt = now(); film.typed = false; film.hold = false;
+    film.stepAt = now(); film.typed = false;
     if (s.scene !== prev) { film.sceneAt = now(); }
     if (s.snd) { Suono.play(s.snd); }
     while (cap.firstChild) { cap.removeChild(cap.firstChild); }
@@ -154,7 +161,7 @@
   function endFilm() {
     var d = film.done;
     if (film.def.loop) { Suono.loop(film.def.loop, false); }
-    finishTyping(); film = null; sceneAt = now();
+    film.done = null; finishTyping(); film = null; sceneAt = now();
     app.className = "app";
     while (cap.firstChild) { cap.removeChild(cap.firstChild); }
     if (d) { d(); }
@@ -168,17 +175,19 @@
 
   /* ---------- i turni ---------- */
   function renderBlocks(blocks, cmd) {
-    var box = el("div", "turn"), i, j, q, b, e, dl, ul, L, shown = false;
+    var box = el("div", "turn"), i, j, q, b, e, dl, ul, L, shown = false, home = roomScene();
     overlay = null;
     if (cmd) { box.appendChild(el("p", "echo", "> " + cmd)); }
     for (i = 0; i < blocks.length; i++) {
       b = blocks[i];
       if (b.t === "p" || b.t === "note") { e = el("p", b.t === "note" ? "note" : ""); addText(e, b.s); box.appendChild(e); }
-      else if (b.t === "room") { roomEl.textContent = b.s; if (ROOM_SCENE[b.s]) { setScene(ROOM_SCENE[b.s]); } }
+      else if (b.t === "room") { roomEl.textContent = b.s; }
       else if (b.t === "chapter") { e = el("div", "chapter"); e.appendChild(el("span", "", b.n)); e.appendChild(el("h2", "", b.s)); box.appendChild(e); }
+      else if (b.t === "end") { box.appendChild(el("p", "end", b.s)); }
       else if (b.t === "img") {
-        if (AsciiScenes[b.id] && !/^m_/.test(b.id)) { setScene(b.id); }
-        else if (/^o_/.test(b.id) && !shown) { setOverlay(b.id, null, b.cap); shown = true; box.appendChild(el("p", "tag", "Reperto · " + b.cap)); }
+        if (b.id === home || shown) { continue; }
+        if (SC[b.id]) { setOverlay(b.id); shown = true; box.appendChild(el("p", "tag", b.cap)); }
+        else if (/^o_/.test(b.id)) { setOverlay(b.id, null, b.cap); shown = true; box.appendChild(el("p", "tag", "Reperto · " + b.cap)); }
       }
       else if (b.t === "map") { setOverlay(null, b); shown = true; box.appendChild(el("p", "tag", b.cap)); }
       else if (b.t === "code") { box.appendChild(el("p", "code", b.s)); }
@@ -193,6 +202,7 @@
         }
       }
     }
+    setScene(home);
     var old = log.querySelectorAll(".turn"); for (i = 0; i < old.length; i++) { old[i].className = "turn old"; }
     while (log.children.length > 12) { log.removeChild(log.firstChild); }
     log.appendChild(box);
@@ -201,27 +211,27 @@
     renderBar();
   }
   function renderBar() {
-    var ex = PC.exits(), inv = PC.inventory(), dir = $("dirs"), bag = $("bag"), i, b;
+    var ex = PC.exits(), inv = PC.inventory(), dir = $("dirs"), bag = $("bag"), i, b, st = PC.status();
     while (dir.firstChild) { dir.removeChild(dir.firstChild); }
     for (i = 0; i < ex.length; i++) { b = el("button", "chip dir", DIR_LABEL[ex[i]]); b.setAttribute("data-cmd", ex[i]); dir.appendChild(b); }
     b = el("button", "chip", "GUARDA"); b.setAttribute("data-cmd", "guarda"); dir.appendChild(b);
     while (bag.firstChild) { bag.removeChild(bag.firstChild); }
     for (i = 0; i < inv.length; i++) { b = el("button", "chip item", inv[i].label); b.setAttribute("data-kw", inv[i].word); bag.appendChild(b); }
-    Suono.setRoom(PC.status().room);
+    Suono.amb(S.ambience(st.room, st.ch), S.random(st.room, st.ch));
   }
 
-  /* dopo DORMI il capitolo 1 è finito: il colpo, e la prova si chiude */
-  function endTrial() {
-    over = true; closeSheet();
-    $("end").className = "veil";
-  }
-  function splitFilm(blocks, id) {
-    var i;
-    for (i = 0; i < blocks.length - 1; i++) { if (blocks[i].t === "img" && blocks[i].id === id && blocks[i + 1].t === "p") { return i; } }
-    return -1;
+  /* dove la storia, in questo stile, si ferma prima della fine: la prova si chiude */
+  function endTrial() { over = true; closeSheet(); $("end").className = "veil full"; }
+  /* la prima tavola del turno che ha un suo filmato */
+  function findFilm(blocks) {
+    var i, f;
+    for (i = 0; i < blocks.length - 1; i++) {
+      if (blocks[i].t === "img" && S.films[blocks[i].id] && blocks[i + 1].t === "p") { f = S.films[blocks[i].id](blocks, i); f.at = i; return f; }
+    }
+    return null;
   }
   function run(cmd) {
-    var blocks, i, note;
+    var blocks, i, j, f, rest;
     if (over || film) { return; }
     Suono.init(); Suono.play("tocco");
     finishTyping(); closeSheet(); closeMenu();
@@ -229,19 +239,18 @@
     if (!blocks.length) { return; }
     if (blocks[0].t === "restart") { begin(true); return; }
     if (blocks[0].t === "home") { window.location.href = "index.html"; return; }
-    if (blocks[0].t === "prologue") { playFilm(AsciiFilms.prologo(prologueTexts()), function () { renderBlocks(PC.look(), null); }); return; }
-    if (PC.status().ch >= 2) {
-      i = splitFilm(blocks, "m_colpo");
-      playFilm(AsciiFilms.m_colpo(i >= 0 ? blocks[i + 1].s : "Alle quattro ti sveglia un colpo."), endTrial);
+    if (blocks[0].t === "prologue") { playFilm(S.prologo(prologueTexts()), function () { renderBlocks(PC.look(), null); }); return; }
+    f = findFilm(blocks);
+    if (S.trial && PC.status().ch > S.trial) {
+      if (f) { playFilm(f.def, endTrial); } else { endTrial(); }
       return;
     }
-    i = splitFilm(blocks, "m_chiamata");
-    if (i >= 0) {
-      note = blocks[i + 2] && blocks[i + 2].t === "note" ? blocks[i + 2].s : "";
-      playFilm(AsciiFilms.m_chiamata(blocks[i + 1].s, note), function () { renderBlocks([{ t: "note", s: "Esci dalla cabina. Olga sta già guardando altrove." }].concat(blocks.slice(i + 3)), cmd); });
+    for (i = 0; i < blocks.length; i++) { for (j = 0; j < S.cues.length; j++) { if (blocks[i].s && S.cues[j][0].test(blocks[i].s)) { Suono.play(S.cues[j][1]); } } }
+    if (f) {
+      rest = blocks.slice(0, f.at).concat(f.after ? [{ t: "note", s: f.after }] : []).concat(blocks.slice(f.at + f.take));
+      playFilm(f.def, function () { renderBlocks(rest, cmd); });
       return;
     }
-    for (i = 0; i < blocks.length; i++) { if (blocks[i].s && blocks[i].s.indexOf("Milano in cabina") >= 0) { Suono.play("squillo"); } }
     renderBlocks(blocks, cmd);
   }
 
@@ -270,12 +279,15 @@
   function syncSound() { $("m-suono").textContent = Suono.isOn() ? "SUONO: SÌ" : "SUONO: NO"; }
   $("m-suono").addEventListener("click", function (ev) { ev.stopPropagation(); Suono.init(); Suono.setOn(!Suono.isOn()); syncSound(); });
   /* ricominciare: due tocchi */
-  $("m-capo").addEventListener("click", function (ev) {
-    ev.stopPropagation();
-    if (this.getAttribute("data-armed")) { this.removeAttribute("data-armed"); this.textContent = "RICOMINCIA"; closeMenu(); run("ricomincia"); return; }
-    this.setAttribute("data-armed", "1"); this.textContent = "SICURO? TOCCA ANCORA";
-  });
-  $("end-again").addEventListener("click", function () { $("end").className = "veil off"; begin(true); });
+  function arm(id, label, cmd) {
+    $(id).addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (this.getAttribute("data-armed")) { this.removeAttribute("data-armed"); this.textContent = label; closeMenu(); run(cmd); return; }
+      this.setAttribute("data-armed", "1"); this.textContent = "SICURO? TOCCA ANCORA";
+    });
+  }
+  arm("m-capo", "DA CAPO", "ricomincia"); arm("m-cap", "RIFAI IL CAPITOLO", "ricomincia capitolo");
+  $("end-again").addEventListener("click", function () { $("end").className = "veil full off"; begin(true); });
 
   /* ---------- si comincia ---------- */
   function prologueTexts() {
@@ -287,14 +299,17 @@
     var st = PC.start(forceNew);
     over = false; overlay = null;
     while (log.firstChild) { log.removeChild(log.firstChild); }
-    if (PC.status().ch >= 2) { st = PC.start(true); }
+    if (S.trial && PC.status().ch > S.trial) { st = PC.start(true); }
+    setScene(roomScene());
     if (st.resumed) { renderBlocks(st.blocks, null); return; }
     roomEl.textContent = "";
-    Suono.setRoom("Fermata della corriera");
-    playFilm(AsciiFilms.prologo(prologueTexts()), function () { renderBlocks(st.blocks.filter(function (b) { return b.t !== "note"; }).concat([{ t: "note", s: "Tocca una parola accesa per scegliere cosa farne. In basso: dove puoi andare, cosa hai con te, e il menu." }]), null); });
+    Suono.amb(S.ambience(PC.status().room, 1), []);
+    playFilm(S.prologo(prologueTexts()), function () { renderBlocks(st.blocks.filter(function (b) { return b.t !== "note"; }).concat([{ t: "note", s: "Tocca una parola accesa per scegliere cosa farne. In basso: dove puoi andare, cosa hai con te, e il menu." }]), null); });
   }
   var fromNew = window.location.hash === "#nuova";
   if (fromNew) { try { window.location.hash = ""; } catch (e) { /* resta */ } }
+  /* dietro il titolo: la scena dove la partita è rimasta, o la prima */
+  try { PC.start(false); scene = roomScene(); } catch (e) { scene = ""; }
   fit();
   requestAnimationFrame(frame);
   $("start-btn").addEventListener("click", function () {
@@ -304,5 +319,5 @@
   });
   if (document.fonts && document.fonts.ready && document.fonts.ready.then) { document.fonts.ready.then(function () { R.build(); }); }
   /* per le prove automatiche */
-  window.__prova = { run: run, film: function () { return film; }, next: function () { if (film) { finishTyping(); nextStep(); } }, skip: function () { if (film) { endFilm(); } } };
+  window.__prova = { run: run, film: function () { return film; }, next: function () { if (film) { finishTyping(); if (film) { nextStep(); } } }, skip: function () { if (film) { endFilm(); } } };
 })();

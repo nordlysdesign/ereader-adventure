@@ -50,6 +50,9 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .story .where { display: block; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 2px; }
 .story p { margin: 6px 0 8px; }
 .story .state { font-size: 13px; color: var(--ink-soft); }
+.story .mode { border-top: 1px dashed var(--ink); padding-top: 8px; margin-top: 4px; }
+.story .mode .how { margin: 0 0 4px; font-size: 13px; }
+.story .mode .state:empty { display: none; }
 .story .go a, .story .go button { display: inline-block; text-decoration: none; line-height: 38px; min-height: 42px; margin: 0 8px 8px 0; padding: 0 14px; font-size: 14px; }
 .story .go a.main { background: var(--ink); color: var(--paper); }
 """
@@ -164,13 +167,13 @@ read = lambda p: open(p, encoding='utf-8').read()
 # Le storie. chiave: prefisso in localStorage; codice: il numero in testa al codice di salvataggio.
 STORIES = [
     dict(slug='via-libera', title='Via Libera', key='vialibera', code=1, cover='faro', where='Porto Scuro, novembre 1953',
+         ascii=dict(scenes='scene-vialibera-*.js', storia='storia-vialibera.js', pix=['pix.js'], nota='tutta la storia',
+                    sub='per telefono', intro='Tutta la storia, in un altro stile: scene fatte di caratteri, filmati, suono. Si gioca a tocchi.'),
          blurb='Il guardiano di Punta Cieca è stato ripescato sotto il molo, e qualcuno vuole il quaderno che teneva. Un faro, quattro segnali, una mezzanotte.'),
     dict(slug='acqua-cheta', title='Acqua Cheta', key='acquacheta', code=2, cover='lagoGiorno', where='Val Sorda, febbraio 1957',
+         ascii=dict(scenes='scene-acqua*.js', storia='storia-acqua.js', pix=['pix-oggetti.js'], nota='per ora solo il capitolo 1',
+                    sub='per telefono · capitolo primo', intro='Il capitolo primo, in un altro stile: scene fatte di caratteri, filmati, suono. Si gioca a tocchi.'),
          blurb='Il geologo della diga è caduto dal coronamento, e la Compagnia vuole che sia un suicidio. Un lago che sale, una montagna che si muove, una telefonata sola.'),
-    # Una prova di stile, non una storia: il capitolo 1 di Acqua Cheta per telefono, a caratteri colorati. Ha il suo modello di pagina (più sotto).
-    dict(slug='acqua-cheta-ascii', src='acqua-cheta', title='Acqua Cheta, in caratteri', key='acquacheta-ascii', code=2, cover='fermata', ascii=True,
-         where='Prova per telefono · solo il capitolo 1',
-         blurb='La stessa storia in un altro stile: scene fatte di caratteri, a colori, con filmati e suono. Si gioca solo a tocchi. Non è per l\'e-reader.'),
 ]
 
 def png(story, scene, k=2):
@@ -191,7 +194,6 @@ def png(story, scene, k=2):
 ui = read(d + 'ui.js')
 gfx = read(d + 'gfx.js')
 for st in STORIES:
-    if st.get('ascii'): continue
     sd = d + st['slug'] + '/'
     pix = '\n'.join(read(p) for p in sorted(glob.glob(sd + 'pix*.js')))
     out = html % dict(css=css, extra=extra, title=st['title'], gfx=gfx, engine=read(sd + 'engine.js'), pix=pix, ui=ui)
@@ -227,6 +229,7 @@ button { font: inherit; }
 .note { color: #7f8c9b; font-size: 13px; }
 .tag { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #f5a742; }
 .code { font-size: 17px; font-weight: 600; letter-spacing: 2px; color: #fff3dc; }
+.end { font: italic 400 22px 'Old Standard TT', Georgia, serif; text-align: center; color: #fff3dc; border-top: 1px solid #f5a742; border-bottom: 1px solid #f5a742; padding: 10px 0; margin: 14px 0 12px !important; }
 .kw { color: #f5a742; border-bottom: 1px solid rgba(245, 167, 66, 0.55); cursor: pointer; text-shadow: 0 0 10px rgba(245, 167, 66, 0.4); }
 .chapter { text-align: center; margin: 4px 0 14px; padding: 10px 0 12px; border-top: 1px solid #f5a742; border-bottom: 1px solid #f5a742; }
 .chapter span { display: block; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: #f5a742; }
@@ -261,7 +264,7 @@ ASCII_HTML = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0c11">
-<title>Acqua Cheta, in caratteri</title>
+<title>%(title)s, per telefono</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&amp;family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
 <style>%(css)s</style>
 </head>
@@ -281,21 +284,22 @@ ASCII_HTML = r"""<!DOCTYPE html>
     <button type="button" class="chip big" data-cmd="prologo">PROLOGO</button>
     <button type="button" class="chip big" id="m-suono">SUONO: SÌ</button>
     <button type="button" class="chip big" data-cmd="storie">STORIE</button>
-    <button type="button" class="chip big" id="m-capo" style="grid-column: 1 / 4">RICOMINCIA</button>
+    <button type="button" class="chip big" id="m-cap" style="grid-column: 1 / 3">RIFAI IL CAPITOLO</button>
+    <button type="button" class="chip big" id="m-capo">DA CAPO</button>
   </div></div></div>
   <div class="veil" id="title">
-    <h1>Acqua Cheta</h1>
-    <div class="sub">in caratteri · prova per telefono</div>
-    <p>Il capitolo primo, in un altro stile. Si gioca a tocchi; con il suono è meglio.</p>
+    <h1>%(title)s</h1>
+    <div class="sub">%(sub)s</div>
+    <p>%(intro)s Con il suono è meglio.</p>
     <button type="button" class="chip main" id="start-btn">COMINCIA</button>
     <a class="chip" href="index.html">TORNA ALLE STORIE</a>
   </div>
   <div class="veil full off" id="end">
     <h1>Fine della prova</h1>
-    <div class="sub">Capitolo primo: «Neve vecchia»</div>
+    <div class="sub">%(title)s, capitolo primo</div>
     <p>La storia continua per altri tre capitoli, fino a una telefonata. Per ora, in questo stile, c'è solo il primo.</p>
     <button type="button" class="chip main" id="end-again">RIGIOCA LA PROVA</button>
-    <a class="chip" href="acqua-cheta.html">LA STORIA COMPLETA, PER E-READER</a>
+    <a class="chip" href="%(slug)s.html">LA STORIA COMPLETA, PER E-READER</a>
     <a class="chip" href="index.html">TORNA ALLE STORIE</a>
   </div>
 </div>
@@ -306,28 +310,38 @@ ASCII_HTML = r"""<!DOCTYPE html>
 </html>
 """
 for st in STORIES:
-    if not st.get('ascii'): continue
-    sd = d + st['src'] + '/'
+    a = st['ascii']
+    sd = d + st['slug'] + '/'
     eng = read(sd + 'engine.js')
-    old, new = '"' + st['src'].replace('-', '') + '.', '"' + st['key'] + '.'
+    old, new = '"' + st['key'] + '.', '"' + st['key'] + '-ascii.'
     assert eng.count(old) >= 3, 'le chiavi di salvataggio del motore non sono dove me le aspetto'
     eng = eng.replace(old, new)
-    js = '\n'.join([gfx, eng, read(sd + 'pix-oggetti.js'), read(sd + 'pix-momenti.js')] + [read(d + 'ascii/' + f) for f in ('render.js', 'scene-acqua.js', 'filmati.js', 'suono.js', 'ui-touch.js')])
-    out = ASCII_HTML % dict(css=ASCII_CSS, js=js)
-    open(base + st['slug'] + '.html', 'w', encoding='utf-8').write(out)
-    print(st['slug'] + '.html', len(out) // 1024, 'KiB')
+    scenes = sorted(glob.glob(d + 'ascii/' + a['scenes']))
+    assert scenes, 'mancano le scene per telefono di ' + st['slug']
+    js = '\n'.join([gfx, eng] + [read(sd + f) for f in a['pix']] + [read(d + 'ascii/' + f) for f in ('render.js', 'kit.js')] + [read(f) for f in scenes] + [read(d + 'ascii/' + f) for f in (a['storia'], 'suono.js', 'ui-touch.js')])
+    out = ASCII_HTML % dict(css=ASCII_CSS, js=js, title=st['title'], sub=a['sub'], intro=a['intro'], slug=st['slug'])
+    open(base + st['slug'] + '-ascii.html', 'w', encoding='utf-8').write(out)
+    print(st['slug'] + '-ascii.html', len(out) // 1024, 'KiB')
 
 cards = ''
 for st in STORIES:
     cards += """
-      <div class="story" id="s-%(slug)s" data-key="%(key)s" data-code="%(code)d" data-href="%(slug)s.html">
+      <div class="story" id="s-%(slug)s">
         <img src="%(img)s" alt="" width="480" height="300">
         <span class="where">%(where)s</span>
         <h3>%(title)s</h3>
         <p>%(blurb)s</p>
-        <p class="state"></p>
-        <p class="go"><a class="chip main" href="%(slug)s.html">Comincia</a></p>
-      </div>""" % dict(st, img=png(st.get('src', st['slug']), st['cover']))
+        <div class="mode" data-key="%(key)s" data-code="%(code)d" data-href="%(slug)s.html">
+          <p class="how"><b>Per e-reader</b> · bianco e nero, si scrive o si tocca</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="%(slug)s.html">Comincia</a></p>
+        </div>
+        <div class="mode" data-key="%(key)s-ascii" data-code="%(code)d" data-href="%(slug)s-ascii.html">
+          <p class="how"><b>Per telefono</b> · a caratteri colorati, con filmati e suono, solo a tocchi (%(nota)s)</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="%(slug)s-ascii.html">Comincia</a></p>
+        </div>
+      </div>""" % dict(st, img=png(st['slug'], st['cover']), nota=st['ascii']['nota'])
 home = r"""<!DOCTYPE html>
 <html lang="it">
 <head>
@@ -344,7 +358,7 @@ home = r"""<!DOCTYPE html>
       <div class="status"><span>Ada Corvi</span><span>Le storie</span></div>
       <div class="out">
         <div class="front"><h2>Ada Corvi</h2><span>Due noir da leggere e da giocare, quattro capitoli l'uno</span></div>%(cards)s
-        <p class="note">Si gioca scrivendo, oppure toccando un'azione e poi una parola sottolineata. Ogni storia tiene la sua partita e i suoi finali; da dentro una storia si torna qui con STORIE, o da Aa.</p>
+        <p class="note">Si gioca scrivendo, oppure toccando un'azione e poi una parola sottolineata. Ogni storia si gioca in due modi, e ogni modo tiene la sua partita: quello per e-reader è in bianco e nero e fermo, quello per telefono è a colori, si muove e suona. Da dentro una storia si torna qui con STORIE.</p>
       </div>
     </div>
   </div>
@@ -362,7 +376,7 @@ home = r"""<!DOCTYPE html>
   }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } e.appendChild(document.createTextNode(text)); return e; }
   var cards = document.getElementsByTagName("div"), i;
-  for (i = 0; i < cards.length; i++) { if (cards[i].className === "story") { fill(cards[i]); } }
+  for (i = 0; i < cards.length; i++) { if (cards[i].className === "mode") { fill(cards[i]); } }
   function fill(card) {
     var key = card.getAttribute("data-key"), href = card.getAttribute("data-href"), h = null, ends = 0, k, o = null, ps = card.getElementsByTagName("p"), state, go, a, b, txt = "";
     for (k = 0; k < ps.length; k++) { if (ps[k].className === "state") { state = ps[k]; } if (ps[k].className === "go") { go = ps[k]; } }

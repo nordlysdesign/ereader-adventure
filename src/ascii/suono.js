@@ -5,7 +5,7 @@
    ================================================================== */
 var Suono = (function () {
   "use strict";
-  var ac = null, master = null, on = true, noiseBuf = null, amb = {}, loops = {}, KEY = "acquacheta-ascii.suono", room = "";
+  var ac = null, master = null, on = true, noiseBuf = null, amb = {}, loops = {}, KEY = "ascii.suono", want = { vento: 1, sala: 0, pioggia: 0 }, randoms = [];
   try { on = localStorage.getItem(KEY) !== "no"; } catch (e) { on = true; }
 
   function init() {
@@ -19,7 +19,9 @@ var Suono = (function () {
       amb.vento = band(520, 0.7, 0); lfo(amb.vento.f.frequency, 0.11, 260); lfo(amb.vento.g.gain, 0.07, 0.012);
       /* la sala: un fondo basso, caldo */
       amb.sala = band(140, 0.5, 0);
-      setRoom(room);
+      /* la pioggia: un soffio alto, fitto */
+      amb.pioggia = band(5200, 0.3, 0, "highpass");
+      setAmb(want);
     } catch (e) { ac = null; }
   }
   function src() { var s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; s.start(0, Math.random() * 1.5); return s; }
@@ -44,13 +46,13 @@ var Suono = (function () {
     g.gain.setValueAtTime(0.0001, n); g.gain.exponentialRampToValueAtTime(gain, n + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, n + dur);
     o.connect(g); g.connect(master); o.start(n); o.stop(n + dur + 0.05);
   }
-  /* l'ambiente segue il luogo: fuori il vento, in sala il caldo, in camera il vento dietro i vetri */
-  function setRoom(r) {
-    room = r || "";
+  /* l'ambiente segue il luogo: quanto vento, quanta sala, quanta pioggia (da 0 a 1). Lo decide la storia */
+  function setAmb(o, list) {
+    want = o || want; if (list) { randoms = list; }
     if (!ac) { return; }
-    var fuori = /Fermata|Piazza|Coronamento/.test(room), sala = /Albergo/.test(room), camera = /Camera/.test(room);
-    ramp(amb.vento.g.gain, fuori ? 0.085 : (camera ? 0.03 : (sala ? 0.012 : 0.05)), 1.2);
-    ramp(amb.sala.g.gain, sala ? 0.16 : 0, 1.2);
+    ramp(amb.vento.g.gain, 0.085 * (want.vento || 0), 1.2);
+    ramp(amb.sala.g.gain, 0.16 * (want.sala || 0), 1.2);
+    ramp(amb.pioggia.g.gain, 0.05 * (want.pioggia || 0), 1.2);
   }
   var LOOP = {
     /* il fruscio della linea per Milano */
@@ -66,6 +68,14 @@ var Suono = (function () {
     squillo: function () { var i, k; for (k = 0; k < 2; k++) { for (i = 0; i < 9; i++) { tone("square", 880, 880, 0.035, 0.035, k * 0.75 + i * 0.05); tone("sine", 1320, 1320, 0.035, 0.03, k * 0.75 + i * 0.05); } } },
     macchina: function () { var i, n = 3 + Math.floor(Math.random() * 6); for (i = 0; i < n; i++) { click(2400, 0.018, 0.022, i * (0.09 + Math.random() * 0.05)); } },
     legna: function () { click(700 + Math.random() * 600, 0.05, 0.03); },
+    bicchiere: function () { tone("sine", 2300, 2250, 0.25, 0.012); click(5200, 0.02, 0.012); },
+    /* un gettone che scende: tre note di metallo */
+    gettone: function () { tone("triangle", 1900, 1700, 0.09, 0.05); tone("triangle", 2500, 2300, 0.09, 0.04, 0.09); click(900, 0.08, 0.06, 0.22); },
+    ferro: function () { click(420, 0.18, 0.12); tone("square", 140, 90, 0.2, 0.04); click(1500, 0.05, 0.05, 0.16); },
+    scatto: function () { click(1100, 0.04, 0.09); click(600, 0.07, 0.07, 0.05); },
+    /* la sirena di un piroscafo, lontana */
+    sirena: function () { tone("sawtooth", 104, 98, 2.6, 0.035); tone("sine", 156, 150, 2.6, 0.03); },
+    onda: function () { var b = band(700, 0.4, 0.0001); ramp(b.g.gain, 0.05, 1.4); setTimeout(function () { ramp(b.g.gain, 0.0001, 1.8); setTimeout(function () { try { b.s.stop(); } catch (e) { /* già ferma */ } }, 2200); }, 1500); },
     /* il colpo: un tonfo grave e lungo, poi i vetri */
     colpo: function () {
       var i;
@@ -80,15 +90,15 @@ var Suono = (function () {
     if (yes && !loops[name] && LOOP[name]) { loops[name] = LOOP[name](); }
     if (!yes && loops[name]) { var b = loops[name]; ramp(b.g.gain, 0.0001, 0.4); setTimeout(function () { try { b.s.stop(); } catch (e) { /* già fermo */ } }, 600); loops[name] = null; }
   }
-  /* i rumori di fondo che capitano ogni tanto: la macchina di Vescovi, la stufa */
+  /* i rumori di fondo che capitano ogni tanto: quali, lo dice la storia */
   setInterval(function () {
-    if (!ac || !on) { return; }
-    if (/Albergo/.test(room)) { if (Math.random() < 0.35) { play("macchina"); } if (Math.random() < 0.3) { play("legna"); } }
-  }, 2300);
+    if (!ac || !on || !randoms.length) { return; }
+    if (Math.random() < 0.4) { play(randoms[Math.floor(Math.random() * randoms.length)]); }
+  }, 2600);
   function setOn(v) {
     on = !!v;
     try { localStorage.setItem(KEY, on ? "si" : "no"); } catch (e) { /* non indispensabile */ }
     if (ac) { ramp(master.gain, on ? 0.9 : 0, 0.2); }
   }
-  return { init: init, play: play, loop: loop, setRoom: setRoom, setOn: setOn, isOn: function () { return on; } };
+  return { init: init, play: play, loop: loop, amb: setAmb, setOn: setOn, isOn: function () { return on; } };
 })();

@@ -158,6 +158,9 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 .story .where { display: block; font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 2px; }
 .story p { margin: 6px 0 8px; }
 .story .state { font-size: 13px; color: #565a5b; }
+.story .mode { border-top: 1px dashed #111111; padding-top: 8px; margin-top: 4px; }
+.story .mode .how { margin: 0 0 4px; font-size: 13px; }
+.story .mode .state:empty { display: none; }
 .story .go a, .story .go button { display: inline-block; text-decoration: none; line-height: 38px; min-height: 42px; margin: 0 8px 8px 0; padding: 0 14px; font-size: 14px; }
 .story .go a.main { background: #111111; color: #f1f0ea; }
 </style>
@@ -169,31 +172,39 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
       <div class="status"><span>Ada Corvi</span><span>Le storie</span></div>
       <div class="out">
         <div class="front"><h2>Ada Corvi</h2><span>Due noir da leggere e da giocare, quattro capitoli l'uno</span></div>
-      <div class="story" id="s-via-libera" data-key="vialibera" data-code="1" data-href="via-libera.html">
+      <div class="story" id="s-via-libera">
         <img src="data:image/png;base64,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" alt="" width="480" height="300">
         <span class="where">Porto Scuro, novembre 1953</span>
         <h3>Via Libera</h3>
         <p>Il guardiano di Punta Cieca è stato ripescato sotto il molo, e qualcuno vuole il quaderno che teneva. Un faro, quattro segnali, una mezzanotte.</p>
-        <p class="state"></p>
-        <p class="go"><a class="chip main" href="via-libera.html">Comincia</a></p>
+        <div class="mode" data-key="vialibera" data-code="1" data-href="via-libera.html">
+          <p class="how"><b>Per e-reader</b> · bianco e nero, si scrive o si tocca</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="via-libera.html">Comincia</a></p>
+        </div>
+        <div class="mode" data-key="vialibera-ascii" data-code="1" data-href="via-libera-ascii.html">
+          <p class="how"><b>Per telefono</b> · a caratteri colorati, con filmati e suono, solo a tocchi (tutta la storia)</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="via-libera-ascii.html">Comincia</a></p>
+        </div>
       </div>
-      <div class="story" id="s-acqua-cheta" data-key="acquacheta" data-code="2" data-href="acqua-cheta.html">
+      <div class="story" id="s-acqua-cheta">
         <img src="data:image/png;base64,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" alt="" width="480" height="300">
         <span class="where">Val Sorda, febbraio 1957</span>
         <h3>Acqua Cheta</h3>
         <p>Il geologo della diga è caduto dal coronamento, e la Compagnia vuole che sia un suicidio. Un lago che sale, una montagna che si muove, una telefonata sola.</p>
-        <p class="state"></p>
-        <p class="go"><a class="chip main" href="acqua-cheta.html">Comincia</a></p>
+        <div class="mode" data-key="acquacheta" data-code="2" data-href="acqua-cheta.html">
+          <p class="how"><b>Per e-reader</b> · bianco e nero, si scrive o si tocca</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="acqua-cheta.html">Comincia</a></p>
+        </div>
+        <div class="mode" data-key="acquacheta-ascii" data-code="2" data-href="acqua-cheta-ascii.html">
+          <p class="how"><b>Per telefono</b> · a caratteri colorati, con filmati e suono, solo a tocchi (per ora solo il capitolo 1)</p>
+          <p class="state"></p>
+          <p class="go"><a class="chip main" href="acqua-cheta-ascii.html">Comincia</a></p>
+        </div>
       </div>
-      <div class="story" id="s-acqua-cheta-ascii" data-key="acquacheta-ascii" data-code="2" data-href="acqua-cheta-ascii.html">
-        <img src="data:image/png;base64,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" alt="" width="480" height="300">
-        <span class="where">Prova per telefono · solo il capitolo 1</span>
-        <h3>Acqua Cheta, in caratteri</h3>
-        <p>La stessa storia in un altro stile: scene fatte di caratteri, a colori, con filmati e suono. Si gioca solo a tocchi. Non è per l'e-reader.</p>
-        <p class="state"></p>
-        <p class="go"><a class="chip main" href="acqua-cheta-ascii.html">Comincia</a></p>
-      </div>
-        <p class="note">Si gioca scrivendo, oppure toccando un'azione e poi una parola sottolineata. Ogni storia tiene la sua partita e i suoi finali; da dentro una storia si torna qui con STORIE, o da Aa.</p>
+        <p class="note">Si gioca scrivendo, oppure toccando un'azione e poi una parola sottolineata. Ogni storia si gioca in due modi, e ogni modo tiene la sua partita: quello per e-reader è in bianco e nero e fermo, quello per telefono è a colori, si muove e suona. Da dentro una storia si torna qui con STORIE.</p>
       </div>
     </div>
   </div>
@@ -211,7 +222,7 @@ figure canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
   }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) { e.className = cls; } e.appendChild(document.createTextNode(text)); return e; }
   var cards = document.getElementsByTagName("div"), i;
-  for (i = 0; i < cards.length; i++) { if (cards[i].className === "story") { fill(cards[i]); } }
+  for (i = 0; i < cards.length; i++) { if (cards[i].className === "mode") { fill(cards[i]); } }
   function fill(card) {
     var key = card.getAttribute("data-key"), href = card.getAttribute("data-href"), h = null, ends = 0, k, o = null, ps = card.getElementsByTagName("p"), state, go, a, b, txt = "";
     for (k = 0; k < ps.length; k++) { if (ps[k].className === "state") { state = ps[k]; } if (ps[k].className === "go") { go = ps[k]; } }
