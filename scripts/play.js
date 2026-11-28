@@ -1,10 +1,10 @@
 // Gioca "Via Libera" senza browser: percorso completo, poi ogni finale da un codice salvato.
-// Uso: node scripts/play.js src        (aggiungi -v per leggere tutto il testo)
+// Uso: node scripts/play.js src        (aggiungi -v per leggere tutto il testo). L'altra storia: scripts/play-acqua.js
 var fs = require('fs'), vm = require('vm');
 var dir = process.argv[2], verbose = process.argv[3] === '-v';
 var ctx = { console: console };
 vm.createContext(ctx);
-vm.runInContext(fs.readFileSync(dir + '/engine.js', 'utf8') + '\n' + fs.readFileSync(dir + '/pix.js', 'utf8') + '\nthis.PC = PC; this.Pix = Pix;', ctx);
+vm.runInContext(fs.readFileSync(dir + '/gfx.js', 'utf8') + '\n' + fs.readFileSync(dir + '/via-libera/engine.js', 'utf8') + '\n' + fs.readFileSync(dir + '/via-libera/pix.js', 'utf8') + '\nthis.PC = PC; this.Pix = Pix;', ctx);
 var PC = ctx.PC;
 
 function show(blocks) {
@@ -139,7 +139,7 @@ Object.keys(SC).forEach(function (id) {
   } catch (e) { fails++; console.log('scena ' + id + ': ERRORE ' + e.message); }
 });
 // ogni tavola chiamata dalla storia deve esistere
-var eng = fs.readFileSync(dir + '/engine.js', 'utf8'), re = /IMG\(([^,]+),/g, m, ids = {};
+var eng = fs.readFileSync(dir + '/via-libera/engine.js', 'utf8'), re = /IMG\(([^,]+),/g, m, ids = {};
 while ((m = re.exec(eng))) { (m[1].match(/"([^"]+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; }); }
 var pk0 = /var END_PIC = \{([\s\S]*?)\};/.exec(eng)[1]; (pk0.match(/"(f_\w+)"/g) || []).forEach(function (q) { ids[q.slice(1, -1)] = 1; });
 var pic = /var PIC = \{([\s\S]*?)\};/.exec(eng)[1], pk = /(\w+):/g;

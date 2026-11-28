@@ -59,7 +59,7 @@ var PC = (function () {
     scheda: "scheda", dossier: "scheda", personaggio: "scheda", io: "scheda",
     aiuto: "aiuto", help: "aiuto", comandi: "aiuto",
     indizio: "indizio", indizi: "indizio", suggerimento: "indizio", suggerisci: "indizio", aiutami: "indizio", hint: "indizio", bloccata: "indizio", bloccato: "indizio",
-    finali: "finali",
+    finali: "finali", storie: "storie", home: "storie",
     prologo: "prologo", ricomincia: "ricomincia", restart: "ricomincia", salva: "salva", carica: "carica", aspetta: "aspetta", z: "aspetta"
   };
   var NOUNS = {
@@ -377,7 +377,7 @@ var PC = (function () {
     var fin = END_PIC[e[0]];
     return [IMG("tx" + code, "Mezzanotte: " + code.charAt(0) + "-" + code.charAt(1)), P(e[1]), IMG(fin[0], fin[1]),
       { t: "end", s: "Fine — " + e[0] },
-      NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA CAPITOLO|ricomincia capitolo]] per rifare la notte e cercare un altro finale, [[RICOMINCIA|ricomincia]] per ripartire da capo.")];
+      NOTE("Hai chiuso la storia in " + S.moves + " mosse. " + endsNote() + " [[RICOMINCIA CAPITOLO|ricomincia capitolo]] per rifare la notte e cercare un altro finale, [[RICOMINCIA|ricomincia]] per ripartire da capo, [[STORIE|storie]] per tornare all'elenco delle storie.")];
   }
 
   /* ---------- movimento ---------- */
@@ -896,7 +896,7 @@ var PC = (function () {
     return [NOTE("Indizio " + (n + 1) + " di 3"), P(h[n + 1])].concat(n < 2 ? [NOTE("Se non basta: [[ANCORA|indizio]].")] : []);
   }
 
-  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi. CHIEDI A chi DI cosa\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA CAPITOLO, RICOMINCIA";
+  var HELP = "COMANDI\nMuoversi: NORD, SUD, EST, OVEST, SU, GIÙ (anche N, S, E, O)\nGuardare: GUARDA, ESAMINA cosa, LEGGI cosa\nAgire: PRENDI, APRI, USA cosa. PARLA con chi. DAI o MOSTRA cosa a chi. CHIEDI A chi DI cosa\nNel momento giusto: DORMI, ACCETTA, RIFIUTA, SEGNALA 1-3\nLibro: SCHEDA, MAPPA, INVENTARIO, PROLOGO\nBloccata? [[INDIZIO|indizio]], anche più volte. FINALI dice quali hai trovato\nPartita: SALVA ti dà un codice, CARICA codice lo riprende, RICOMINCIA CAPITOLO, RICOMINCIA. STORIE torna all'elenco delle storie";
 
   function exec(input) {
     var m = /^\s*carica\b\s*(.*)$/i.exec(String(input));
@@ -906,7 +906,7 @@ var PC = (function () {
     var t = tokens(s), w = t[0], verb, ids = [], id, i, n, digits = "";
 
     verb = VERBS[w];
-    if (S.end && !(verb === "aiuto" || verb === "indizio" || verb === "finali" || verb === "mappa" || verb === "scheda" || verb === "prologo" || verb === "ricomincia" || verb === "salva")) {
+    if (S.end && !(verb === "aiuto" || verb === "indizio" || verb === "finali" || verb === "mappa" || verb === "scheda" || verb === "prologo" || verb === "ricomincia" || verb === "salva" || verb === "storie")) {
       return [P("La storia è finita. RICOMINCIA, oppure CARICA un codice.")];
     }
     if (DIRS[w] && t.length === 1) { return done(go(DIRS[w])); }
@@ -918,6 +918,7 @@ var PC = (function () {
     if (verb === "aiuto") { return [P(HELP)]; }
     if (verb === "indizio") { return hint(); }
     if (verb === "finali") { return [P(endsNote())]; }
+    if (verb === "storie") { save(); return [{ t: "home" }]; }
     if (verb === "mappa") { return mapBlock(); }
     if (verb === "scheda") { return sheet(); }
     if (verb === "prologo") { return [{ t: "prologue" }]; }
@@ -1051,11 +1052,12 @@ var PC = (function () {
       S = saved;
       return { resumed: true, blocks: [NOTE("Partita ripresa: " + CH_NAME[S.ch] + ", «" + CH_TITLE[S.ch] + "». PROLOGO per rileggere l'inizio, RICOMINCIA per ripartire da capo.")].concat(S.end ? [P("Questa storia è già finita. RICOMINCIA per ripartire.")] : describe(true)) };
     }
-    S = fresh(); markChapter();
+    S = fresh(); markChapter(); if (forceNew) { save(); }
     return { resumed: false, blocks: [CHAP(1)].concat(describe(true)).concat([NOTE("Scrivi un comando, oppure tocca un'azione e poi una parola sottolineata. SCHEDA ti dice chi sei e cosa sai; SALVA ti dà un codice.")]) };
   }
 
   return {
+    title: "Via Libera",
     start: start, exec: exec, prologue: prologue, inventory: inventory,
     look: function () { return describe(false); },
     exits: function () {

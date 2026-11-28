@@ -165,6 +165,7 @@ if (typeof document !== "undefined") {
       render();
     }
 
+    function goHome() { window.location.href = "index.html"; }
     function setPending(verb) {
       var chips = document.getElementById("chips-verb").getElementsByTagName("button"), i;
       pending = verb;
@@ -181,6 +182,7 @@ if (typeof document !== "undefined") {
       setPending(null);
       setDrawer(false);
       if (blocks.length && blocks[0].t === "restart") { begin(true); return; }
+      if (blocks.length && blocks[0].t === "home") { goHome(); return; }
       atTop = false;
       if (blocks.length && blocks[0].t === "prologue") {
         first = pushPrologue();
@@ -253,6 +255,7 @@ if (typeof document !== "undefined") {
       };
     }
     armButton(RE[0]); armButton(RE[1]);
+    document.getElementById("go-home").onclick = goHome;
     document.getElementById("ref-prefs").onclick = function () {
       var box = document.getElementById("prefs"), open = box.className.indexOf("off") >= 0;
       disarm();
@@ -268,7 +271,10 @@ if (typeof document !== "undefined") {
     };
 
     syncSwitch();
-    begin(false);
+    /* dall'elenco delle storie si può arrivare con #nuova: partita da capo. Il segno si toglie subito, così ricaricare la pagina non la azzera di nuovo */
+    var fromNew = window.location.hash === "#nuova";
+    if (fromNew) { try { window.location.hash = ""; } catch (e) { /* resta */ } }
+    begin(fromNew);
     lastW = out.clientWidth;
     if (document.fonts && document.fonts.ready && document.fonts.ready.then) { document.fonts.ready.then(function () { render(); }); }
   })();
